@@ -1,0 +1,1989 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>AiUniverse</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#0B0B0D;color:#F4F4F5;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;padding-bottom:96px}
+h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
+.kopf{padding:16px 16px 12px;background:linear-gradient(180deg,#17171C,#0B0B0D);border-bottom:1px solid #23232B;position:sticky;top:0;z-index:5}
+.zeile{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.punkt{width:9px;height:9px;border-radius:50%;background:#2ED06E;box-shadow:0 0 10px rgba(46,208,110,.8);flex:none}
+.punkt.aus{background:#4A4A54;box-shadow:none}
+.kname{font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.unter{font-size:11px;color:#7E7E89;margin-top:1px}
+.knopf{background:#1C1C22;border:1px solid #2A2A32;color:#A7A7B2;border-radius:9px;padding:8px 11px;font:inherit;font-size:13px;cursor:pointer}
+.knopf:active{background:#24242C}
+.or{background:#FF6A1A;border:none;color:#140B04;font-weight:700;font-family:"Space Grotesk",sans-serif;letter-spacing:.03em}
+.rot{color:#FF6B6B}
+.stand{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px}
+.stand>div{background:#15151A;border:1px solid #24242C;border-radius:10px;padding:8px 4px;text-align:center}
+.stand .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#74747F}
+.stand .w{font-size:11.5px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gruen{color:#2ED06E}.grau{color:#6E6E79}
+.reiter{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:12px 16px 0}
+.reiter button{background:#15151A;border:1px solid #26262E;border-radius:12px;padding:11px 4px;color:#A7A7B2;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer;line-height:1.3}
+.reiter button.an{background:#FF6A1A;border-color:#FF6A1A;color:#140B04;box-shadow:0 6px 16px rgba(255,106,26,.32)}
+.erkl{display:flex;gap:9px;margin:11px 16px 0;padding:11px 12px;background:rgba(255,106,26,.07);border:1px solid rgba(255,106,26,.25);border-radius:12px;font-size:11.5px;line-height:1.5;color:#C9C9D2}
+.erkl i{width:7px;height:7px;border-radius:50%;background:#FF6A1A;margin-top:5px;flex:none}
+.inhalt{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+.karte{background:linear-gradient(180deg,#1A1A20,#141418);border:1px solid #272730;border-radius:16px;padding:4px 13px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.karte.p{padding:13px}
+.kt{font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:#8E8E99;margin:0 0 9px}
+.r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #23232B}
+.r:last-child{border-bottom:none}
+.r label,.r .lb{font-size:12.5px;color:#C9C9D2}
+.r .hint{font-size:10.5px;color:#7E7E89;margin-top:2px}
+input[type=text],input[type=number],select,textarea{background:#0E0E12;border:1px solid #2C2C35;border-radius:9px;color:#F4F4F5;padding:8px 9px;font:inherit;font-size:12.5px}
+input[type=text],input[type=number]{text-align:right;width:92px}
+input.breit{text-align:left;width:100%}
+select{width:auto}
+textarea{width:100%;text-align:left;resize:vertical;min-height:92px;line-height:1.55;font-size:12px}
+.sch{width:46px;height:26px;border-radius:999px;background:#2A2A32;position:relative;flex:none;border:none;cursor:pointer;padding:0}
+.sch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#6E6E79;transition:.15s}
+.sch.an{background:#FF6A1A}.sch.an i{left:23px;background:#140B04}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pills button{background:#1E1E25;border:1px solid #2C2C35;color:#8E8E99;border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
+.pills button.an{background:#FF6A1A;border-color:#FF6A1A;color:#140B04;font-weight:600}
+.liste .e{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #202028}
+.liste .e:last-child{border-bottom:none}
+.e .tx{flex:1;min-width:0}
+.e .ti{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.e .me{font-size:10.5px;color:#7E7E89;margin-top:2px}
+.ik{width:34px;height:34px;border-radius:9px;background:#1E1E25;border:1px solid #2C2C35;color:#E6E6EA;font-size:14px;cursor:pointer;flex:none}
+.leer{color:#6E6E79;font-size:12px;padding:12px 0;text-align:center}
+.leiste{position:fixed;left:0;right:0;bottom:0;padding:11px 16px calc(14px + env(safe-area-inset-bottom));background:#0B0B0D;border-top:1px solid #23232B;display:flex;flex-wrap:wrap;align-items:center;gap:11px;z-index:6}
+.lauf{flex:0 0 100%;display:none;align-items:center;gap:9px;padding:8px 11px;margin:-2px 0 2px;background:#17171C;border:1px solid #2A2A33;border-radius:11px;font-size:12.5px;color:#D2D2DA}
+.lauf.an{display:flex}
+.lauf .pk{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#E8711A;animation:pul 1.3s ease-in-out infinite}
+.lauf .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lauf .zt{flex:0 0 auto;color:#9A9AA4;font-variant-numeric:tabular-nums}
+@keyframes pul{0%,100%{opacity:1}50%{opacity:.25}}
+.leiste .pr{flex:none}
+.leiste .pr .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#74747F}
+.leiste .pr .w{font-size:19px;font-weight:700;font-family:"Space Grotesk",sans-serif}
+.gen{flex:1;border-radius:14px;padding:16px 10px;font-size:15px}
+.dim{position:fixed;inset:0;background:rgba(5,5,7,.78);z-index:20;display:flex;align-items:flex-end;padding:16px}
+.dlg{background:linear-gradient(180deg,#1D1D24,#141418);border:1px solid #33333E;border-radius:22px;padding:20px;width:100%;box-shadow:0 28px 60px rgba(0,0,0,.8)}
+.dlg h2{margin:0 0 4px;font-size:18px}
+.dlg p{margin:0 0 14px;font-size:12.5px;color:#8E8E99;line-height:1.5}
+.dlg .zw{display:flex;gap:10px}
+.dlg .zw button{flex:1;border-radius:14px;padding:15px 8px;font-size:14px}
+.log{font:11px/1.6 ui-monospace,monospace;color:#9A9AA4;white-space:pre-wrap;word-break:break-word;max-height:170px;overflow:auto}
+.hinw{font-size:10.5px;color:#6E6E79;padding:4px 0 10px}
+.kind{padding-left:16px}
+.szn{background:#15151A;border:1px solid #24242C;border-radius:12px;padding:10px;margin-bottom:9px}
+.szn .kopf{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:static;top:auto;z-index:auto;padding:0;background:none;border-bottom:0}
+.szn .nr{font-size:10px;color:#74747F;letter-spacing:.08em;flex:1}
+.szn .bildchen{width:100%;height:132px;object-fit:cover;border-radius:9px;background:#0B0B0D;display:block}
+.szn textarea{width:100%;min-height:58px;margin-top:8px}
+.szz{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.szh{font-size:10.5px;color:#7E7E89}
+.hak{display:flex;align-items:center;gap:6px;font-size:12px;color:#A7A7B2;cursor:pointer}
+.hak input{width:17px;height:17px;accent-color:#FF6A1A}
+.hak.aus{opacity:.45}
+.szn select,.szn input[type=text]{font-size:12px}
+.raster{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.zl{background:#15151A;border:1px solid #23232B;border-radius:9px;padding:7px 9px}
+.zt{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#74747F}
+.zw{font-size:12px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.me.warn{color:#FF6A1A}
+.suchf{margin:12px 16px 0;position:relative}
+.suchf input[type=text]{width:100%;box-sizing:border-box;text-align:left;background:#15151A;border:1px solid #26262E;border-radius:12px;padding:11px 13px;color:#F4F4F5;font:inherit;font-size:13.5px}
+.suchf input::placeholder{color:#6B6B78}
+.sucherg:empty{display:none}
+.sucherg{position:absolute;left:0;right:0;top:46px;z-index:40;background:#17171D;border:1px solid #2E2E38;border-radius:12px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.sucherg div{padding:11px 13px;border-bottom:1px solid #22222A;font-size:13px;cursor:pointer}
+.sucherg div:last-child{border-bottom:none}
+.sucherg div:active{background:#22222A}
+.sucherg b{color:#FF6A1A;font-weight:600}
+.sucherg span{display:block;color:#7E7E8B;font-size:11px;margin-top:2px}
+.treffer{animation:blitz 2s ease-out}
+@keyframes blitz{0%,55%{background:rgba(255,106,26,.22)}100%{background:transparent}}
+.spaeter{margin:0 0 4px;padding:10px 12px;background:#15151A;border:1px dashed #33333E;border-radius:11px;font-size:11.5px;line-height:1.5;color:#8A8A96}
+input[type=range]{-webkit-appearance:none;appearance:none;height:16px;border-radius:8px;
+ outline:none;border:1px solid #2C2C35;margin:0;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
+ border-radius:50%;background:#fff;border:2px solid #0B0B0D;box-shadow:0 1px 4px rgba(0,0,0,.7)}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;
+ border:2px solid #0B0B0D}
+</style>
+</head>
+<body>
+
+<div class="kopf">
+  <div class="zeile">
+    <div style="display:flex;align-items:center;gap:9px;min-width:0">
+      <span class="punkt" id="pt"></span>
+      <div style="min-width:0">
+        <div class="kname" id="knam">—</div>
+        <div class="unter" id="kunt"></div>
+      </div>
+    </div>
+    <button class="knopf" onclick="zeige('kanaele')">Kanäle</button>
+  </div>
+  <div class="stand" id="stand"></div>
+</div>
+
+<div class="suchf"><input type="text" id="suchf" placeholder="Suchen: Untertitel, Follow, Musik, Tempo …" oninput="suchTreffer(this.value)" onblur="setTimeout(suchZu,220)"><div class="sucherg" id="sucherg"></div></div>
+<div class="reiter" id="reiter"></div>
+<div class="erkl"><i></i><span id="erkl"></span></div>
+<div class="inhalt" id="inhalt"></div>
+
+<div class="leiste" id="leiste">
+  <div class="lauf" id="lauf"><span class="pk"></span><span class="tx" id="laufTx">läuft …</span><span class="zt" id="laufZt"></span></div>
+  <div class="pr"><div class="t">Kostet</div><div class="w" id="preis">—</div></div>
+  <button class="knopf or gen" id="gen" onclick="fragGenerieren()">VIDEO ERZEUGEN</button>
+</div>
+
+<div id="dialog"></div>
+
+<script>
+var S={kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
+
+var TABS=[
+ ["start","Übersicht","Hier startest du ein Video von Hand, schaltest die Automatik und siehst die fertigen Videos."],
+ ["prompt","Prompt","Worüber der Kanal spricht und in welchem Ton. Die Themenliste wird von oben abgearbeitet, erledigte kommen nicht wieder."],
+ ["figuren","Charaktere","Figuren mit fester Stimme und freigestellten Posen. Im Szenen-Editor waehlst du, wer wo im Bild steht."],
+ ["video","Video & Ton","Wie das Video aussieht und klingt: Format, Bildwechsel, Bewegung, Stimme, Musik."],
+ ["texte","Text & Einblendung","Untertitel und Einblendungen. Schrift, Größe, Höhe im Bild, Farbe des mitlaufenden Wortes."],
+ ["technik","KI & Technik","Welcher Dienst welche Arbeit macht, was er kostet und ob sein Schlüssel hinterlegt ist."]
+];
+
+function h(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function api(w,d){return fetch(w,d?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}:undefined).then(function(r){return r.headers.get("content-type").indexOf("json")>=0?r.json():r.text()})}
+function el(id){return document.getElementById(id)}
+
+function frage(titel,text,knopf,fn,gefahr){
+  el("dialog").innerHTML='<div class="dim" onclick="if(event.target===this)zu()"><div class="dlg">'
+   +'<h2>'+h(titel)+'</h2><p>'+text+'</p><div class="zw">'
+   +'<button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf '+(gefahr?"":"or")+'" id="ja" style="'+(gefahr?"background:#B02A2A;border-color:#B02A2A;color:#fff;font-weight:700":"")+'">'+h(knopf)+'</button>'
+   +'</div></div></div>';
+  el("ja").onclick=function(){zu();fn()};
+}
+function zu(){el("dialog").innerHTML=""}
+function melde(t){el("dialog").innerHTML='<div class="dim" onclick="zu()"><div class="dlg"><h2>Hinweis</h2><p>'+h(t)+'</p><div class="zw"><button class="knopf or" onclick="zu()">Alles klar</button></div></div></div>'}
+
+function kanalDaten(){for(var i=0;i<(S.daten.kanaele||[]).length;i++){if(S.daten.kanaele[i].key===S.kanal)return S.daten.kanaele[i]}return null}
+
+function laden(){
+  return api("/api/stand").then(function(d){
+    S.daten=d;
+    var ks=d.kanaele||[];
+    if(!S.kanal||!kanalDaten()){
+      var gm=kanalGemerkt(), da=false;
+      for(var i=0;i<ks.length;i++){if(ks[i].key===gm)da=true}
+      S.kanal=da?gm:(ks.length?ks[0].key:null);
+    }
+    zeigeKopf();
+    if(!S.kanal)return;
+    return Promise.all([
+      api("/api/kanal?k="+S.kanal).then(function(x){S.einst=x}),
+      api("/api/themen?k="+S.kanal).then(function(x){S.themen=x}),
+      api("/api/videos?k="+S.kanal).then(function(x){S.videos=x}),
+      api("/api/preis?k="+S.kanal).then(function(x){S.preis=x}),
+      api("/api/stand?k="+S.kanal).then(function(x){S.daten.apis=x.apis})
+    ]).then(function(){zeigeKopf();zeichne()});
+  });
+}
+
+function zeigeKopf(){
+  var k=kanalDaten();
+  el("knam").textContent=k?k.name:"Kein Kanal";
+  var vn=(S.vorlagen[k&&k.vorlage]||{}).name||(k?k.vorlage:"");
+  el("kunt").textContent=k?(vn+" · "+(k.sprachen||["de"])[0]+" · "+(S.einst.format||"9:16")):"";
+  el("pt").className="punkt"+(k&&k.aktiv?"":" aus");
+  var a=S.daten.apis||{};
+  var g=S.guthaben&&S.guthaben.ok?(Number(S.guthaben.betrag).toFixed(2)+" "+(S.guthaben.waehrung==="USD"?"$":S.guthaben.waehrung)):"—";
+  el("stand").innerHTML=
+    kachel("Text",a.text?kurz(a.text_name,"Claude"):"fehlt",a.text)+
+    kachel("Bild",a.bilder?kurz(a.bilder_name,"Flux"):"fehlt",a.bilder)+
+    kachel("Stimme",a.stimme?kurz(a.stimme_name,"bereit"):"fehlt",a.stimme)+
+    kachel("fal.ai",g,S.guthaben&&S.guthaben.ok);
+}
+function kurz(n,fallback){n=(n||"").trim();return n?n:fallback}
+function kachel(t,w,ok){return '<div><div class="t">'+t+'</div><div class="w '+(ok?"gruen":"grau")+'">'+h(w)+'</div></div>'}
+
+function zeige(t){S.tab=t;zeichne()}
+
+
+function laufZeit(s){
+  s=Math.max(0,Math.round(Number(s)||0));
+  var m=Math.floor(s/60); s=s%60;
+  return m+":"+(s<10?"0":"")+s;
+}
+function laufLeiste(){
+  var k=el("lauf"); if(!k)return;
+  var l=S.daten.lauf||{};
+  if(!l.laeuft){k.className="lauf";return}
+  var z=(l.zeilen||[]).filter(function(x){return (x||"").trim()});
+  var letzte=z.length?z[z.length-1]:"läuft …";
+  el("laufTx").textContent=letzte;
+  el("laufZt").textContent=laufZeit(l.sekunden);
+  k.className="lauf an";
+}
+
+function zeichne(){
+  el("reiter").innerHTML=TABS.map(function(t){
+    return '<button class="'+(S.tab===t[0]?"an":"")+'" onclick="zeige(\''+t[0]+'\')">'+h(t[1])+'</button>'}).join("");
+  var e=TABS.filter(function(t){return t[0]===S.tab})[0];
+  el("erkl").textContent=e?e[2]:"Kanäle anlegen, klonen oder löschen. Ein Kanal macht genau eine Videoart.";
+  el("leiste").style.display=(S.tab==="kanaele")?"none":"flex";
+  el("preis").textContent=(S.preis.gesamt!=null?S.preis.gesamt.toFixed(2).replace(".",","):"—")+" €";
+  var f={start:tStart,prompt:tPrompt,figuren:tFiguren,video:tVideo,texte:tTexte,technik:tTechnik,kanaele:tKanaele}[S.tab]||tStart;
+  el("inhalt").innerHTML=f();
+  laufLeiste();
+  if(S.tab==="texte")p70Lade();
+}
+
+/* ---------- Bausteine ---------- */
+function reihe(label,rechts,hint){
+  return '<div class="r"><div><div class="lb">'+h(label)+'</div>'+(hint?'<div class="hint">'+h(hint)+'</div>':'')+'</div>'+rechts+'</div>'
+}
+function zahl(feld,wert,breit){
+  return '<input type="number" value="'+h(wert)+'" onchange="setz(\''+feld+'\',this.value,1)">'
+}
+function text(feld,wert){
+  return '<input type="text" value="'+h(wert)+'" onchange="setz(\''+feld+'\',this.value)">'
+}
+function schalter(feld,an){
+  return '<button class="sch'+(an?" an":"")+'" onclick="setz(\''+feld+'\','+(an?"false":"true")+')"><i></i></button>'
+}
+function wahl(feld,wert,liste){
+  return '<select onchange="setz(\''+feld+'\',this.value)">'+liste.map(function(o){
+    var v=o[0],n=o[1];return '<option value="'+h(v)+'"'+(String(wert)===String(v)?" selected":"")+'>'+h(n)+'</option>'}).join("")+'</select>'
+}
+function knoepfe(feld,wert,liste){
+  return '<div class="pills">'+liste.map(function(o){
+    return '<button class="'+(String(wert)===String(o[0])?"an":"")+'" onclick="setz(\''+feld+'\',\''+o[0]+'\')">'+h(o[1])+'</button>'}).join("")+'</div>'
+}
+function frHex(h,s,l){
+  s=s/100; l=l/100;
+  var k=function(n){return (n+h/30)%12};
+  var a=s*Math.min(l,1-l);
+  var f=function(n){var v=l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+                    return Math.round(255*v)};
+  return '#'+[f(0),f(8),f(4)].map(function(x){return ('0'+x.toString(16)).slice(-2)})
+         .join('').toUpperCase();
+}
+function frHsl(hex){
+  var s=String(hex||'#FFFFFF').replace('#','');
+  if(s.length!==6)s='FFFFFF';
+  var r=parseInt(s.substr(0,2),16)/255, g=parseInt(s.substr(2,2),16)/255, b=parseInt(s.substr(4,2),16)/255;
+  var mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn, h=0, l=(mx+mn)/2;
+  var sa=d===0?0:d/(1-Math.abs(2*l-1));
+  if(d!==0){
+    if(mx===r)h=60*(((g-b)/d)%6);
+    else if(mx===g)h=60*(((b-r)/d)+2);
+    else h=60*(((r-g)/d)+4);
+  }
+  if(h<0)h+=360;
+  return [Math.round(h), Math.round(sa*100), Math.round(l*100)];
+}
+function frZeig(id,feld,speichern){
+  var h=+el(id+'_h').value, s=+el(id+'_s').value, l=+el(id+'_l').value;
+  var hex=frHex(h,s,l);
+  el(id+'_v').style.background=hex;
+  el(id+'_s').style.background='linear-gradient(90deg,'+frHex(h,0,l)+','+frHex(h,100,l)+')';
+  el(id+'_l').style.background='linear-gradient(90deg,#000,'+frHex(h,s,50)+',#fff)';
+  if(speichern)setz(feld,hex);
+}
+function farbregler(feld,wert,standard){
+  var hex=String(wert||standard||'#FFFFFF').toUpperCase();
+  var p=frHsl(hex), id='fr'+feld.replace(/[^a-z0-9]/gi,'');
+  var ruf=function(sp){return 'frZeig(\''+id+'\',\''+feld+'\','+(sp?'1':'0')+')'};
+  var reg=function(teil,wert,max,hg){
+    return '<input type="range" id="'+id+'_'+teil+'" min="0" max="'+max+'" value="'+wert+'"'
+     +' style="width:100%;background:'+hg+'" oninput="'+ruf(0)+'" onchange="'+ruf(1)+'">';
+  };
+  return '<div style="display:flex;align-items:center;gap:9px">'
+   +'<div id="'+id+'_v" style="width:36px;height:36px;flex:none;border-radius:9px;'
+   +'border:1px solid #2C2C35;background:'+hex+'"></div>'
+   +'<div style="display:flex;flex-direction:column;gap:6px;width:160px">'
+   + reg('h',p[0],360,'linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)')
+   + reg('s',p[1],100,'linear-gradient(90deg,'+frHex(p[0],0,p[2])+','+frHex(p[0],100,p[2])+')')
+   + reg('l',p[2],100,'linear-gradient(90deg,#000,'+frHex(p[0],p[1],50)+',#fff)')
+   +'</div></div>';
+}
+function farbStandard(welche){
+  var w=(S.einst.untertitel_stil||"klassisch");
+  if(welche==="aktiv")return w==="wortweise"?"#FFFFFF":"#FFD400";
+  return w==="wortweise"?"#B4B4B4":"#FFFFFF";
+}
+function reglerZeig(id,feld,speichern){
+  var v=+el(id).value;
+  el(id+'_z').textContent=v;
+  if(speichern)setz(feld,v,1);
+}
+function regler(feld,wert,standard,mn,mx,einheit){
+  var v=(wert==null||wert==='')?standard:wert;
+  var id='rg'+feld.replace(/[^a-z0-9]/gi,'');
+  var ruf=function(sp){return 'reglerZeig(\''+id+'\',\''+feld+'\','+(sp?'1':'0')+')'};
+  return '<div style="display:flex;align-items:center;gap:8px">'
+   +'<span id="'+id+'_z" class="zahl" style="width:30px;text-align:right;font-size:13px;font-weight:700">'+h(v)+'</span>'
+   +(einheit?'<span class="hint" style="width:10px">'+h(einheit)+'</span>':'')
+   +'<input type="range" id="'+id+'" min="'+mn+'" max="'+mx+'" value="'+h(v)+'"'
+   +' style="width:140px;background:linear-gradient(90deg,#1A1A20,#5A5A6A)"'
+   +' oninput="'+ruf(0)+'" onchange="'+ruf(1)+'">'
+   +'</div>';
+}
+function utStandard(welche){
+  /* genauso gerechnet wie in szenen_video.py, bei 1920 Pixeln Hoehe */
+  var st=(S.einst.untertitel_stil||"klassisch");
+  var n=+(S.einst.untertitel_woerter||3);
+  var g=Math.max(20,Math.min(120,+(S.einst.untertitel_groesse||48)));
+  var sh={1:1.12,2:1.0,3:0.88,4:0.78,5:0.70,6:0.64}[n]||0.78;
+  var H=1920, fs, mv, rand, scha;
+  if(st==="kino"){
+    fs=Math.max(18,Math.floor(H*0.032*g/48*(0.92+0.08*sh)));
+    mv=47; rand=Math.max(2,Math.floor(fs*0.10)); scha=0;
+  }else if(st==="fett"){
+    fs=Math.max(28,Math.floor(H*0.058*g/48*sh));
+    mv=30; rand=Math.max(4,Math.floor(fs*0.14)); scha=Math.max(2,Math.floor(fs*0.06));
+  }else if(st==="knall"){
+    fs=Math.max(30,Math.floor(H*0.056*g/48*sh));
+    mv=34; rand=Math.max(4,Math.floor(fs*0.15)); scha=Math.max(2,Math.floor(fs*0.07));
+  }else if(st==="karaoke"){
+    fs=Math.max(28,Math.floor(H*0.050*g/48*sh));
+    mv=40; rand=Math.max(3,Math.floor(fs*0.13)); scha=0;
+  }else if(st==="wortweise"){
+    fs=Math.max(30,Math.floor(H*0.050*g/48*sh));
+    mv=47; rand=Math.max(3,Math.floor(fs*0.10)); scha=0;
+  }else{  /* klassisch wird an einer ganz anderen Stelle gebaut */
+    fs=Math.max(24,Math.floor(H*0.046*g/48));
+    mv=17; rand=Math.max(3,Math.floor(fs*0.11)); scha=Math.max(2,Math.floor(fs*0.07));
+  }
+  if(welche==="hoehe")return mv;
+  if(welche==="rand")return Math.min(30,rand);
+  return Math.min(40,scha);
+}
+function setzViele(d){
+  var text=false;
+  for(var f in d){S.einst[f]=d[f]; if(f==="geschichte_text")text=true}
+  if(text)setTimeout(function(){S.gs=null;ladeGeschichte()},260);
+  return api("/api/kanal?k="+S.kanal,d).then(function(){zeichne()});
+}
+function setz(feld,wert,zahlFeld){
+  if(feld==="geschichte_text"||feld==="geschichte_stil"||feld==="geschichte_figur")setTimeout(function(){S.gs=null;ladeGeschichte()},260);
+  if(wert==="true")wert=true;else if(wert==="false")wert=false;
+  else if(zahlFeld)wert=Number(wert)||0;
+  var d={};
+  if(feld==="sprachen_eins"){d.sprachen=[wert];S.einst.sprachen=[wert];}
+  else{d[feld]=wert;S.einst[feld]=wert;}
+  api("/api/kanal?k="+S.kanal,d).then(function(){
+    if(["laenge","bilder_pro_minute","stimme_an","modus","vorlage","format"].indexOf(feld)>=0){
+      api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})}
+    else zeichne();
+  });
+}
+
+/* ---------- Reiter ---------- */
+function tStart(){
+  var l=S.daten.lauf||{};
+  var o=standKarte();
+  o+='<div class="karte"><div class="r"><div><div class="lb">Kanalname</div>'
+   +'<div class="hint">'+h((kanalDaten()||{}).name||"")+'</div></div>'
+   +'<button class="knopf" onclick="kanalUmbenennen()">ändern</button></div></div>';
+  o+='<div class="karte">'
+   +reihe("Thema von Hand",'<input type="text" id="thema" placeholder="leer = nächstes aus der Liste" style="width:160px;text-align:left">',"leer lassen nimmt das nächste Thema")
+   +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
+   +reihe("Abspann",schalter("abspann_an",S.einst.abspann_an!==false),"feste Schlusstafel, kostet nichts")
+   +(S.einst.abspann_an===false?'':(
+      reihe("Abspann: Sekunden",zahl("abspann_sekunden",S.einst.abspann_sekunden||6,1))
+     +reihe("Abspann: obere Zeile",text("abspann_zeile1",S.einst.abspann_zeile1||"TEIL 2 FOLGT"))
+     +reihe("Abspann: untere Zeile",text("abspann_zeile2",S.einst.abspann_zeile2||"FOLGEN · LIKEN · KOMMENTIEREN"))))
+   +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde — danach wird die Wortzahl für die Länge berechnet")
+   +'</div>';
+  o+='<div class="karte"><div class="r"><div><div class="lb">Automatik</div><div class="hint">'
+    +(S.einst.automatik_an?"läuft":"ausgeschaltet")+'</div></div>'+schalter("automatik_an",!!S.einst.automatik_an)+'</div></div>';
+  if(l.laeuft||(l.zeilen&&l.zeilen.length)){
+    o+='<div class="karte p"><h2 class="kt">'+(l.laeuft?"Läuft gerade":"Letzter Lauf")+'</h2><div class="log">'
+      +h((l.zeilen||[]).join("\n")||"—")+'</div>'
+      +(l.laeuft?'<button class="knopf" style="width:100%;margin-top:10px" onclick="abbrechen()">Abbrechen</button>':'')+'</div>';
+  }
+  o+='<div class="karte p"><h2 class="kt">Fertige Videos</h2><div class="liste">';
+  if(!S.videos.length)o+='<div class="leer">noch keine</div>';
+  S.videos.forEach(function(v){
+    o+='<div class="e"><div class="tx"><div class="ti">'+h(v.titel)+'</div><div class="me">'+h(v.zeit)+' · '+v.mb+' MB</div></div>'
+      +'<button class="ik" onclick="spiel(\''+v.ordner+'\')">▶</button>'
+      +'<button class="ik" onclick="herunter(\''+v.ordner+'\')">⤓</button>'
+      +'<button class="ik rot" onclick="fragWeg(\''+v.ordner+'\',\''+h(v.titel).replace(/'/g,"")+'\')">✕</button></div>';
+  });
+  o+='</div><div class="hinw">Vor jedem Löschen kommt eine Abfrage.</div></div>';
+  return o;
+}
+
+function tPrompt(){
+  var modus=(S.einst.modus==="szenen")?"szenen":((S.einst.modus==="geschichte")?"geschichte":"auto");
+  var kopf='<div class="karte">'+reihe("Wie das Video entsteht",
+    wahl("modus",modus,[["auto","Claude schreibt es"],["geschichte","Text ansehen und ändern"],["szenen","Ich baue es selbst"]]),
+    modus==="szenen"?"Deine Bilder, Clips und Texte":
+    (modus==="geschichte"?"Thema rein, Text zum Gegenlesen, dann erzeugen":"Thema rein, fertiges Video raus"))+'</div>';
+  kopf+='<div class="karte">'+reihe("Sprache",wahl("sprachen_eins",(S.einst.sprachen||["de"])[0],SPRACHEN),
+         "gilt für Text und Untertitel")+'</div>';
+  if(modus==="szenen")return kopf+tSzenen();
+  if(modus==="geschichte")return kopf+tThemen()+tGeschichte()+tSzenen();
+  var o=kopf+'<div class="karte p"><h2 class="kt">Masterprompt</h2>'
+   +'<textarea onchange="promptAendern(this.value)">'+h(S.einst.prompt||"")+'</textarea>'
+   +'<div class="hinw" style="margin-top:8px">Änderungen werden erst nach einer Abfrage gespeichert.</div></div>';
+  return o+tThemen();
+}
+
+function tThemen(){
+  var o='<div class="karte p"><h2 class="kt">Themenliste · '+(S.themen.offen||[]).length+' offen</h2><div class="liste">';
+  if(!(S.themen.offen||[]).length)o+='<div class="leer">leer — dann denkt die Text-KI sich selbst etwas aus</div>';
+  (S.themen.offen||[]).forEach(function(t,i){
+    o+='<div class="e"><div class="tx"><div class="ti">'+(i+1)+'. '+h(t)+'</div></div>'
+     +'<button class="ik rot" onclick="themaWeg(\''+h(t).replace(/'/g,"")+'\')">✕</button></div>';
+  });
+  o+='</div><div style="display:flex;gap:7px;margin-top:10px">'
+   +'<input type="text" id="neuthema" class="breit" placeholder="Neues Thema">'
+   +'<button class="knopf or" onclick="themaNeu()">+</button></div>';
+  var erl=(S.themen.erledigt||[]).slice(-6).reverse();
+  o+='<div class="hinw" style="margin-top:12px">Erledigt: '+(S.themen.erledigt||[]).length
+   +(erl.length?' · zuletzt '+h(erl.map(function(x){return x.thema}).join(", ")):'')+'</div>';
+  o+='<div class="hinw" style="padding-top:0">Das oberste Thema nimmt der Schreibknopf, '
+   +'wenn das Themenfeld leer ist.</div>'
+   +'<button class="knopf" style="width:100%" onclick="fragReset()">Gedächtnis leeren</button></div>';
+  return o;
+}
+
+function tFiguren(){
+  return tFiguren();
+}
+function tFigurenAlt(){
+  return '<div class="karte p"><h2 class="kt">Charaktere &amp; Bilder</h2>'
+   +'<p style="font-size:12.5px;color:#9A9AA4;line-height:1.55;margin:0">Feste Figuren mit fest zugeordneter Stimme, frei erfundene aus dem Stimmenvorrat, '
+   +'Gespräche zwischen zwei Figuren und eigene Bilder zum Hochladen. Das ist der nächste Schritt — '
+   +'der Motor dafür muss zuerst gebaut werden.</p></div>';
+}
+
+function tVideo(){
+  var o=tArten();
+  o+='<div class="karte p"><h2 class="kt">Format</h2>'
+   +knoepfe("format",S.einst.format||"9:16",[["9:16","9:16 TikTok"],["4:5","4:5 Insta"],["1:1","1:1"],["16:9","16:9 YouTube"]])+'</div>';
+  var bpm=S.einst.bilder_pro_minute||24, sek=S.einst.laenge||20;
+  o+='<div class="karte">'
+   +reihe("Bilder pro Minute",zahl("bilder_pro_minute",bpm,1),"bei "+sek+" Sek sind das "+Math.max(3,Math.round(sek/60*bpm))+" Bilder")
+   +reihe("Serie: Teile",knoepfe("serie_teile",Number(S.einst.serie_teile||1),[[1,"aus"],[2,"2"],[3,"3"],[4,"4"],[5,"5"]]),"ein Fall, mehrere Videos — je Teil mindestens 70 Sek")
+   +reihe("Bewegung im Bild",schalter("bewegung_an",S.einst.bewegung_an!==false),"aus = Standbilder stehen still, nur echte Clips bewegen sich")
+   +reihe("Stärke",knoepfe("bewegung_staerke",S.einst.bewegung_staerke||"sanft",[["sanft","sanft"],["mittel","mittel"],["stark","stark"]]),"sanft reicht fast immer")
+   +'</div>';
+  o+='<div class="karte p"><h2 class="kt">Look</h2>'
+   +reihe("Look an",schalter("look_an",S.einst.look_an!==false),"eine Farbkorrektur ueber alles, damit es wie ein Film wirkt")
+   +(S.einst.look_an===false?'':(
+      reihe("Stil",knoepfe("look_stil",S.einst.look_stil||"kalt",[["kalt","kalt"],["warm","warm"],["hart","hart"]]),"kalt = True Crime. hart = fast ohne Farbe.")
+     +reihe("Tiefen anheben",zahl("look_schatten",(S.einst.look_schatten==null?4:S.einst.look_schatten),1),"0 bis 20. Holt Zeichnung in dunkle Bilder. 0 = aus.")
+     +reihe("Filmkorn",zahl("look_korn",(S.einst.look_korn==null?7:S.einst.look_korn),1),"0 bis 30, 7 ist gut. 0 = kein Korn.")))
+   +'</div>';
+  o+=stimmenKarte();
+  o+='<div class="karte">'
+   +reihe("Stimme an",schalter("stimme_an",S.einst.stimme_an!==false),"aus für Build-Videos")
+   +reihe("Musik an",schalter("musik_an",!!S.einst.musik_an))
+   +reihe("Geräusche",schalter("ambience_an",!!S.einst.ambience_an),"Umgebung passend zur Szene")
+   +'</div>';
+  if(!S.modelle)ladeModelle();
+  var kl=(S.modelle&&((S.modelle.apis||{}).video||[]).filter(function(e){return e.url&&e.key})[0])||null;
+  o+='<div class="karte p"><h2 class="kt">KI-Animation</h2>'
+   +(kl?reihe("Anteil bewegter Szenen",zahl("kling_anteil",(S.einst.kling_anteil==null?0:S.einst.kling_anteil)),
+       "Prozent, nur für Szenen ohne Anführungszeichen. Wo die Figur redet, gibt es immer einen Sprechclip.")
+      +'<div style="padding:11px 0 4px">'
+       +'<div class="lb" style="margin-bottom:6px">Was sich bewegen soll</div>'
+       +'<textarea id="bewegfeld" style="min-height:62px" placeholder="die Figur bewegt sich lebendig: Gewicht verlagert sich, Haare und Kleidung schwingen mit, kleine Gesten mit den Haenden, Kopf dreht sich leicht, Blick zur Kamera, Kamera bleibt ruhig"'
+       +' onchange="p86Feld(\'kling_prompt\',\'Bewegung im Bild\',\'bewegfeld\',this.value)">'+h(S.einst.kling_prompt||"")+'</textarea>'
+       +'<div style="margin-top:8px"><button class="knopf" onclick="bewegVorschlag()">Vorschlag einsetzen</button></div>'
+       +'<div class="hinw">Wo in Anführungszeichen geredet wird, kommt die Szene als erste dran, wenn der Prozentsatz nicht für alle reicht. Gemeint ist die Figur, nicht die Kamera. Der Satz der Szene geht automatisch mit, '
+       +'damit jede Szene eine andere Bewegung bekommt.</div></div>'
+      +'<div class="hinw" style="margin:6px 0 10px">Kostet je animierter Szene. Modell und Preis stehen unter KI &amp; Technik beim Slot „Animation". '
+       +'Was es für dieses Video macht, siehst du dort unter „Was ein Video kostet".</div>'
+     :'<div class="spaeter">Noch kein Animationsmodell mit Schlüssel eingetragen. '
+      +'Unter KI &amp; Technik beim Slot „Animation" ein Modell anlegen, dann erscheint hier der Regler.</div>')
+   +'</div>';
+  o+='<div class="karte p"><h2 class="kt">Schluss</h2>'
+   +reihe("Nachlauf",zahl("nachlauf",(S.einst.nachlauf===undefined?0.9:S.einst.nachlauf),1),
+          "Sekunden, die nach dem letzten Wort noch stehenbleiben")
+   +'</div>';
+  o+='<div class="karte p"><h2 class="kt">Schnitt</h2>'
+   +reihe("Tempo",knoepfe("tempo",S.einst.tempo||"normal",
+     [["ruhig","ruhig"],["normal","normal"],["schnell","schnell"],["sehr_schnell","sehr schnell"]]),
+     "Lange Bilder werden in mehrere Einstellungen geteilt")
+   +reihe("Geräusch beim Schnitt",knoepfe("schnitt_ton",S.einst.schnitt_ton||"whoosh",
+     [["aus","aus"],["whoosh","Whoosh"],["swoosh","Swoosh"],["pop","Pop"],["klick","Klick"]]))
+   +reihe("Lautstärke",zahl("schnitt_laut",(S.einst.schnitt_laut==null?35:S.einst.schnitt_laut)),"in Prozent")
+   +'</div>';
+  return o;
+}
+
+/* ---------- Vorschau ---------- */
+var P70={plattform:"tiktok",zonen:true,nonce:0,bild:"",timer:null,zu:false};
+var P70_PLATT=[["tiktok","TikTok"],["insta","Instagram"],["shorts","Shorts"],["pinterest","Pinterest"]];
+/* links, oben, breit, hoch - alles in Prozent des Bildes */
+var P70_ZONEN={
+ tiktok:    [[0,0,100,7],[82,38,18,48],[0,76,80,17],[0,93,100,7]],
+ insta:     [[0,0,100,7],[82,44,18,40],[0,72,78,18],[0,90,100,10]],
+ shorts:    [[0,0,100,8],[82,46,18,42],[0,78,78,14],[0,92,100,8]],
+ pinterest: [[0,0,100,8],[80,8,20,12],[0,84,100,16]]
+};
+function p70Zonen(){
+  if(!P70.zonen)return "";
+  return (P70_ZONEN[P70.plattform]||[]).map(function(r){
+    return '<div style="position:absolute;left:'+r[0]+'%;top:'+r[1]+'%;width:'+r[2]+'%;height:'+r[3]+'%;'
+     +'box-sizing:border-box;pointer-events:none;border:1px solid rgba(255,96,96,.38);'
+     +'background:repeating-linear-gradient(45deg,rgba(255,70,70,.20) 0,rgba(255,70,70,.20) 5px,'
+     +'rgba(255,70,70,.04) 5px,rgba(255,70,70,.04) 10px)"></div>'}).join("");
+}
+function p70Jetzt(){
+  if(P70.zu)return;
+  var k=S.kanal; if(!k)return;
+  var mein=++P70.nonce;
+  var u="/api/vorschau?k="+encodeURIComponent(k)+"&n="+mein;
+  var sp=el("p70sp"); if(sp)sp.style.display="block";
+  var i=new Image();
+  i.onload=function(){
+    if(mein!==P70.nonce)return;
+    P70.bild=u;
+    var b=el("p70b"); if(b)b.style.backgroundImage='url("'+u+'")';
+    var x=el("p70t"); if(x)x.style.display="none";
+    var s=el("p70sp"); if(s)s.style.display="none";
+  };
+  i.onerror=function(){
+    if(mein!==P70.nonce)return;
+    var s=el("p70sp"); if(s)s.style.display="none";
+    if(!P70.bild){var x=el("p70t"); if(x)x.style.display="block"}
+  };
+  i.src=u;
+}
+function p70Lade(){
+  if(P70.timer)clearTimeout(P70.timer);
+  P70.timer=setTimeout(p70Jetzt,320);
+}
+function p70Platt(w){P70.plattform=w;zeichne()}
+function p70Um(){P70.zonen=!P70.zonen;zeichne()}
+function p70Gross(){
+  if(!P70.bild)return;
+  el("dialog").innerHTML='<div class="dim" onclick="zu()" style="padding:8px">'
+   +'<div style="position:relative;width:min(94vw,calc(84vh*9/16));height:min(84vh,calc(94vw*16/9));'
+   +'margin:0 auto;border-radius:12px;overflow:hidden;background:#000 center/contain no-repeat url(\''+P70.bild+'\')">'
+   +p70Zonen()+'</div>'
+   +'<div class="hinw" style="max-width:520px;margin:10px auto 0">Echtes Einzelbild vom Server, '
+   +'gerechnet mit demselben ffmpeg wie das Video. Die roten Flächen sind ungefähr, wo die App '
+   +'ihre Knöpfe und ihren Begleittext drüberlegt.</div></div>';
+}
+function schriftDa(){
+  if(S.schriften===null){
+    S.schriften=0;
+    api("/api/schriften").then(function(x){S.schriften=x||{};zeichne()});
+  }
+  return S.schriften&&S.schriften.gut?S.schriften:null;
+}
+function schriftFehlt(){
+  var w=S.einst.untertitel_schrift||"auto";
+  if(w==="auto"||!w)return "";
+  var s=schriftDa(); if(!s)return "";
+  return (s.gut||[]).concat(s.rest||[]).indexOf(w)<0?w:"";
+}
+function schriftHinweis(){
+  var f=schriftFehlt();
+  if(f)return "»"+f+"« ist nicht installiert — es wird eine andere benutzt";
+  return "nur was installiert ist, wirkt auch";
+}
+function schriftWahl(){
+  var w=S.einst.untertitel_schrift||"auto";
+  var s=schriftDa();
+  if(!s)return '<select disabled style="max-width:168px"><option>wird geladen …</option></select>';
+  var o='<select onchange="setz(\'untertitel_schrift\',this.value)" style="max-width:168px">'
+   +'<option value="auto"'+((w==="auto"||!w)?" selected":"")+'>beste vorhandene</option>';
+  var f=schriftFehlt();
+  if(f)o+='<option value="'+h(f)+'" selected>'+h(f)+' — FEHLT</option>';
+  var teil=function(titel,liste){
+    if(!liste||!liste.length)return "";
+    return '<optgroup label="'+titel+'">'+liste.map(function(n){
+      return '<option value="'+h(n)+'"'+(n===w?" selected":"")+'>'+h(n)+'</option>'}).join("")+'</optgroup>';
+  };
+  o+=teil("gut für Untertitel",s.gut)+teil("sonst installiert",s.rest);
+  return o+'</select>';
+}
+function p70Zu(){P70.zu=true;zeichne()}
+function p70Auf(){P70.zu=false;zeichne();p70Jetzt()}
+function p70Karte(){
+  var halt='position:sticky;top:6px;z-index:6;margin-bottom:10px';
+  if(P70.zu){
+    return '<div class="karte p" style="'+halt+';padding:9px 13px">'
+     +'<div style="display:flex;align-items:center;justify-content:space-between">'
+     +'<div class="kt" style="margin:0">Vorschau</div>'
+     +'<button class="knopf" style="padding:5px 12px" onclick="p70Auf()">zeigen</button>'
+     +'</div></div>';
+  }
+  return '<div class="karte p" style="'+halt+'">'
+   +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">'
+   +'<div class="kt" style="margin:0">Vorschau</div>'
+   +'<button class="knopf" style="padding:5px 12px" onclick="p70Zu()">ausblenden</button></div>'
+   +'<div style="display:flex;gap:11px;align-items:flex-start">'
+   +'<div id="p70b" onclick="p70Gross()" style="position:relative;width:128px;height:228px;flex:none;'
+   +'border-radius:10px;overflow:hidden;border:1px solid #2C2C35;cursor:pointer;background-color:#15151A;'
+   +'background-position:center;background-size:cover;background-repeat:no-repeat'
+   +(P70.bild?';background-image:url(\''+P70.bild+'\')':'')+'">'
+   +p70Zonen()
+   +'<div id="p70t" class="hint" style="display:'+(P70.bild?"none":"block")
+   +';padding:10px;text-align:center;line-height:1.4;font-size:11px">Noch kein Bild. '
+   +'Lade im Szenen-Editor eins hoch.</div>'
+   +'<div id="p70sp" style="display:none;position:absolute;left:0;right:0;bottom:0;height:3px;'
+   +'background:linear-gradient(90deg,#FF8A45,#FFD400)"></div>'
+   +'</div>'
+   +'<div style="flex:1;min-width:0">'
+   +'<div class="pills" style="flex-wrap:wrap">'+P70_PLATT.map(function(x){
+      return '<button class="'+(P70.plattform===x[0]?"an":"")+'" onclick="p70Platt(\''+x[0]
+       +'\')">'+h(x[1])+'</button>'}).join("")+'</div>'
+   +'<div style="display:flex;align-items:center;gap:8px;margin-top:10px">'
+   +'<span class="hint" style="flex:1;min-width:0">Bereiche der App</span>'
+   +'<button class="sch'+(P70.zonen?" an":"")+'" onclick="p70Um()"><i></i></button></div>'
+   +'<div style="display:flex;gap:6px;margin-top:10px">'
+   +'<button class="knopf" style="flex:1;padding:7px 0" onclick="p70Jetzt()">neu</button>'
+   +'<button class="knopf" style="flex:1;padding:7px 0" onclick="p70Gross()">groß</button></div>'
+   +'</div></div></div>';
+}
+function tTexte(){
+  var o=p70Karte()+'<div class="karte">'
+   +reihe("Stil",knoepfe("untertitel_stil",S.einst.untertitel_stil||"klassisch",[["klassisch","klassisch"],["kino","Kino"],["fett","fett"],["wortweise","Wort fuer Wort"],["knall","Knall"],["karaoke","Karaoke"]]),"Knall = gesprochenes Wort in Signalfarbe. Karaoke = der Satz faerbt sich mit.")
+   +reihe("Gesprochenes Wort",farbregler("untertitel_farbe_aktiv",S.einst.untertitel_farbe_aktiv,farbStandard("aktiv")),"bei Wort fuer Wort, Knall und Karaoke")
+   +reihe("Nicht gesprochen",farbregler("untertitel_farbe_ruhe",S.einst.untertitel_farbe_ruhe,farbStandard("ruhe")),"die uebrigen Woerter in der Zeile")
+   +reihe("Höhe im Bild",regler("untertitel_hoehe",S.einst.untertitel_hoehe,utStandard("hoehe"),3,92,"%"),"Abstand von unten — 50 ist Bildmitte")
+   +reihe("Seitlich",regler("untertitel_seitlich",S.einst.untertitel_seitlich,0,-45,45,"%"),"0 ist mittig, minus nach links, plus nach rechts")
+   +reihe("Winkel",regler("untertitel_winkel",S.einst.untertitel_winkel,0,-30,30,"°"),"schräg gestellt — plus hebt das Zeilenende an")
+   +reihe("Rand",regler("untertitel_rand",S.einst.untertitel_rand,utStandard("rand"),0,30),"die harte Kante um die Buchstaben")
+   +reihe("Schatten",regler("untertitel_schatten",S.einst.untertitel_schatten,utStandard("schatten"),0,40),"wie weit er versetzt ist")
+   +reihe("Schattenrichtung",regler("untertitel_schattenwinkel",S.einst.untertitel_schattenwinkel,45,0,359,"°"),"45 ist rechts unten, 225 links oben — wirkt nur mit Schatten")
+   +reihe("Leuchten",regler("untertitel_leuchten",S.einst.untertitel_leuchten,0,0,40),"Schein um die übrigen Wörter, in deren Farbe")
+   +reihe("Leuchten gesprochen",regler("untertitel_leuchten_aktiv",S.einst.untertitel_leuchten_aktiv,(S.einst.untertitel_leuchten||0),0,40),"Schein um das Wort, das gerade gesprochen wird")
+   +reihe("Randfarbe",farbregler("untertitel_randfarbe",S.einst.untertitel_randfarbe,"#000000"),"nur die harte Kante — das Leuchten nimmt die Farbe des Wortes")
+   +reihe("An der Stimme ausrichten",schalter("untertitel_takt",S.einst.untertitel_takt!==false),"misst die Sprechpausen, damit der Text nicht vorauslaeuft")
+   +reihe("Schriftart",schriftWahl(),schriftHinweis())
+   +reihe("Größe",zahl("untertitel_groesse",S.einst.untertitel_groesse||48,1),"48 ist normal, höher = größer")
+   +reihe("Buchstabenabstand",regler("untertitel_abstand",S.einst.untertitel_abstand,0,0,30),"zieht die Buchstaben auseinander")
+   +reihe("Wörter gleichzeitig",knoepfe("untertitel_woerter",S.einst.untertitel_woerter||3,[[2,"2"],[3,"3"],[4,"4"],[5,"5"],[6,"6"]]))
+   +reihe("GROSSBUCHSTABEN",schalter("untertitel_caps",S.einst.untertitel_caps!==false))
+   +'</div>';
+  var ebAn=!!(S.einst.cta_anfang||S.einst.cta_mitte||S.einst.cta_ende!==false);
+  o+='<div class="karte p"><h2 class="kt">Einblendung</h2>'
+   +reihe("Am Anfang",schalter("cta_anfang",!!S.einst.cta_anfang))
+   +reihe("In der Mitte",schalter("cta_mitte",!!S.einst.cta_mitte))
+   +reihe("Am Ende",schalter("cta_ende",S.einst.cta_ende!==false))
+   +reihe("Auch gesprochen",schalter("cta_gesprochen",!!S.einst.cta_gesprochen),"nur im Automatik-Modus")
+   +'</div>';
+  if(ebAn){
+    o+='<div class="karte p"><h2 class="kt">Wie sie aussieht</h2>'
+     +reihe("Symbol",wahl("eb_art",S.einst.eb_art||"folgen",
+        [["folgen","Folgen (Plus)"],["like","Like (Herz)"],["daumen","Daumen hoch"],
+         ["abo","Abo (Glocke)"],["nur_text","nur Text"]]))
+     +reihe("Text",'<input type="text" class="breit" style="max-width:150px" value="'
+        +h(S.einst.eb_text==null?"FOLGEN":S.einst.eb_text)
+        +'" onchange="setz(\'eb_text\',this.value)">',"leer lassen = nur Symbol")
+     +reihe("Platz",wahl("eb_platz",S.einst.eb_platz||"links_unten",
+        [["links_unten","links unten"],["mitte_unten","mitte unten"],["rechts_unten","rechts unten"],
+         ["links_oben","links oben"],["mitte_oben","mitte oben"],["rechts_oben","rechts oben"]]))
+     +reihe("Größe",zahl("eb_groesse",(S.einst.eb_groesse==null?7:S.einst.eb_groesse)),"Prozent der Bildhöhe")
+     +reihe("Wie lange",zahl("eb_dauer",(S.einst.eb_dauer==null?2.6:S.einst.eb_dauer)),"Sekunden je Einblendung")
+     +reihe("Farbe",farbregler("eb_farbe",S.einst.eb_farbe,"#FF6A1A"),"Farbton, Saettigung, Helligkeit")
+     +'<div class="hinw" style="margin:6px 0 10px">Die Grafik wird vom Code gezeichnet — du musst nichts hochladen. '
+     +'Sie fliegt ein und wieder raus. Steht deine Figur rechts unten, nimm für die Einblendung die andere Seite.</div>'
+     +'</div>';
+  }
+  return o;
+}
+
+function tTechnik(){
+  var a=S.daten.apis||{};
+  var p=S.preis||{};
+  var o='<div class="karte">'
+   +zeileDienst("Text · Claude",a.text,"Skript, Titel, Beschreibung",(p.text||0).toFixed(2)+" €")
+   +zeileDienst("Bild · Flux Pro",a.bilder,(p.bilder||0)+" Bilder · "+(p.je_bild||0).toFixed(2)+" € je Bild",(((p.bilder||0)*(p.je_bild||0))||0).toFixed(2)+" €")
+   +zeileDienst("Stimme",a.stimme,"über fal.ai",(p.stimme||0).toFixed(2)+" €")
+   +zeileDienst("Animation · Kling",a.animation,"noch nicht eingerichtet","—")
+   +zeileDienst("Avatar · Sprechclips",a.avatar,"nicht eingerichtet","—")
+   +'</div>';
+  o+='<div class="karte p"><h2 class="kt">Guthaben</h2>'
+   +'<div class="r" style="padding-top:0"><div><div class="lb">fal.ai</div><div class="hint">Bilder und Stimme</div></div>'
+   +'<div style="display:flex;align-items:center;gap:8px"><span class="zahl" style="font-size:15px;font-weight:700" id="gh">'
+   +(S.guthaben?(S.guthaben.ok?Number(S.guthaben.betrag).toFixed(2)+" "+S.guthaben.waehrung:h(S.guthaben.text)):"—")
+   +'</span><button class="knopf" onclick="holGuthaben()">abrufen</button></div></div></div>';
+  o+='<div class="karte p"><h2 class="kt">Schlüssel</h2><div class="liste">';
+  [["anthropic","Claude"],["fal","fal.ai"],["eleven","ElevenLabs"],["kling","Kling"],["hedra","Hedra"],["freesound","Freesound"]].forEach(function(s){
+    var w=S.schluessel[s[0]]||"";
+    o+='<div class="e"><div class="tx"><div class="ti">'+s[1]+'</div><div class="me">'+(w?h(w):"nicht gesetzt")+'</div></div>'
+     +'<button class="knopf" onclick="schluesselSetzen(\''+s[0]+'\',\''+s[1]+'\')">'+(w?"ersetzen":"eintragen")+'</button></div>';
+  });
+  o+='</div><div class="hinw">Eingetragene Schlüssel werden nie wieder angezeigt.</div></div>';
+  return o;
+}
+function zeileDienst(name,ok,hint,preis){
+  return '<div class="r"><div><div class="lb">'+(ok?'<span class="gruen">✓</span> ':'<span class="grau">○</span> ')+h(name)+'</div>'
+   +'<div class="hint">'+h(hint)+'</div></div><div class="zahl" style="font-size:12.5px">'+h(preis)+'</div></div>'
+}
+
+function tKanaele(){
+  var ks=S.daten.kanaele||[];
+  var o='<div class="karte"><div class="liste">';
+  ks.forEach(function(k){
+    var vn=(S.vorlagen[k.vorlage]||{}).name||k.vorlage;
+    o+='<div class="e'+(k.eltern?" kind":"")+'">'
+     +'<span class="punkt'+(k.aktiv?"":" aus")+'"></span>'
+     +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+(k.key===S.kanal?' <span style="color:#FF8A45">•</span>':'')+'</div>'
+     +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(vn)+' · '+h((k.sprachen||["de"])[0])+' · '+k.videos+' Videos</div></div>'
+     +(k.eltern?'<button class="ik" title="lösen" onclick="fragLoesen(\''+k.key+'\')">⛓</button>':'')
+     +'<button class="ik rot" onclick="fragKanalWeg(\''+k.key+'\',\''+h(k.name).replace(/'/g,"")+'\')">✕</button></div>';
+  });
+  o+='</div></div>';
+  o+='<div class="karte p"><h2 class="kt">Neuer Kanal</h2>'
+   +'<input type="text" id="nname" class="breit" placeholder="Name" style="margin-bottom:8px">'
+   +'<div class="r" style="padding-top:4px"><div class="lb">Vorlage</div><select id="nvorlage">'
+   +Object.keys(S.vorlagen).map(function(v){return '<option value="'+v+'">'+h(S.vorlagen[v].name)+'</option>'}).join("")
+   +'</select></div>'
+   +'<div class="r"><div class="lb">Sprache</div><select id="nsprache">'
+   +[["de","Deutsch"],["en","Englisch"],["es","Spanisch"],["fr","Französisch"]].map(function(s){return '<option value="'+s[0]+'">'+s[1]+'</option>'}).join("")
+   +'</select></div>'
+   +'<button class="knopf or" style="width:100%;margin-top:10px;padding:14px" onclick="kanalNeu()">Kanal anlegen</button></div>';
+  var k=kanalDaten();
+  if(k){
+    o+='<div class="karte p"><h2 class="kt">Von '+h(k.name)+' ableiten</h2>'
+     +'<input type="text" id="kname" class="breit" placeholder="Name des neuen Kanals" style="margin-bottom:8px">'
+     +'<div class="r" style="padding-top:4px"><div class="lb">Sprache für Geschwisterkanal</div><select id="gsprache">'
+     +[["en","Englisch"],["es","Spanisch"],["fr","Französisch"],["de","Deutsch"]].map(function(s){return '<option value="'+s[0]+'">'+s[1]+'</option>'}).join("")
+     +'</select></div>'
+     +'<div style="display:flex;gap:8px;margin-top:10px">'
+     +'<button class="knopf" style="flex:1;padding:13px" onclick="klon()">Klonen</button>'
+     +'<button class="knopf or" style="flex:1;padding:13px" onclick="gesch()">Geschwisterkanal</button></div>'
+     +'<div class="hinw">Ein Klon ist eigenständig. Ein Geschwisterkanal läuft mit und benutzt dieselben Bilder — das spart gut zwei Drittel.</div></div>';
+  }
+  return o;
+}
+
+/* ---------- Aktionen ---------- */
+function kanalMerken(k){try{localStorage.setItem("aiu_kanal",k||"")}catch(e){}}
+function kanalGemerkt(){try{return localStorage.getItem("aiu_kanal")||""}catch(e){return ""}}
+function waehle(k){S.kanal=k;kanalMerken(k);S.tab="start";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.gs=null;S.arten=null;laden()}
+function spiel(o){window.open("/video/"+o,"_blank")}
+function herunter(o){location.href="/laden/"+encodeURIComponent(o)}
+function jn(x){return x?"an":"aus"}
+function standKarte(){
+  var e=S.einst||{}, k=kanalDaten()||{};
+  var modus=(e.modus==="szenen")?"Eigene Szenen":
+            ((e.modus==="geschichte")?"Deine Geschichte":"Claude schreibt");
+  var vn=(S.vorlagen[e.vorlage]||{}).name||e.vorlage||"—";
+  var z=[["Vorlage",h(vn)],["Wie",modus],["Format",h(e.format||"9:16")],
+         ["Sprache",h(sprachName((e.sprachen||["de"])[0]))],["Länge",(e.laenge||20)+" Sek."],
+         ["Bilder pro Minute",String(e.bilder_pro_minute||24)],
+         ["Automatik",jn(e.automatik_an)],["Stimme",jn(e.stimme_an!==false)],
+         ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
+         ["Geräusche",jn(e.ambience_an)],["Telegram",jn(e.telegram_token&&e.telegram_chat)],
+         ["Tempo",h((e.tempo||"normal").replace("_"," "))],
+         ["Schnittgeräusch",h(e.schnitt_ton||"whoosh")]];
+  var o='<div class="karte p"><h2 class="kt">Eingestellt</h2><div class="raster">';
+  z.forEach(function(x){o+='<div class="zl"><div class="zt">'+x[0]+'</div><div class="zw '
+    +(x[1]==="aus"?"grau":"")+'">'+x[1]+'</div></div>'});
+  return o+'</div></div>';
+}
+function kanalUmbenennen(){
+  var k=kanalDaten()||{};
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Kanal umbenennen</h2>'
+   +'<input type="text" id="knneu" class="breit" value="'+h(k.name||"")+'" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="kanalNameSpeichern()">Speichern</button></div></div></div>';
+}
+function kanalNameSpeichern(){
+  var n=(el("knneu").value||"").trim();
+  if(!n)return melde("Name darf nicht leer sein.");
+  api("/api/kanal?k="+S.kanal,{name:n}).then(function(){zu();S.einst.name=n;laden()});
+}
+
+function abbrechen(){api("/api/stop",{}).then(laden)}
+
+function fragGenerieren(){
+  var t=(el("thema")&&el("thema").value||"").trim();
+  var k=kanalDaten();
+  frage("Video erzeugen?",
+    "<b>"+h(t||"nächstes Thema aus der Liste")+"</b><br>"+h(k?k.name:"")+" · "+(S.einst.laenge||20)+" Sek · "+(S.einst.format||"9:16")
+    +"<br><br>Kostet etwa <b>"+(S.preis.gesamt||0).toFixed(2).replace(".",",")+" €</b> echtes Guthaben.",
+    "Ja, erzeugen",function(){
+      api("/api/start",{k:S.kanal,thema:t}).then(function(r){if(!r.ok)melde(r.text||"ging nicht");laden()});
+    });
+}
+function fragWeg(o,t){
+  frage("Video löschen?","<b>"+h(t)+"</b><br><br>Das Video und alle Bilder dazu werden gelöscht. Das lässt sich nicht rückgängig machen.",
+    "Löschen",function(){api("/api/video_weg",{ordner:o}).then(laden)},true);
+}
+function fragKanalWeg(k,n){
+  frage("Kanal löschen?","<b>"+h(n)+"</b><br><br>Einstellungen und Themenliste sind weg. Die fertigen Videos bleiben liegen.",
+    "Löschen",function(){api("/api/kanal_weg",{k:k}).then(function(r){
+      if(!r.ok)melde(r.fehler==="hat Geschwisterkanaele"?"Dieser Kanal hat einen Geschwisterkanal. Den erst lösen.":"Ging nicht: "+r.fehler);
+      if(k===S.kanal)S.kanal=null;laden()})},true);
+}
+function fragLoesen(k){
+  frage("Verbindung lösen?","Der Kanal läuft dann nicht mehr automatisch mit und bekommt eine eigene Themenliste.",
+    "Lösen",function(){api("/api/kanal_loesen",{k:k}).then(laden)});
+}
+function fragReset(){
+  frage("Gedächtnis leeren?","Erledigte Themen werden vergessen. Claude darf sie dann wieder verwenden.",
+    "Leeren",function(){api("/api/themen?k="+S.kanal,{zuruecksetzen:true}).then(function(x){S.themen=x;zeichne()})},true);
+}
+function themaNeu(){
+  var v=(el("neuthema").value||"").trim();if(!v)return;
+  api("/api/themen?k="+S.kanal,{hinzu:v}).then(function(x){S.themen=x;zeichne()});
+}
+function themaWeg(t){api("/api/themen?k="+S.kanal,{weg:t}).then(function(x){S.themen=x;zeichne()})}
+function kanalNeu(){
+  var n=(el("nname").value||"").trim();if(!n)return melde("Bitte einen Namen eingeben.");
+  api("/api/kanal_neu",{name:n,vorlage:el("nvorlage").value,sprache:el("nsprache").value}).then(function(r){S.kanal=r.key;laden()});
+}
+function klon(){
+  var n=(el("kname").value||"").trim();if(!n)return melde("Bitte einen Namen eingeben.");
+  api("/api/kanal_klon",{quelle:S.kanal,name:n}).then(function(r){S.kanal=r.key;laden()});
+}
+function gesch(){
+  var n=(el("kname").value||"").trim();if(!n)return melde("Bitte einen Namen eingeben.");
+  api("/api/kanal_geschwister",{eltern:S.kanal,name:n,sprache:el("gsprache").value}).then(function(r){S.kanal=r.key;laden()});
+}
+function holGuthaben(){
+  api("/api/guthaben").then(function(d){S.guthaben=d.fal;zeigeKopf();zeichne()});
+}
+function schluesselSetzen(slot,name){
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>'+h(name)+'</h2>'
+   +'<p>Der Schlüssel wird gespeichert und danach nie wieder angezeigt.</p>'
+   +'<input type="text" id="skey" class="breit" placeholder="Schlüssel einfügen" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="schluesselSpeichern(\''+slot+'\')">Speichern</button></div></div></div>';
+}
+function schluesselSpeichern(slot){
+  var v=(el("skey").value||"").trim();if(!v)return;
+  api("/api/schluessel",{slot:slot,wert:v}).then(function(){zu();
+    api("/api/schluessel").then(function(x){S.schluessel=x;laden()})});
+}
+
+
+/* ---------- Modelle (Patch M1) ---------- */
+var SLOTNAME={ref:"Referenzclip",text:"Text",bilder:"Bild",stimme:"Stimme",video:"Animation",musik:"Musik",sound:"Geraeusche",avatar:"Avatar"};
+var EINHEIT={ref:"je Sekunde",text:"je Video",bilder:"je Bild",stimme:"je Sekunde",video:"je Sekunde",musik:"je Stueck",sound:"je Stueck",avatar:"je Sekunde"};
+var BEISPIEL={text:"0.02",bilder:"0.04",stimme:"0.008",video:"0.09",musik:"0.01",sound:"0.01",avatar:"0.05"};
+var ADRESSE={bilder:"fal-ai/flux-pro/v1.1",
+             video:"fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
+             avatar:"fal-ai/kling-video/ai-avatar/v2/standard"};
+
+function ladeModelle(){return api("/api/modelle?k="+S.kanal).then(function(m){S.modelle=m;zeichne()})}
+
+function tTechnik(){
+  var m=S.modelle;
+  if(!m){ladeModelle();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var p=S.preis||{};
+  var o='<div class="karte p"><h2 class="kt">Was ein Video kostet</h2>';
+  if(p.modus==="szenen"){
+    o+='<div class="r" style="padding-top:0"><div><div class="lb">'+(p.szenen||0)+' eigene Szenen</div>'
+      +'<div class="hint">deine Bilder und Texte kosten nichts</div></div><div class="zahl">0.00 €</div></div>'
+      +'<div class="r"><div><div class="lb">Stimme</div><div class="hint">'+(p.gesprochen||0)+' gesprochene Szenen</div></div>'
+      +'<div class="zahl">'+(p.stimme||0).toFixed(2)+' €</div></div>'
+      +(p.animiert?'<div class="r"><div><div class="lb">'+p.animiert+' Szenen animiert</div>'
+     +'<div class="hint">KI-Animation, '+Number(p.je_clip||0).toFixed(2)+' je Szene</div></div>'
+     +'<div class="zahl">'+(p.animation||0).toFixed(2)+' €</div></div>':'')
+   +'<div class="r"><div class="lb"><b>Zusammen</b></div><div class="zahl"><b>'+(p.gesamt||0).toFixed(2)+' €</b></div></div>'
+      +'<div class="hinw" style="margin-top:8px">Länge etwa '+(p.sekunden||0)+' Sekunden, ergibt sich aus den Szenen.</div></div>';
+  }else{
+    o+='<div class="r" style="padding-top:0"><div class="lb">Text</div><div class="zahl">'+(p.text||0).toFixed(2)+' €</div></div>'
+      +'<div class="r"><div class="lb">'+(p.bilder||0)+' Bilder</div><div class="zahl">'+(((p.bilder||0)*(p.je_bild||0))||0).toFixed(2)+' €</div></div>'
+      +'<div class="r"><div class="lb">Stimme</div><div class="zahl">'+(p.stimme||0).toFixed(2)+' €</div></div>'
+      +'<div class="r"><div class="lb"><b>Zusammen</b></div><div class="zahl"><b>'+(p.gesamt||0).toFixed(2)+' €</b></div></div>'
+      +'<div class="hinw" style="margin-top:8px">Bei '+(p.sekunden||0)+' Sekunden. Ändert sich mit Länge und Bildern pro Minute.</div></div>';
+  }
+
+  o+='<div class="karte p"><h2 class="kt">Guthaben</h2>'
+   +'<div class="r" style="padding-top:0"><div><div class="lb">fal.ai</div><div class="hint">Bilder und Stimme</div></div>'
+   +'<div style="display:flex;align-items:center;gap:8px"><span class="zahl" style="font-size:15px;font-weight:700">'
+   +(S.guthaben?(S.guthaben.ok?Number(S.guthaben.betrag).toFixed(2)+" "+S.guthaben.waehrung:h(S.guthaben.text)):"—")
+   +'</span><button class="knopf" onclick="holGuthaben()">abrufen</button></div></div></div>';
+
+  (m.slots||[]).forEach(function(s){
+    var liste=(m.apis||{})[s]||[];
+    o+='<div class="karte p"><h2 class="kt">'+h(SLOTNAME[s]||s)+'</h2><div class="liste">';
+    if(!liste.length)o+='<div class="leer">nichts eingetragen</div>';
+    liste.forEach(function(e,i){
+      o+='<div class="e"><button class="ik" style="'+(e.aktiv?"background:#FF6A1A;border-color:#FF6A1A;color:#140B04":"")+'" '
+        +'onclick="modellAktiv(\''+s+'\','+i+')" title="aktiv schalten">'+(e.aktiv?"●":"○")+'</button>'
+        +'<div class="tx" onclick="modellBearbeiten(\''+s+'\','+i+')"><div class="ti">'+h(e.name||"ohne Namen")+'</div>'
+        +'<div class="me">'+h(e.url||"keine Adresse")+(e.preis!==""&&e.preis!=null?" · "+h(e.preis)+" € "+(EINHEIT[s]||""):"")
+        +(e.key?" · Schlüssel ✓":(e.woher?" · Schlüssel mitbenutzt":" · kein Schlüssel"))+'</div></div>'
+        +'<button class="ik rot" onclick="modellWeg(\''+s+'\','+i+',\''+h(e.name).replace(/'/g,"")+'\')">✕</button></div>';
+    });
+    o+='</div><button class="knopf" style="width:100%;margin-top:9px" onclick="modellNeu(\''+s+'\')">+ Eigenes Modell</button></div>';
+  });
+  o+=tgKarte();
+  o+='<div class="karte p"><h2 class="kt">Avatar einrichten</h2>'
+   +'<div class="hinw" style="padding:0">Oben bei <b>Avatar</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
+   +'Name <b>Kling Avatar</b><br>'
+   +'Adresse <b>fal-ai/kling-video/ai-avatar/v2/standard</b><br>'
+   +'Preis <b>0.05</b> je Sekunde<br>'
+   +'Schlüssel leer lassen — der von Kling wird mitbenutzt.<br><br>'
+   +'Danach bekommt jede Szene, in der die Figur in Anführungszeichen redet, '
+   +'einen Clip mit passendem Mund. Szenen ohne Anführungszeichen laufen wie bisher '
+   +'über die Animation.</div></div>';
+  o+='<div class="karte p"><div class="hinw" style="padding:0">Der orange Punkt links ist das Modell, das benutzt wird. '
+   +'Auf den Namen tippen zum Ändern. Schlüssel werden gespeichert, aber nie wieder angezeigt.</div></div>';
+  return o;
+}
+
+function modellFormular(titel,s,i,e){
+  e=e||{};
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>'+h(titel)+'</h2>'
+   +'<p>Slot: '+h(SLOTNAME[s]||s)+'</p>'
+   +'<input type="text" id="mname" class="breit" placeholder="Name, z.B. Flux Pro" value="'+h(e.name||"")+'" style="margin-bottom:8px">'
+   +'<input type="text" id="murl" class="breit" placeholder="Adresse, z.B. '+(ADRESSE[s]||"fal-ai/flux-pro/v1.1")+'" value="'+h(e.url||"")+'" style="margin-bottom:8px">'
+   +'<input type="text" id="mpreis" class="breit" placeholder="Preis '+(EINHEIT[s]||"je Einheit")+' in Euro, z.B. '+(BEISPIEL[s]||"0.04")+'" value="'+h(e.preis==null?"":e.preis)+'" style="margin-bottom:8px">'
+   +'<input type="text" id="mkey" class="breit" placeholder="'+(e.key?"Schlüssel ersetzen (leer = behalten)":"Schlüssel")+'" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="modellSpeichern(\''+s+'\','+i+')">Speichern</button></div></div></div>';
+}
+function modellNeu(s){modellFormular("Eigenes Modell",s,-1,{})}
+function modellBearbeiten(s,i){modellFormular("Modell ändern",s,i,((S.modelle.apis||{})[s]||[])[i])}
+function modellSpeichern(s,i){
+  var d={slot:s,aktion:(i<0?"neu":"speichern"),i:i,
+    name:el("mname").value,url:el("murl").value,preis:el("mpreis").value,key:el("mkey").value};
+  api("/api/modelle?k="+S.kanal,d).then(function(r){zu();
+    if(!r.ok)return melde(r.fehler||"ging nicht");
+    ladeModelle().then(function(){api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})});
+  });
+}
+function modellAktiv(s,i){
+  api("/api/modelle?k="+S.kanal,{slot:s,aktion:"aktiv",i:i}).then(function(){
+    ladeModelle().then(function(){api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})})});
+}
+function modellWeg(s,i,n){
+  frage("Modell löschen?","<b>"+h(n)+"</b><br><br>Der Eintrag und sein Schlüssel werden gelöscht.","Löschen",
+    function(){api("/api/modelle?k="+S.kanal,{slot:s,aktion:"weg",i:i}).then(function(){ladeModelle()})},true);
+}
+
+
+/* ---------- Eigene Szenen ---------- */
+function ladeSzenen(){return api("/api/szenen?k="+S.kanal).then(function(d){S.szenen=d;
+  return api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})})}
+
+function szeneSetz(id,feld,wert){
+  api("/api/szenen?k="+S.kanal,{aktion:feld,id:id,wert:wert}).then(function(r){
+    if(!r.ok)return melde(r.fehler||"ging nicht");ladeSzenen()})
+}
+function szeneSchieb(id,wohin){
+  api("/api/szenen?k="+S.kanal,{aktion:wohin,id:id}).then(function(){ladeSzenen()})
+}
+function szeneWeg(id,name){
+  frage("Szene löschen?","<b>"+h(name)+"</b><br><br>Die Szene und ihre Datei werden gelöscht.","Löschen",
+    function(){api("/api/szenen?k="+S.kanal,{aktion:"weg",id:id}).then(function(){ladeSzenen()})},true)
+}
+function musikWeg(){
+  frage("Lied entfernen?","Das hochgeladene Lied wird gelöscht.","Entfernen",
+    function(){api("/api/szenen?k="+S.kanal,{aktion:"musik_weg"}).then(function(){ladeSzenen()})},true)
+}
+
+function hochladen(zweck,sid){
+  var i=document.createElement("input");
+  i.type="file";
+  i.accept=(zweck==="musik")?"audio/*":"image/*,video/*";
+  i.onchange=function(){
+    var f=i.files&&i.files[0];if(!f)return;
+    if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2><p id="hpro">'+h(f.name)+' · 0 %</p></div></div>';
+    var x=new XMLHttpRequest();
+    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck="+zweck+"&name="+encodeURIComponent(f.name)+(sid?("&sid="+encodeURIComponent(sid)):""));
+    x.upload.onprogress=function(e){if(e.lengthComputable&&el("hpro"))el("hpro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeSzenen()};
+    x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
+    x.send(f);
+  };
+  i.click();
+}
+
+function szeneNeu(id){
+  frage("Bild neu erzeugen?",
+    "Nur f\u00fcr diese eine Szene wird ein neues Bild erzeugt. Alle anderen Szenen bleiben unver\u00e4ndert.<br><br>Das kostet den Preis f\u00fcr ein Bild.",
+    "Neu erzeugen",function(){
+      el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Wird erzeugt</h2><p>Einen Moment, das Bildmodell braucht ein paar Sekunden.</p></div></div>';
+      api("/api/szene_neu?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
+        zu();
+        if(!r||!r.ok)return melde((r&&r.fehler)||"Das hat nicht geklappt");
+        ladeSzenen();
+      });
+    });
+}
+
+function szenenDauer(){
+  var ges=0;
+  ((S.szenen||{}).szenen||[]).forEach(function(s){
+    ges+= s.gesprochen ? s.vorschlag : (Number(s.sekunden)||s.vorschlag);
+  });
+  return ges;
+}
+
+/* Clips r6 */
+var R6 = {stand:null, tick:null};
+
+function ladeClips(){
+  return api("/api/clip_stand?k="+S.kanal).then(function(d){
+    R6.stand=d;
+    if(d&&d.laeuft){ if(!R6.tick) R6.tick=setInterval(ladeClips,5000); }
+    else if(R6.tick){ clearInterval(R6.tick); R6.tick=null; ladeSzenen(); }
+    zeichne();
+  });
+}
+function clipStand(id){
+  var l=((R6.stand||{}).szenen)||[];
+  for(var i=0;i<l.length;i++) if(l[i].id===id) return l[i];
+  return null;
+}
+function clipLaeuftHier(id){
+  var d=R6.stand||{};
+  return !!(d.laeuft && (d.lauf||{}).sid===id);
+}
+
+function clipZeile(s){
+  var st=clipStand(s.id)||{}, clip=st.clip||s.clip||"", stand=st.stand||s.clip_stand||"";
+  var txt=st.text||s.clip_text||"", hier=clipLaeuftHier(s.id);
+  var laeuft=(R6.stand||{}).laeuft;
+  var o='<div class="szz" style="display:block"><span class="szh">Was passiert in der Szene</span>'
+   +'<textarea class="breit" rows="2" style="margin-top:4px"'
+   +' placeholder="z.B. Im Hintergrund bricht der Vulkan aus, Asche steigt auf. Kamera fährt langsam zurück."'
+   +' onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>';
+
+  if(hier){
+    o+='<div class="szz p62" style="display:block;color:#FF6A1A">'
+     +'<b>Clip läuft…</b> '+h(txt||"wird geschickt")
+     +'<div class="szh">Das dauert ein paar Minuten. Du kannst die Seite zumachen.</div></div>';
+    return o;
+  }
+  if(clip){
+    o+='<div class="szz p62" style="display:block">'
+     +'<video src="/eigen/'+encodeURIComponent(clip)+'?k='+S.kanal+'" controls playsinline muted '
+     +'style="width:100%;max-height:300px;border-radius:9px;background:#000;display:block"></video>'
+     +'<div style="display:flex;gap:7px;margin-top:7px">'
+     +'<button class="knopf" style="flex:1"'+(laeuft?' disabled':'')
+     +' onclick="clipNeu(\''+s.id+'\')">Clip neu machen</button>'
+     +'<button class="knopf" onclick="clipWeg(\''+s.id+'\')">Verwerfen</button>'
+     +'</div>'
+     +'<div class="szh" style="margin-top:4px">Dieser Clip wird ins Video übernommen. '
+     +'Das Standbild wird dann nicht mehr gebraucht.</div></div>';
+    return o;
+  }
+  o+='<div class="szz p62" style="display:block">'
+   +'<button class="knopf" style="width:100%"'+(laeuft?' disabled':'')
+   +' onclick="clipNeu(\''+s.id+'\')">Clip erzeugen'
+   +(s.clip_dauer?(' · '+s.clip_dauer+' s'):'')+'</button>';
+  if(stand==="fehler"&&txt)
+    o+='<div class="szh" style="margin-top:5px;color:#FF6A1A">'+h(txt)+'</div>';
+  o+='</div>';
+  return o;
+}
+
+function clipKarte(){
+  var d=R6.stand;
+  if(!d){ladeClips();return ''}
+  var o='<div class="karte p"><h2 class="kt">Clips</h2>';
+  if(!d.bereit){
+    o+='<div class="hinw" style="padding:0;color:#FF6A1A">'+h(d.grund||"noch nicht eingerichtet")+'</div>';
+    o+='<div class="hinw" style="padding:0;margin-top:9px">Das Referenzmodell trägst du unter '
+     +'<b>KI &amp; Technik</b> bei <b>Referenzclip</b> ein:<br>'
+     +'Adresse <b>fal-ai/kling-video/o3/standard/reference-to-video</b><br>'
+     +'Preis <b>0.112</b> je Sekunde · Schlüssel leer lassen, der von fal wird mitbenutzt.</div></div>';
+    return o;
+  }
+  if(d.laeuft){
+    var l=d.lauf||{};
+    o+='<div class="hinw" style="padding:0;color:#FF6A1A"><b>Läuft.</b> '
+     +(l.gesamt>1?('Szene '+(l.nummer||1)+' von '+l.gesamt+'. '):'')
+     +h(l.text||"")+' · '+(l.dauer||0)+' s</div>'
+     +'<button class="knopf" style="width:100%;margin-top:9px" onclick="clipStop()">Nach diesem Clip aufhören</button></div>';
+    return o;
+  }
+  if(!d.offen){
+    o+='<div class="hinw" style="padding:0">Alle Szenen haben einen Clip. '
+     +'Das Video nimmt sie, wie sie sind.</div></div>';
+    return o;
+  }
+  o+='<div class="hinw" style="padding:0">'+d.offen+' Szene'+(d.offen===1?'':'n')+' ohne Clip, '
+   +'zusammen '+d.offen_sekunden+' Sekunden. Das kostet etwa <b>'
+   +(Number(d.offen_preis)||0).toFixed(2)+' USD</b>.</div>'
+   +'<button class="knopf or" style="width:100%;margin-top:9px" onclick="clipAlle()">'
+   +'Alle offenen Clips erzeugen</button>'
+   +'<div class="hinw" style="padding:0;margin-top:7px">Einer nach dem anderen. '
+   +'Du kannst jederzeit aufhören, fertige Clips bleiben.</div></div>';
+  return o;
+}
+
+function clipNeu(id){
+  api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
+    if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+    ladeClips();
+  });
+}
+function clipAlle(){
+  var d=R6.stand||{};
+  frage("Alle offenen Clips erzeugen?",
+    d.offen+" Szenen, zusammen "+d.offen_sekunden+" Sekunden.<br><br>Das kostet etwa <b>"
+    +(Number(d.offen_preis)||0).toFixed(2)+" USD</b>.","Los",function(){
+      api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{alle:true}).then(function(r){
+        if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+        ladeClips();
+      });
+    });
+}
+function clipStop(){
+  api("/api/clip_stop?k="+encodeURIComponent(S.kanal),{}).then(function(r){
+    if(r&&r.hinweis)melde(r.hinweis);
+    ladeClips();
+  });
+}
+function clipWeg(id){
+  frage("Clip verwerfen?","Die Clipdatei wird gelöscht. Das Standbild der Szene bleibt.",
+    "Verwerfen",function(){
+      api("/api/clip_weg?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
+        if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+        R6.stand=null; ladeClips(); ladeSzenen();
+      });
+    },true);
+}
+
+function tSzenen(){
+  var d=S.szenen;
+  if(!d){ladeSzenen();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var li=d.szenen||[];
+  var o='';
+  o+=clipKarte();
+  o+='<div class="karte p"><h2 class="kt">Musik</h2><div class="liste">';
+  if(!d.musik)o+='<div class="leer">kein eigenes Lied — dann nimmt er die Automatik-Musik</div>';
+  else o+='<div class="e"><div class="tx"><div class="ti">'+h(d.musik)+'</div><div class="me">läuft unter dem ganzen Video</div></div>'
+        +'<button class="ik rot" onclick="musikWeg()">✕</button></div>';
+  o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="hochladen(\'musik\')">+ Lied hochladen</button>'
+   +reihe("Leise unter der Stimme",zahl("musik_leise",(S.einst.musik_leise==null?12:S.einst.musik_leise)),"in Prozent")
+   +reihe("Laut ohne Stimme",zahl("musik_laut",(S.einst.musik_laut==null?75:S.einst.musik_laut)),"in Prozent")
+   +'<div class="r"><div><div class="lb">Ohne Stimme lauter</div><div class="hint">'
+   +(S.einst.musik_anheben===false?"aus — bleibt durchgehend leise":"ab etwa 2,5 Sekunden Stille")+'</div></div>'
+   +schalter("musik_anheben",S.einst.musik_anheben!==false)+'</div>'
+   +reihe("Einblenden",zahl("musik_ein",(S.einst.musik_ein==null?1:S.einst.musik_ein)),"Sekunden am Anfang")
+   +reihe("Ausblenden",zahl("musik_aus",(S.einst.musik_aus==null?1.5:S.einst.musik_aus)),"Sekunden am Ende")
+   +'</div>';
+
+  o+='<div class="karte p"><h2 class="kt">Szenen · '+li.length+' · etwa '+Math.round(szenenDauer())+' Sek.</h2>';
+  if(!li.length)o+='<div class="leer">noch nichts — lade dein erstes Bild hoch</div>';
+  li.forEach(function(s,i){
+    var vor=(s.typ==="clip")
+      ? '<video class="bildchen" controls preload="metadata" playsinline src="/eigen/'+encodeURIComponent(s.datei)+'?k='+S.kanal+'"></video>'
+      : '<img class="bildchen" src="/eigen/'+encodeURIComponent(s.datei)+'?k='+S.kanal+'" alt="">';
+    o+='<div class="szn"><div class="kopf"><div class="nr">'+(i+1)+' · '+(s.typ==="clip"?"CLIP":"BILD")+' · '+h(s.datei)+'</div>'
+     +'<button class="ik" onclick="szeneSchieb(\''+s.id+'\',\'hoch\')"'+(i===0?" disabled":"")+'>↑</button>'
+     +'<button class="ik" onclick="szeneSchieb(\''+s.id+'\',\'runter\')"'+(i===li.length-1?" disabled":"")+'>↓</button>'
+     +'<button class="ik rot" onclick="szeneWeg(\''+s.id+'\',\''+h(s.datei).replace(/'/g,"")+'\')">✕</button></div>'
+     +vor
+     +'<textarea placeholder="Gesprochener Text. &quot;…&quot; spricht die Figur. [eckige Klammern sind Regie und werden nicht gesprochen]" onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea>'
+     +'<div class="szz">'
+     +'<label class="hak"><input type="checkbox"'+(s.gesprochen?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'gesprochen\',this.checked)">Gesprochen</label>'
+     +'<label class="hak"><input type="checkbox"'+(s.untertitel?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'untertitel\',this.checked)">Untertitel</label>'
+     +'</div>';
+    if(!s.gesprochen){
+      o+='<div class="szz"><span class="szh">Sekunden</span><input type="text" style="width:62px" value="'
+        +h(String(s.sekunden||s.vorschlag))+'" onchange="szeneSetz(\''+s.id+'\',\'sekunden\',this.value)"></div>';
+    }else{
+      o+='<div class="szz"><span class="szh">Dauert so lang wie der Satz, etwa '+s.vorschlag+' Sek.</span></div>';
+    }
+    if(s.typ!=="clip"){
+      o+='<div class="szz"><span class="szh">Bild</span><select onchange="szeneSetz(\''+s.id+'\',\'passen\',this.value)">'
+       +(d.passenarten||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.passen===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
+       +'</select></div>';
+      o+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'bewegung\',this.value)">'
+       +(d.bewegungen||[]).map(function(b){return '<option value="'+b[0]+'"'+(s.bewegung===b[0]?" selected":"")+'>'+h(b[1])+'</option>'}).join("")
+       +'</select></div>';
+    }
+    o+='<div class="szz"><span class="szh">Stimmung</span><select onchange="szeneSetz(\''+s.id+'\',\'stimmung\',this.value)">'
+      +(d.stimmungen||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.stimmung===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
+      +'</select></div>';
+    if(!S.fig)ladeFiguren();
+    var fn=figurNamen();
+    o+='<div class="szz"><span class="szh">Figur</span><select onchange="szeneSetz(\''+s.id+'\',\'figur\',this.value)">'
+      +'<option value="">keine</option>'
+      +fn.map(function(n){return '<option value="'+h(n)+'"'+(s.figur===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
+      +'</select></div>';
+    if(s.figur){
+      var po=posenVon(s.figur);
+      o+='<div class="szz"><span class="szh">Pose</span><select onchange="szeneSetz(\''+s.id+'\',\'pose\',this.value)">'
+        +'<option value="">erste</option>'
+        +po.map(function(n){return '<option value="'+h(n)+'"'+(s.pose===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
+        +'</select></div>';
+      o+='<div class="szz"><span class="szh">Platz</span><select onchange="szeneSetz(\''+s.id+'\',\'platz\',this.value)">'
+        +(((S.fig||{}).plaetze)||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.platz===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
+        +'</select><span class="szh">Größe</span><input type="text" style="width:54px" value="'+h(String(s.figur_groesse||55))
+        +'" onchange="szeneSetz(\''+s.id+'\',\'figur_groesse\',this.value)"><span class="szh">%</span></div>';
+      o+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'figur_bewegung\',this.value)">'
+        +(((S.szenen||{}).figur_bewegungen)||[["","wie bei der Figur"]]).map(function(x){
+          return '<option value="'+x[0]+'"'+((s.figur_bewegung||"")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
+        +'</select></div>';
+    }
+    o+='<div class="szz p89"><label class="hak"><input type="checkbox"'+(s.ki_animation?" checked":"")
+      +' onchange="szeneSetz(\''+s.id+'\',\'ki_animation\',this.checked)">Diese Szene per KI animieren</label></div>';
+    o+='<div class="szz p90" style="gap:7px">'
+      +'<button class="knopf" onclick="szeneNeu(\''+s.id+'\')">Bild neu erzeugen</button>'
+      +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\')">Eigenes Bild</button>'
+      +'</div>';
+    o+=clipZeile(s);
+    o+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
+      +h(s.musik==="auto"?"":String(s.musik))+'" onchange="szeneSetz(\''+s.id+'\',\'musik\',this.value)"><span class="szh">% · leer = automatisch</span></div>';
+    if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FF6A1A">Datei fehlt auf dem Server</span></div>';
+    o+='</div>';
+  });
+  o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="hochladen(\'szene\')">+ Bild oder Clip</button></div>';
+  o+='<div class="karte p"><div class="hinw" style="padding:0">Die Szenen laufen in dieser Reihenfolge. '
+   +'Ist „Gesprochen“ an, dauert die Szene genau so lang wie ihr Satz. Ist es aus, gilt die Sekundenzahl.</div></div>';
+  return o;
+}
+
+
+/* ---------- Telegram (Patch S6) ---------- */
+function ladeTelegram(){return api("/api/telegram?k="+S.kanal).then(function(d){S.tg=d;zeichne()})}
+function tgKarte(){
+  var t=S.tg;
+  if(!t){ladeTelegram();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var o='<div class="karte p"><h2 class="kt">Telegram</h2>'
+   +'<div class="r" style="padding-top:0"><div><div class="lb">Stand</div>'
+   +'<div class="hint">'+(t.bereit?"Token und Chat hinterlegt":"noch nicht eingerichtet")+'</div></div>'
+   +'<span class="w '+(t.bereit?"gruen":"grau")+'" style="font-size:12px;font-weight:600">'
+   +(t.bereit?"bereit":"fehlt")+'</span></div>'
+   +'<input type="text" id="tgtok" class="breit" placeholder="'+(t.token?"Token ersetzen (leer = behalten)":"Bot-Token")+'" style="margin-bottom:8px">'
+   +'<input type="text" id="tgchat" class="breit" placeholder="Chat-ID" value="'+h(t.chat||"")+'" style="margin-bottom:8px">'
+   +'<input type="text" id="tgadr" class="breit" placeholder="Adresse des Dashboards" value="'+h(t.adresse||location.origin)+'" style="margin-bottom:12px">'
+   +'<div class="zw"><button class="knopf" onclick="tgTest()">Test senden</button>'
+   +'<button class="knopf or" onclick="tgSpeichern()">Speichern</button></div>'
+   +'<div class="hinw" style="margin-top:10px">Das fertige Video wird als Datei geschickt. '
+   +'Ab etwa 50 MB kommt stattdessen das Vorschaubild mit einer Zeile zum Herunterladen.</div></div>';
+  return o;
+}
+function tgSpeichern(){
+  api("/api/telegram?k="+S.kanal,{token:el("tgtok").value,chat:el("tgchat").value,adresse:el("tgadr").value})
+    .then(function(r){if(!r.ok)return melde(r.fehler||"ging nicht");ladeTelegram()});
+}
+function tgTest(){
+  api("/api/telegram?k="+S.kanal,{token:el("tgtok").value,chat:el("tgchat").value,adresse:el("tgadr").value})
+   .then(function(){return api("/api/telegram_test?k="+S.kanal,{})})
+   .then(function(r){ladeTelegram();melde(r.ok?"Testnachricht ist raus — schau in Telegram.":(r.fehler||"ging nicht"))});
+}
+
+
+/* ---------- Stimmen (Patch S7) ---------- */
+var STIMMUNG=[["ruhig","ruhig"],["sachlich","sachlich"],["normal","normal"],["lebendig","lebendig"],["dramatisch","dramatisch"]];
+var ENERGIE={ruhig:0.15,sachlich:0.35,normal:0.55,lebendig:0.75,dramatisch:0.92};
+function stimmungName(e){
+  e=Number(e); if(isNaN(e))e=0.6;
+  var beste="normal",ab=9;
+  for(var k in ENERGIE){var d=Math.abs(ENERGIE[k]-e); if(d<ab){ab=d;beste=k}}
+  return beste;
+}
+function stimmenListe(){return (S.einst.stimmen||[]).filter(function(x){return x&&x.name})}
+function stimmenKarte(){
+  var li=stimmenListe(), aktiv=(S.einst.stimme_id||"");
+  var o='<div class="karte p"><h2 class="kt">Stimmen</h2><div class="liste">';
+  if(!li.length)o+='<div class="leer">keine eingetragen — dann nimmt er die Standardstimme des Modells</div>';
+  li.forEach(function(e,i){
+    var an=(e.id&&e.id===aktiv);
+    o+='<div class="e"><button class="ik" style="'+(an?"background:#FF6A1A;border-color:#FF6A1A;color:#140B04":"")+'"'
+      +' onclick="stimmeAktiv('+i+')">'+(an?"●":"○")+'</button>'
+      +'<div class="tx" onclick="stimmeBearbeiten('+i+')"><div class="ti">'+h(e.name)+'</div>'
+      +'<div class="me">'+h(e.id||"ohne ID")+'</div></div>'
+      +'<button class="ik rot" onclick="stimmeWeg('+i+',\''+h(e.name).replace(/'/g,"")+'\')">✕</button></div>';
+  });
+  o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="stimmeNeu()">+ Stimme</button>'
+   +reihe("Grundstimmung",knoepfeStimmung(stimmungName(S.einst.stimme_energie)),"gilt, wo bei der Szene nichts anderes steht")
+   +'<div class="hinw" style="margin-top:8px">Die ID steht in deinem ElevenLabs-Konto bei der Stimme. '
+   +'Der Name ist frei wählbar und wird im Szenen-Editor unter „Figur“ benutzt.</div></div>';
+  return o;
+}
+function knoepfeStimmung(jetzt){
+  return '<div class="pills">'+STIMMUNG.map(function(o){
+    return '<button class="'+(jetzt===o[0]?"an":"")+'" onclick="setz(\'stimme_energie\','+ENERGIE[o[0]]+')">'+h(o[1])+'</button>'}).join("")+'</div>';
+}
+function stimmeForm(titel,i,e){
+  e=e||{};
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>'+h(titel)+'</h2>'
+   +'<input type="text" id="stn" class="breit" placeholder="Name, z.B. Erzähler oder Oma" value="'+h(e.name||"")+'" style="margin-bottom:8px">'
+   +'<input type="text" id="sti" class="breit" placeholder="Stimm-ID aus ElevenLabs" value="'+h(e.id||"")+'" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="stimmeSpeichern('+i+')">Speichern</button></div></div></div>';
+}
+function stimmeNeu(){stimmeForm("Stimme",-1,{})}
+function stimmeBearbeiten(i){stimmeForm("Stimme ändern",i,stimmenListe()[i])}
+function stimmeSpeichern(i){
+  var n=(el("stn").value||"").trim(), id=(el("sti").value||"").trim();
+  if(!n)return melde("Name darf nicht leer sein.");
+  var li=stimmenListe().slice();
+  if(i<0)li.push({name:n,id:id}); else li[i]={name:n,id:id};
+  stimmenSichern(li,function(){zu()});
+}
+function stimmeWeg(i,n){
+  frage("Stimme löschen?","<b>"+h(n)+"</b><br><br>Der Eintrag wird entfernt.","Löschen",function(){
+    var li=stimmenListe().slice(); li.splice(i,1); stimmenSichern(li);},true);
+}
+function stimmeAktiv(i){
+  var e=stimmenListe()[i]||{};
+  S.einst.stimme_id=e.id||"";
+  api("/api/kanal?k="+S.kanal,{stimme_id:S.einst.stimme_id}).then(zeichne);
+}
+function stimmenSichern(li,danach){
+  S.einst.stimmen=li;
+  api("/api/kanal?k="+S.kanal,{stimmen:li}).then(function(){if(danach)danach();zeichne()});
+}
+
+
+/* ---------- Masterprompt mit Abfrage (Patch S9) ---------- */
+function promptAendern(neu){
+  var alt=S.einst.prompt||"";
+  if(neu===alt)return;
+  var leer=!neu.trim();
+  var vorschau=leer?"<b>Der Masterprompt wird komplett geleert.</b>"
+    :"Neu:<br><br><i>"+h(neu.slice(0,180))+(neu.length>180?"…":"")+"</i>";
+  var text="Der Masterprompt bestimmt, wie Claude jedes Video für diesen Kanal schreibt.<br><br>"+vorschau;
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Masterprompt ändern?</h2>'
+   +'<p>'+text+'</p><div class="zw">'
+   +'<button class="knopf" id="pnein">Verwerfen</button>'
+   +'<button class="knopf '+(leer?"":"or")+'" id="pja"'
+   +(leer?' style="background:#B02A2A;border-color:#B02A2A;color:#fff;font-weight:700"':'')
+   +'>Speichern</button></div></div></div>';
+  el("pnein").onclick=function(){zu();zeichne()};
+  el("pja").onclick=function(){zu();setz("prompt",neu)};
+}
+
+
+/* ---------- Charaktere (Patch S10) ---------- */
+function ladeFiguren(){return api("/api/figuren?k="+S.kanal).then(function(d){S.fig=d;zeichne()})}
+function figSetz(name,aktion,wert,datei){
+  var d={aktion:aktion,name:name};
+  if(wert!==undefined)d.wert=wert;
+  if(datei!==undefined)d.datei=datei;
+  return api("/api/figuren?k="+S.kanal,d).then(function(r){
+    if(!r.ok){melde(r.fehler||"ging nicht");return r}
+    return ladeFiguren().then(function(){return r})});
+}
+function figNeu(){
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neue Figur</h2>'
+   +'<p>Der Name steht später im Szenen-Editor zur Auswahl.</p>'
+   +'<input type="text" id="fign" class="breit" placeholder="z.B. Oma, Monster, Maskottchen" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="figAnlegen()">Anlegen</button></div></div></div>';
+}
+function figAnlegen(){
+  var n=(el("fign").value||"").trim();
+  if(!n)return melde("Name darf nicht leer sein.");
+  figSetz(n,"neu").then(function(r){if(r&&r.ok)zu()});
+}
+function figWeg(n){
+  frage("Figur löschen?","<b>"+h(n)+"</b><br><br>Die Figur und alle ihre Posen werden gelöscht.",
+    "Löschen",function(){figSetz(n,"weg")},true);
+}
+function poseWeg(n,d){
+  frage("Pose löschen?","Die Bilddatei wird gelöscht.","Löschen",function(){figSetz(n,"pose_weg",undefined,d)},true);
+}
+function poseFrei(n,d){
+  melde("Hintergrund wird entfernt…");
+  figSetz(n,"freistellen",undefined,d).then(function(r){if(r&&r.ok)zu()});
+}
+function poseHoch(n){
+  var i=document.createElement("input");
+  i.type="file"; i.accept="image/*";
+  i.onchange=function(){
+    var f=i.files&&i.files[0];if(!f)return;
+    if(f.size>20*1024*1024){melde("Bild zu groß — höchstens 20 MB.");return}
+    var pose=prompt("Name der Pose (z.B. winkt, zeigt, erstaunt)","Pose");
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2><p id="hpro">'+h(f.name)+' · 0 %</p></div></div>';
+    var x=new XMLHttpRequest();
+    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=figur&figur="
+      +encodeURIComponent(n)+"&pose="+encodeURIComponent(pose||"")+"&name="+encodeURIComponent(f.name));
+    x.upload.onprogress=function(e){if(e.lengthComputable&&el("hpro"))el("hpro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeFiguren()};
+    x.onerror=function(){zu();melde("Hochladen fehlgeschlagen")};
+    x.send(f);
+  };
+  i.click();
+}
+/* Darsteller r2 */
+function ladeDarsteller(){return api("/api/darsteller?k="+S.kanal).then(function(d){S.ds=d;zeichne()})}
+
+function dsSetz(o){
+  return api("/api/darsteller?k="+S.kanal,o).then(function(r){
+    if(!r||!r.ok){melde((r&&r.fehler)||"ging nicht");return r}
+    return ladeDarsteller().then(function(){return r})});
+}
+
+function dsBes(platz,did,gid){return dsSetz({aktion:"besetzung",platz:platz,id:did,satz:gid})}
+function dsFeld(did,feld,wert){return dsSetz({aktion:feld,id:did,wert:wert})}
+
+function dsNeu(){
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Darsteller</h2>'
+   +'<p>Eine wiederkehrende Figur, die in jedem Video erklärt.</p>'
+   +'<input type="text" id="dsn" class="breit" placeholder="Name, z.B. Mara" style="margin-bottom:9px">'
+   +'<input type="text" id="dsr" class="breit" placeholder="Rolle, z.B. Frau Mitte 20" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="dsAnlegen()">Anlegen</button></div></div></div>';
+}
+function dsAnlegen(){
+  var n=((el("dsn")||{}).value||"").trim(), r=((el("dsr")||{}).value||"").trim();
+  if(!n)return melde("Ein Name muss sein.");
+  dsSetz({aktion:"neu",name:n,rolle:r}).then(function(x){if(x&&x.ok)zu()});
+}
+function dsWeg(did,name){
+  frage("Darsteller löschen?","<b>"+h(name)+"</b><br><br>Alle Kleidungssätze und Bilder dieser Figur werden gelöscht.",
+    "Löschen",function(){dsSetz({aktion:"weg",id:did})},true);
+}
+function dsSatzNeu(did){
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Kleidungssatz</h2>'
+   +'<p>Mehrere Bilder derselben Figur in <b>derselben</b> Kleidung, aus verschiedenen Blickwinkeln. '
+   +'Innerhalb eines Videos bleibt die Kleidung gleich.</p>'
+   +'<input type="text" id="dsgn" class="breit" placeholder="z.B. Jeans und Jeansjacke" style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="dsSatzOk(\''+did+'\')">Anlegen</button></div></div></div>';
+}
+function dsSatzOk(did){
+  var n=((el("dsgn")||{}).value||"").trim();
+  dsSetz({aktion:"satz_neu",id:did,name:n}).then(function(x){if(x&&x.ok)zu()});
+}
+function dsSatzWeg(did,gid,name){
+  frage("Kleidungssatz löschen?","<b>"+h(name)+"</b><br><br>Die Bilder dieses Satzes werden gelöscht.",
+    "Löschen",function(){dsSetz({aktion:"satz_weg",id:did,satz:gid})},true);
+}
+function dsBildWeg(did,gid,datei){
+  dsSetz({aktion:"bild_weg",id:did,satz:gid,datei:datei});
+}
+function dsBildVor(did,gid,datei){
+  dsSetz({aktion:"bild_vor",id:did,satz:gid,datei:datei});
+}
+
+function dsHoch(did,gid){
+  var i=document.createElement("input");
+  i.type="file"; i.accept="image/*";
+  i.onchange=function(){
+    var f=i.files&&i.files[0];if(!f)return;
+    if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2><p id="dspro">'+h(f.name)+' · 0 %</p></div></div>';
+    var x=new XMLHttpRequest();
+    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=darsteller"
+      +"&id="+encodeURIComponent(did)+"&satz="+encodeURIComponent(gid)
+      +"&name="+encodeURIComponent(f.name));
+    x.upload.onprogress=function(e){if(e.lengthComputable&&el("dspro"))el("dspro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeDarsteller()};
+    x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
+    x.send(f);
+  };
+  i.click();
+}
+
+function tDarsteller(){
+  var d=S.ds;
+  if(!d){ladeDarsteller();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var liste=d.darsteller||[], bes=d.besetzung||{};
+  var o='<div class="karte p"><h2 class="kt">Darsteller</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:10px">Zwei Figuren, die in jedem Video erklären. '
+   +'Ihre Bilder werden <b>nicht</b> ins Bild geklebt — sie gehen als Referenz an das Videomodell, '
+   +'und das stellt die Figuren selbst in die Szene. Darum dürfen diese Bilder einen Hintergrund haben.</div>';
+
+  (d.plaetze||[]).forEach(function(p){
+    var e=bes[p[0]]||{}, did=e.d||"", gid=e.g||"", f=null;
+    liste.forEach(function(x){if(x.id===did)f=x});
+    o+='<div class="szz"><span class="szh">'+h(p[1])+'</span>'
+     +'<select onchange="dsBes(\''+p[0]+'\',this.value,\'\')">'
+     +'<option value="">— frei —</option>'
+     +liste.map(function(x){return '<option value="'+h(x.id)+'"'+(x.id===did?" selected":"")+'>'+h(x.name)+'</option>'}).join("")
+     +'</select>';
+    if(f){
+      if((f.saetze||[]).length){
+        o+='<select onchange="dsBes(\''+p[0]+'\',\''+h(f.id)+'\',this.value)">'
+         +(f.saetze||[]).map(function(g){return '<option value="'+h(g.id)+'"'+(g.id===gid?" selected":"")+'>'+h(g.name)+'</option>'}).join("")
+         +'</select>';
+      }else{
+        o+='<span class="szh" style="color:#FF6A1A">kein Kleidungssatz</span>';
+      }
+    }
+    o+='</div>';
+  });
+
+  if(d.bereit){
+    o+='<div class="hinw" style="padding:0;margin-top:10px">'
+     +(d.grund?('<span style="color:#FF6A1A">'+h(d.grund)+'</span><br>'):'<b>Bereit.</b> ')
+     +'Das Modell bekommt diesen Vorspann:<br>'+h(d.vorspann)+'</div>';
+  }else{
+    o+='<div class="hinw" style="padding:0;margin-top:10px;color:#FF6A1A">'+h(d.grund)+'</div>';
+  }
+  o+=''
+   +'<button class="knopf" style="width:100%;margin-top:10px" onclick="dsNeu()">+ Darsteller</button></div>';
+
+  liste.forEach(function(f){
+    o+='<div class="karte p"><div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+(f.rolle?' <span class="szh">· '+h(f.rolle)+'</span>':'')+'</h2>'
+     +'<button class="ik rot" onclick="dsWeg(\''+h(f.id)+'\',\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
+    o+='<div class="szz"><span class="szh">Rolle</span>'
+     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Frau Mitte 20"'
+     +' onchange="dsFeld(\''+h(f.id)+'\',\'rolle\',this.value)"></div>';
+    o+='<div class="szz" style="margin-top:7px"><span class="szh">Aussehen</span>'
+     +'<input type="text" class="breit" value="'+h(f.beschreibung||"")+'" placeholder="dunkle Haare, moderne Kleidung"'
+     +' onchange="dsFeld(\''+h(f.id)+'\',\'beschreibung\',this.value)"></div>';
+
+    if(!(f.saetze||[]).length)
+      o+='<div class="leer" style="margin-top:9px">noch kein Kleidungssatz</div>';
+
+    (f.saetze||[]).forEach(function(g){
+      o+='<div class="szz" style="margin-top:11px;display:flex;align-items:center;gap:7px">'
+       +'<input type="text" class="breit" value="'+h(g.name)+'" style="flex:1"'
+       +' onchange="dsSetz({aktion:\'satz_name\',id:\''+h(f.id)+'\',satz:\''+h(g.id)+'\',wert:this.value})">'
+       +'<button class="ik rot" onclick="dsSatzWeg(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(g.name).replace(/'/g,"")+'\')">✕</button></div>';
+      o+='<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:7px">';
+      (g.bilder||[]).forEach(function(b,bi){
+        o+='<div style="position:relative;flex:0 0 66px;width:66px;height:88px">'
+         +'<img src="/darsteller/'+encodeURIComponent(b.datei)+'?k='+S.kanal+'" '
+         +'title="'+(bi===0?'Frontalbild':'antippen: zum Frontalbild machen')+'" '
+         +'onclick="dsBildVor(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(b.datei)+'\')" '
+         +'style="width:66px;height:88px;object-fit:cover;border-radius:8px;background:#0B0B0D;'
+         +'display:block;cursor:pointer;'+(bi===0?'outline:2px solid #FF6A1A;outline-offset:-2px':'')+'">'
+         +(bi===0?'<div style="position:absolute;left:0;right:0;bottom:0;background:#FF6A1A;color:#140B04;'
+                 +'font-size:9.5px;font-weight:700;text-align:center;padding:2px 0;'
+                 +'border-radius:0 0 8px 8px;pointer-events:none">FRONTAL</div>':'')
+         +'<button class="ik rot" title="Bild löschen" '
+         +'onclick="event.stopPropagation();dsBildWeg(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(b.datei)+'\')" '
+         +'style="position:absolute;top:-7px;right:-7px;width:23px;height:23px;'
+         +'border-radius:50%;font-size:11px;line-height:1;padding:0">✕</button>'
+         +'</div>';
+      });
+      if(!g.voll)
+        o+='<button class="knopf" style="flex:0 0 66px;width:66px;height:88px;font-size:12px" '
+         +'onclick="dsHoch(\''+h(f.id)+'\',\''+h(g.id)+'\')">+ Bild</button>';
+      o+='</div>';
+      if(!(g.bilder||[]).length)
+        o+='<div class="szh" style="margin-top:5px">Das erste Bild ist das Frontalbild. '
+         +'Dann zwei bis drei weitere derselben Kleidung von der Seite und von hinten.</div>';
+    });
+    o+='<button class="knopf" style="width:100%;margin-top:11px" onclick="dsSatzNeu(\''+h(f.id)+'\')">+ Kleidungssatz</button></div>';
+  });
+  return o;
+}
+
+function tFiguren(){
+  var d=S.fig;
+  if(!d){ladeFiguren();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var o='';
+  o+=tDarsteller();
+  if(!(d.figuren||[]).length)
+    o+='<div class="karte p"><div class="leer">noch keine Figur angelegt</div></div>';
+  (d.figuren||[]).forEach(function(f){
+    o+='<div class="karte p"><div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+'</h2>'
+     +'<button class="ik rot" onclick="figWeg(\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
+    o+='<div class="szz"><span class="szh">Stimme</span><select onchange="figSetz(\''+h(f.name).replace(/'/g,"")+'\',\'stimme\',this.value)">'
+     +'<option value="">Kanalstimme</option>'
+     +(d.stimmen||[]).map(function(s){return '<option value="'+h(s[1])+'"'+(f.stimme===s[1]?" selected":"")+'>'+h(s[0])+'</option>'}).join("")
+     +'</select></div>';
+    o+='<div class="szz" style="margin-top:7px"><span class="szh">Bewegung</span>'
+     +'<select onchange="figBewegung(\''+h(f.name).replace(/'/g,"")+'\',this.value)">'
+     +((d.bewegungen||[["statisch","steht still"],["bewegt","atmet und wippt"],["animiert","Animationsschleife"]]))
+       .map(function(x){return '<option value="'+x[0]+'"'+((f.bewegung||"bewegt")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
+     +'</select>'+(((f.bewegung||"bewegt")==="animiert"&&!f.hat_schleife)
+       ?'<span class="szh" style="color:#FF6A1A">keine Schleife da — läuft als „bewegt"</span>':'')+'</div>';
+    o+='<div class="liste" style="margin-top:9px">';
+    if(!f.posen.length)o+='<div class="leer">keine Pose — lade ein Bild hoch</div>';
+    f.posen.forEach(function(p){
+      var sch=(p.art==="clip")?'':'<button class="ik" title="Hintergrund entfernen" onclick="poseFrei(\''+h(f.name).replace(/'/g,"")+'\',\''+h(p.datei).replace(/'/g,"")+'\')">✂</button>';
+      o+='<div class="e"><img src="/figur/'+encodeURIComponent(p.vorschau||p.datei)+'?k='+S.kanal+'" '
+       +'style="width:44px;height:58px;object-fit:contain;background:#0B0B0D;border-radius:7px">'
+       +'<div class="tx"><div class="ti">'+h(p.name)+(p.art==="clip"?' · bewegt':'')+'</div><div class="me'+(p.frei?"":" warn")+'">'
+       +(p.frei?(p.art==="clip"?"Animationsschleife, läuft durch":"freigestellt"):"mit Hintergrund — wirkt im Video aufgeklebt")+'</div></div>'
+       +sch
+       +'<button class="ik rot" onclick="poseWeg(\''+h(f.name).replace(/'/g,"")+'\',\''+h(p.datei).replace(/'/g,"")+'\')">✕</button></div>';
+    });
+    o+='</div><div class="zw" style="margin-top:9px">'
+     +'<button class="knopf" style="flex:1" onclick="poseHoch(\''+h(f.name).replace(/'/g,"")+'\')">+ Pose (Bild)</button>'
+     +'<button class="knopf" style="flex:1" onclick="poseHochBewegt(\''+h(f.name).replace(/'/g,"")+'\')">+ Bewegte Figur</button>'
+     +'</div></div>';
+  });
+  o+='<button class="knopf or" style="width:100%;margin-bottom:10px" onclick="figNeu()">+ Neue Figur</button>';
+  o+='<div class="karte p"><div class="hinw" style="padding:0">Eine Figur ist ein Satz freigestellter Bilder — dieselbe Figur in verschiedenen Posen. '
+   +'Mit der Schere entfernst du einen einfarbigen Hintergrund. Im Szenen-Editor wählst du pro Szene Figur, Pose, Platz und Größe; '
+   +'die hier zugeordnete Stimme spricht dann diese Szene. '
+   +'„Bewegt" belebt dein vorhandenes Bild per Rechnung und kostet nichts. „Animationsschleife" braucht eine '
+   +'hochgeladene bewegte Figur mit durchsichtigem Hintergrund (MOV oder GIF).</div></div>';
+  return o;
+}
+function figBewegung(name,wert){
+  return api("/api/figuren?k="+S.kanal,{aktion:"bewegung",name:name,wert:wert}).then(function(r){
+    if(!r.ok)return melde(r.fehler||"ging nicht");ladeFiguren()});
+}
+function poseHochBewegt(n){
+  var i=document.createElement("input");
+  i.type="file"; i.accept=".mov,.webm,.mp4,.gif,video/*";
+  i.onchange=function(){
+    var f=i.files&&i.files[0];if(!f)return;
+    if(f.size>60*1024*1024){melde("Datei zu groß — höchstens 60 MB.");return}
+    var pose=prompt("Name der Bewegung (z.B. winkt, nickt, atmet)","Schleife");
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2><p id="hpro">'+h(f.name)+' · 0 %</p>'
+      +'<p class="hint">Wird danach in eine Schleife mit Transparenz umgewandelt.</p></div></div>';
+    var x=new XMLHttpRequest();
+    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=figur&figur="
+      +encodeURIComponent(n)+"&pose="+encodeURIComponent(pose||"")+"&name="+encodeURIComponent(f.name));
+    x.upload.onprogress=function(e){if(e.lengthComputable&&el("hpro"))el("hpro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+      if(!r.ok){melde(r.fehler||"Hochladen ging nicht");return}
+      ladeFiguren()};
+    x.onerror=function(){zu();melde("Hochladen ging nicht")};
+    x.send(f);
+  };
+  i.click();
+}
+function figurNamen(){return ((S.fig||{}).figuren||[]).map(function(f){return f.name})}
+function posenVon(n){
+  var f=((S.fig||{}).figuren||[]).filter(function(x){return x.name===n})[0];
+  return f?f.posen.map(function(p){return p.name}):[];
+}
+
+
+/* ---------- Suche (Patch P4) ---------- */
+/* [Was im Dashboard steht, Reiter, Suchwoerter dazu] */
+var SUCHE=[
+ ["Symbol","texte","einblendung symbol herz plus glocke daumen folgen like abo"],
+ ["Text","texte","einblendung text beschriftung folgen"],
+ ["Platz","texte","einblendung position ecke links rechts oben unten"],
+ ["Wie lange","texte","einblendung dauer sekunden"],
+ ["Farbe","texte","einblendung farbe orange kanalfarbe hex"],
+ ["Am Anfang","texte","einblendung follow like abo cta anfang hook"],
+ ["In der Mitte","texte","einblendung follow like abo cta mitte"],
+ ["Am Ende","texte","einblendung follow like abo cta ende abspann"],
+ ["Einblendung Anfang","texte","follow like abo cta aufforderung anfang hook"],
+ ["Einblendung Mitte","texte","follow like abo cta aufforderung mitte"],
+ ["Einblendung Ende","texte","follow like abo cta aufforderung ende abspann"],
+ ["Auch gesprochen","texte","cta gesprochen vorlesen aufforderung"],
+ ["Schrift","texte","untertitel schriftart font"],
+ ["Größe","texte","untertitel schriftgroesse gross klein"],
+ ["Höhe im Bild","texte","untertitel position hoehe unten oben"],
+ ["Wörter pro Zeile","texte","untertitel woerter zeile umbruch"],
+ ["Großbuchstaben","texte","untertitel caps grossschrift"],
+ ["Format","video","9:16 4:5 1:1 16:9 hochkant quer tiktok instagram youtube seitenverhaeltnis"],
+ ["Bilder pro Minute","video","bilder anzahl takt dichte"],
+ ["Bewegung im Bild","video","ken burns zoom schwenk bewegung"],
+ ["Stärke","video","bewegung staerke sanft stark"],
+ ["Anteil bewegter Szenen","video","kling animation ki bewegt prozent anteil video"],
+ ["Bewegungs-Anweisung","video","kling prompt kamerafahrt animation"],
+ ["Abbrechen","prompt","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
+ ["Videoart","video","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
+ ["Tempo","video","schnitt schnelligkeit einstellungen teilen erklaervideo"],
+ ["Geräusch beim Schnitt","video","whoosh swoosh pop klick schnittgeraeusch sound"],
+ ["Lautstärke","video","schnittgeraeusch pegel laut leise"],
+ ["Stimme an","video","sprecher tts elevenlabs stimme"],
+ ["Musik an","video","musik lied hintergrund"],
+ ["Geräusche","video","ambience umgebung atmosphaere"],
+ ["Stimmen","video","stimme id elevenlabs figur sprecher liste"],
+ ["Grundstimmung","video","stimmung ruhig lebendig dramatisch energie"],
+ ["Stil-Anker","prompt","stil anker gleich aussehen figur konsistent look"],
+ ["Deine Geschichte","prompt","geschichte text story erzaehlung eigener text maerchen"],
+ ["Stil","prompt","geschichte stil maerchen comic foto aquarell aussehen"],
+ ["Figur","prompt","geschichte figur held charakter gleich konsistent"],
+ ["Wie das Video entsteht","prompt","modus claude schreibt ich baue selbst szenen eigene bilder geschichte"],
+ ["Masterprompt","prompt","prompt anweisung thema stil text"],
+ ["Sprache","prompt","sprache deutsch englisch uebersetzung"],
+ ["Länge in Sekunden","prompt","dauer laenge sekunden"],
+ ["Thema","prompt","themen liste naechstes video"],
+ ["Szenen","prompt","szenen editor eigene bilder clips reihenfolge"],
+ ["Lied hochladen","prompt","musik eigenes lied song hochladen"],
+ ["Leise unter der Stimme","prompt","musik lautstaerke leise ducking"],
+ ["Laut ohne Stimme","prompt","musik lautstaerke laut vordergrund"],
+ ["Einblenden","prompt","musik fade anfang einblenden"],
+ ["Ausblenden","prompt","musik fade ende ausblenden abklingen"],
+ ["Bewegung","figuren","figur statisch bewegt animiert atmen wippen schleife"],
+ ["Stimme","figuren","figur stimme zuordnen elevenlabs"],
+ ["Automatik","start","zeitplan automatisch taeglich lauf"],
+ ["Kanalname","start","name umbenennen kanal"],
+ ["Fertige Videos","start","download herunterladen ansehen loeschen"],
+ ["Eingestellt","start","uebersicht was eingestellt ist zusammenfassung"],
+ ["Telegram","technik","telegram bot chat benachrichtigung senden"],
+ ["Guthaben","technik","guthaben fal.ai kontostand credits"],
+ ["Was ein Video kostet","technik","preis kosten euro rechnung"],
+ ["Text","technik","modell api claude anthropic schluessel"],
+ ["Bild","technik","modell api flux imagen bilder schluessel"],
+ ["Animation","technik","kling video animation bewegte szene"]
+];
+var SUCHZIEL=null;
+
+function suchZu(){var e=el("sucherg");if(e)e.innerHTML=""}
+
+function suchTreffer(w){
+  var e=el("sucherg"); if(!e)return;
+  w=(w||"").trim().toLowerCase();
+  if(w.length<2){e.innerHTML="";return}
+  var namen={}; TABS.forEach(function(t){namen[t[0]]=t[1]});
+  var tr=SUCHE.filter(function(s){
+    return s[0].toLowerCase().indexOf(w)>=0 || s[2].indexOf(w)>=0;
+  }).slice(0,7);
+  if(!tr.length){e.innerHTML='<div><b>nichts gefunden</b><span>Versuch ein anderes Wort</span></div>';return}
+  e.innerHTML=tr.map(function(s,i){
+    return '<div onmousedown="suchGeh('+SUCHE.indexOf(s)+')" ontouchstart="suchGeh('+SUCHE.indexOf(s)+')">'
+      +'<b>'+h(s[0])+'</b><span>Reiter '+h(namen[s[1]]||s[1])+'</span></div>'}).join("");
+}
+
+function suchGeh(i){
+  var s=SUCHE[i]; if(!s)return;
+  suchZu();
+  var f=el("suchf"); if(f)f.value="";
+  SUCHZIEL=s[0];
+  if(S.tab!==s[1]){S.tab=s[1];laden().then(suchZeigen)}else{zeichne();suchZeigen()}
+}
+
+function suchZeigen(){
+  if(!SUCHZIEL)return;
+  var ziel=SUCHZIEL; SUCHZIEL=null;
+  setTimeout(function(){
+    var alle=document.querySelectorAll(".lb, .kt, .szh");
+    for(var i=0;i<alle.length;i++){
+      if((alle[i].textContent||"").trim()===ziel){
+        var k=alle[i].closest(".r")||alle[i].closest(".karte")||alle[i];
+        k.scrollIntoView({behavior:"smooth",block:"center"});
+        k.classList.add("treffer");
+        setTimeout(function(){k.classList.remove("treffer")},2100);
+        return;
+      }
+    }
+  },260);
+}
+
+
+/* ---------- Geschichte (Patch P9) ---------- */
+function ladeGeschichte(){return api("/api/geschichte?k="+S.kanal).then(function(d){S.gs=d;zeichne()})}
+
+function tGeschichte(){
+  var g=S.gs;
+  if(!g){ladeGeschichte();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var laeuft=(S.daten.lauf||{}).laeuft;
+  var o='<div class="karte p"><h2 class="kt">Deine Geschichte</h2>'
+   +'<div style="display:flex;gap:7px;margin-bottom:9px">'
+   +'<input type="text" id="gsthema" class="breit" placeholder="Thema — leer nimmt das nächste aus der Liste" value="'
+   +h(S.einst.geschichte_thema||"")+'" onchange="setz(\'geschichte_thema\',this.value)">'
+   +'<button class="knopf or" id="gsknopf" onclick="textSchreiben()">Schreiben</button></div>'
+   +serieLeiste()
+   +'<textarea id="gstext" style="min-height:190px" placeholder="Hier den ganzen Text einfügen.&#10;&#10;(Satz oder Absatz in Klammern wird ein Bild.)&#10;(Die nächste Klammer das nächste.)"'
+   +' onchange="setz(\'geschichte_text\',this.value)">'+h(S.einst.geschichte_text||"")+'</textarea>'
+   +'<div class="hinw" style="margin-top:8px">'
+   +(g.saetze?('Ergibt <b>'+g.saetze+' Szenen</b> · etwa '+Number(g.kosten||0).toFixed(2)+' € für die Bilder')
+            :'Noch kein Text. Schreib oder füg ihn oben ein und tipp daneben, dann wird gezählt.')
+   +'</div>'
+   +'<div class="hinw" style="padding-top:0">Klammern bestimmen die Szenen: alles zwischen ( und ) wird ein Bild. '
+   +'Ohne Klammern trennt eine Leerzeile, ohne beides wird Satz für Satz zerlegt.<br><br>'
+   +'<b>Schreiben</b> lässt die Text-KI eine Geschichte zum Thema verfassen, fertig mit Klammern '
+   +'und Regie. Lies drüber und ändere, was dir nicht passt, bevor du erzeugst.<br><br>'
+   +'In Anführungszeichen spricht die Figur. In eckigen Klammern steht die Regie: was zu sehen sein soll. Sie wird nicht gesprochen.</div>'
+   +'</div>';
+
+  o+='<div class="karte p"><h2 class="kt">Wie es aussehen soll</h2>'
+   +reihe("Stil",wahl("geschichte_stil",S.einst.geschichte_stil||"",
+      (g.stile||[["","ohne Vorgabe"]])))
+   +reihe("Figur",'<select onchange="setz(\'geschichte_figur\',this.value)">'
+      +'<option value="">keine</option>'
+      +(g.figuren||[]).map(function(n){return '<option value="'+h(n)+'"'+((S.einst.geschichte_figur||"")===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
+      +'</select>',"dieselbe Figur in jeder Szene")
+   +'<div style="padding:11px 0 4px;border-top:1px solid #23232B">'
+   +'<div class="lb" style="margin-bottom:6px">Stil-Anker</div>'
+   +'<textarea id="anker" style="min-height:74px" placeholder="gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung"'
+   +' onchange="p86Feld(\'stil_zusatz\',\'Stil-Anker\',\'anker\',this.value)">'+h(S.einst.stil_zusatz||"")+'</textarea>'
+   +'<div style="display:flex;gap:8px;margin-top:8px">'
+   +'<button class="knopf" onclick="ankerVorschlag()">Vorschlag einsetzen</button></div>'
+   +'<div class="hinw">Geht an jedes einzelne Bild mit. Damit sieht Szene 9 aus wie Szene 1.</div>'
+   +'</div>'
+   +'</div>';
+
+  if(S.einst.geschichte_figur && g.figur_bild===false)
+    o+='<div class="karte p"><div class="spaeter">Die Figur <b>'+h(S.einst.geschichte_figur)+'</b> hat noch kein Bild. '
+     +'Unter Charaktere ein Bild als Pose hinzufügen, sonst entstehen die Szenen ohne sie.</div></div>';
+
+  if(S.einst.geschichte_figur && !g.kann_figur)
+    o+='<div class="karte p"><div class="spaeter">Dein Bildmodell nimmt keine Vorlage an — die Figur wird dann in jeder Szene anders aussehen. '
+     +'Für gleiche Figur unter KI &amp; Technik beim Slot „Bild" ein Modell wie <b>fal-ai/instant-character</b> eintragen.</div></div>';
+
+  if(!g.bereit)
+    o+='<div class="karte p"><div class="spaeter">'+h(g.grund||"Bildmodell fehlt")+' — unter KI &amp; Technik beim Slot „Bild" eintragen.</div></div>';
+  else if(laeuft)
+    o+='<button class="knopf" style="width:100%;margin-bottom:6px" disabled>läuft …</button>'
+     +'<button class="knopf rot" style="width:100%;margin-bottom:10px" onclick="geschichteAbbrechen()">Abbrechen</button>';
+  else
+    o+='<button class="knopf or" style="width:100%;margin-bottom:10px"'
+     +' onclick="geschichteStart()">Bilder jetzt erzeugen lassen</button>';
+
+  if(laeuft||((S.daten.lauf||{}).zeilen||[]).length)
+    o+='<div class="karte p"><h2 class="kt">Was gerade passiert</h2><div class="log">'
+     +((S.daten.lauf||{}).zeilen||[]).map(h).join("<br>")+'</div>'
+     +(laeuft?'<button class="knopf rot" style="width:100%;margin-top:10px" onclick="geschichteAbbrechen()">Abbrechen</button>':'')
+     +'</div>';
+  return o;
+}
+
+function geschichteStart(){
+  var t=(S.einst.geschichte_text||"").trim();
+  if(!t)return melde("Erst die Geschichte einfügen.");
+  frage("Bilder erzeugen?","Das kostet etwa <b>"+Number((S.gs||{}).kosten||0).toFixed(2)+" €</b> und legt die bisherigen Szenen dieses Kanals neu an.","Los",
+    function(){api("/api/geschichte_start?k="+S.kanal,{}).then(function(r){
+      if(!r.ok)return melde(r.text||"ging nicht");
+      laden();setTimeout(ladeGeschichte,1500);
+    })});
+}
+
+
+/* ---------- Videoart als Voreinstellung (Patch P10) ---------- */
+function ladeArten(){return api("/api/arten?k="+S.kanal).then(function(d){S.arten=d;zeichne()})}
+
+function tArten(){
+  var a=S.arten;
+  if(!a){ladeArten();return ''}
+  var o='<div class="karte p"><h2 class="kt">Videoart</h2>'
+   +'<div class="pills">'
+   +(a.arten||[]).map(function(x){
+      return '<button class="'+(a.jetzt===x[0]?"an":"")+'" onclick="artSetzen(\''+x[0]+'\')">'+h(x[1])+'</button>'}).join("")
+   +'</div>'
+   +'<div class="hinw" style="margin-top:9px">Ein Tipp stellt Tempo, Geräusch, Stimmung, Musik und Einblendung passend ein. '
+   +'Danach kannst du jeden einzelnen Schalter weiter ändern — die Videoart ist nur ein Startpunkt.</div></div>';
+  return o;
+}
+
+function artSetzen(n){
+  api("/api/voreinstellung?k="+S.kanal,{name:n}).then(function(r){
+    if(!r.ok)return melde(r.fehler||"ging nicht");
+    S.arten=null;laden();
+  });
+}
+
+var SPRACHEN=[["de","Deutsch"],["en","Englisch"],["es","Spanisch"],["fr","Französisch"],["it","Italienisch"]];
+function sprachName(c){for(var i=0;i<SPRACHEN.length;i++)if(SPRACHEN[i][0]===c)return SPRACHEN[i][1];return c||"—"}
+
+function geschichteAbbrechen(){
+  frage("Lauf stoppen?","Die schon fertigen Bilder bleiben erhalten. Die restlichen werden nicht mehr erzeugt.","Stoppen",
+    function(){api("/api/stop",{}).then(function(){laden();setTimeout(function(){S.gs=null;ladeGeschichte()},900)})},true);
+}
+
+
+function p86Kurz(s){
+  s=String(s||"");
+  return s.length>190?h(s.slice(0,190))+"\u2026":h(s);
+}
+
+function p86Zurueck(id,feld){
+  var f=el(id);
+  if(f)f.value=S.einst[feld]||"";
+}
+
+function p86Feld(feld,titel,id,neu){
+  var alt=S.einst[feld]||"";
+  if(neu===alt)return;
+  var text;
+  if(!String(neu).trim())
+    text="<b>"+h(titel)+" wird komplett geleert.</b><br><br>Bisher:<br><br><i>"+p86Kurz(alt)+"</i>";
+  else if(!alt.trim())
+    text="Neu:<br><br><i>"+p86Kurz(neu)+"</i>";
+  else
+    text="Bisher:<br><br><i>"+p86Kurz(alt)+"</i><br><br>Neu:<br><br><i>"+p86Kurz(neu)+"</i>";
+  text="Das geht an jedes einzelne Bild mit.<br><br>"+text;
+  el("dialog").innerHTML='<div class="dim" onclick="if(event.target===this){zu();p86Zurueck(\''
+   +id+'\',\''+feld+'\')}"><div class="dlg"><h2>'+h(titel)+' \u00e4ndern?</h2>'
+   +'<p>'+text+'</p><div class="zw">'
+   +'<button class="knopf" id="p86nein">Verwerfen</button>'
+   +'<button class="knopf or" id="p86ja">\u00dcbernehmen</button>'
+   +'</div></div></div>';
+  el("p86nein").onclick=function(){zu();p86Zurueck(id,feld)};
+  el("p86ja").onclick=function(){zu();setz(feld,neu)};
+}
+
+function p86Vorschlag(feld,titel,id,wert,warnung){
+  var alt=S.einst[feld]||"";
+  if(alt.trim()===wert.trim())return melde("Der Vorschlag steht schon drin.");
+  function setze(){var f=el(id);if(f)f.value=wert;setz(feld,wert)}
+  if(!alt.trim()){setze();return}
+  frage(titel+": Vorschlag einsetzen?",
+    (warnung?"<b>"+h(warnung)+"</b><br><br>":"")
+    +"Dein bisheriger Text wird dabei <b>\u00fcberschrieben</b> und ist weg.<br><br>"
+    +"Bisher:<br><br><i>"+p86Kurz(alt)+"</i><br><br>"
+    +"Vorschlag:<br><br><i>"+p86Kurz(wert)+"</i>",
+    "\u00dcberschreiben",setze,true);
+}
+
+function ankerVorschlag(){
+  p86Vorschlag("stil_zusatz","Stil-Anker","anker",
+    "gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung",
+    "Dieser Vorschlag ist f\u00fcr Kan\u00e4le mit einer festen Figur gedacht. Bei einem Kanal ohne Figur passt er nicht.");
+}
+
+
+function bewegVorschlag(){
+  p86Vorschlag("kling_prompt","Bewegung im Bild","bewegfeld",
+    "die Figur bewegt sich lebendig: Gewicht verlagert sich, Haare und Kleidung schwingen mit, kleine Gesten mit den Haenden, Kopf dreht sich leicht, Blick zur Kamera, Kamera bleibt ruhig",
+    "Dieser Vorschlag setzt voraus, dass eine Figur im Bild steht.");
+}
+
+
+function textSchreiben(){
+  var b=el("gsknopf"); if(!b)return;
+  var thema=(el("gsthema")||{}).value||"";
+  b.disabled=true; b.textContent="schreibt…";
+  api("/api/vorschlag?k="+S.kanal,{thema:thema}).then(function(r){
+    b.disabled=false; b.textContent="Schreiben";
+    if(!r||!r.ok)return melde((r&&r.fehler)||"Die Text-KI hat nicht geantwortet");
+    var d={geschichte_teil:0};
+    if(r.thema&&r.thema_aus_liste)d.geschichte_thema=r.thema;
+    var teile=serieTeile(r.text);
+    if(teile.length>1){
+      d.geschichte_serie=r.text;
+      d.geschichte_text=teile[0];
+    } else {
+      d.geschichte_serie="";
+      d.geschichte_text=r.text;
+    }
+    var f=el("gstext"); if(f)f.value=d.geschichte_text;
+    setzViele(d).then(function(){
+      if(teile.length>1)melde((r.titel?r.titel+" · ":"")+teile.length+" Teile gespeichert. Teil 1 steht im Feld.");
+      else melde((r.titel?r.titel+" · ":"")+r.szenen+" Szenen geschrieben. Lies drüber, dann erzeugen.");
+    });
+  }).catch(function(){
+    b.disabled=false; b.textContent="Schreiben";
+    melde("Verbindung abgebrochen. Das Schreiben dauert bis zu zwei Minuten.");
+  });
+}
+
+
+/* ---------- Serien ---------- */
+function serieTeile(text){
+  var roh=(text||"").split(/^[ \t]*#{3,}[ \t]*$/m), raus=[];
+  for(var i=0;i<roh.length;i++){var s=roh[i].trim(); if(s)raus.push(s)}
+  return raus;
+}
+function serieLeiste(){
+  var n=Number(S.einst.serie_teile||1);
+  var teile=serieTeile(S.einst.geschichte_serie||"");
+  if(n<2 && teile.length<2) return '';
+  if(!teile.length) return '<div class="hinw" style="padding-top:0">Serie mit '+n+' Teilen eingestellt. '
+    +'Drück auf Schreiben, dann wird der ganze Fall am Stück geschrieben und hier in Teile zerlegt.</div>';
+  var jetzt=Number(S.einst.geschichte_teil||0);
+  var o='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">';
+  for(var i=0;i<teile.length;i++){
+    o+='<button class="knopf'+(i===jetzt?' or':'')+'" style="flex:1 1 auto;min-width:74px" '
+      +'onclick="teilWaehlen('+i+')">Teil '+(i+1)+'</button>';
+  }
+  o+='</div><div class="hinw" style="padding-top:0">'+teile.length+' Teile. '
+   +'Der gewählte steht unten im Feld — erzeugen, dann den nächsten wählen.</div>';
+  return o;
+}
+function teilWaehlen(i){
+  var teile=serieTeile(S.einst.geschichte_serie||"");
+  if(!teile[i])return;
+  var f=el("gstext"); if(f)f.value=teile[i];
+  setzViele({geschichte_teil:i, geschichte_text:teile[i]});
+}
+
+/* ---------- Start ---------- */
+try{var _t=(location.search.match(/[?&]tab=([a-z]+)/)||[])[1];if(_t)S.tab=_t}catch(e){}
+api("/api/vorlagen").then(function(v){S.vorlagen=v;return api("/api/schluessel")})
+ .then(function(s){S.schluessel=s;return laden()})
+ .then(function(){setInterval(function(){if((S.daten.lauf||{}).laeuft)laden()},4000)});
+</script>
+</body>
+</html>

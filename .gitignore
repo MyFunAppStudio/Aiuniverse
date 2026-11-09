@@ -1,0 +1,41 @@
+# ===================================================================
+#  Was NICHT nach GitHub gehoert.
+#
+#  Wichtigste Zeile ist regeln/ - dort liegen die API-Schluessel und
+#  das Dashboard-Passwort. Die bleiben ausschliesslich auf dem Server.
+# ===================================================================
+
+# Schluessel, Passwoerter, Kanal-Einstellungen
+regeln/
+*.env
+.env
+
+# Erzeugte Medien und Zwischenstaende
+eigene/
+fertige_videos/
+gs/
+pr/
+pk*/
+einblendungen/
+geraeusche/
+*.mp4
+*.mp3
+*.wav
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Sicherungskopien der Patches
+*.bak
+*.bak_*
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Sonstiges
+*.log
+*.tmp
+.DS_Store
