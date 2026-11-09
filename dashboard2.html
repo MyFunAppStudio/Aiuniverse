@@ -7,109 +7,148 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;background:#0B0B0D;color:#F4F4F5;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;padding-bottom:96px}
+body{margin:0;background:#0A0C12;color:#ECF1F8;font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif;padding-bottom:96px}
 h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
-.kopf{padding:16px 16px 12px;background:linear-gradient(180deg,#17171C,#0B0B0D);border-bottom:1px solid #23232B;position:sticky;top:0;z-index:5}
+.kopf{padding:16px 16px 12px;background:linear-gradient(180deg,#141821,#0A0C12);border-bottom:1px solid #202636;position:sticky;top:0;z-index:5}
 .zeile{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.punkt{width:9px;height:9px;border-radius:50%;background:#2ED06E;box-shadow:0 0 10px rgba(46,208,110,.8);flex:none}
-.punkt.aus{background:#4A4A54;box-shadow:none}
+.punkt{width:9px;height:9px;border-radius:50%;background:#3DDC84;box-shadow:0 0 10px rgba(61,220,132,.8);flex:none}
+.punkt.aus{background:#454F6B;box-shadow:none}
 .kname{font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.unter{font-size:11px;color:#7E7E89;margin-top:1px}
-.knopf{background:#1C1C22;border:1px solid #2A2A32;color:#A7A7B2;border-radius:9px;padding:8px 11px;font:inherit;font-size:13px;cursor:pointer}
-.knopf:active{background:#24242C}
-.or{background:#FF6A1A;border:none;color:#140B04;font-weight:700;font-family:"Space Grotesk",sans-serif;letter-spacing:.03em}
-.rot{color:#FF6B6B}
+.unter{font-size:11px;color:#76849E;margin-top:1px}
+.knopf{background:#191D29;border:1px solid #272E42;color:#9EA9BF;border-radius:9px;padding:8px 11px;font:inherit;font-size:13px;cursor:pointer}
+.knopf:active{background:#212738}
+.or{background:#24D3E8;border:none;color:#04161B;font-weight:700;font-family:"Space Grotesk",sans-serif;letter-spacing:.03em}
+.rot{color:#FF7A7A}
 .stand{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:12px}
-.stand>div{background:#15151A;border:1px solid #24242C;border-radius:10px;padding:8px 4px;text-align:center}
-.stand .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#74747F}
+.stand>div{background:#12151E;border:1px solid #212738;border-radius:10px;padding:8px 4px;text-align:center}
+.stand .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#6C7A94}
 .stand .w{font-size:11.5px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gruen{color:#2ED06E}.grau{color:#6E6E79}
+.gruen{color:#3DDC84}.grau{color:#66748E}
 .reiter{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:12px 16px 0}
-.reiter button{background:#15151A;border:1px solid #26262E;border-radius:12px;padding:11px 4px;color:#A7A7B2;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer;line-height:1.3}
-.reiter button.an{background:#FF6A1A;border-color:#FF6A1A;color:#140B04;box-shadow:0 6px 16px rgba(255,106,26,.32)}
-.erkl{display:flex;gap:9px;margin:11px 16px 0;padding:11px 12px;background:rgba(255,106,26,.07);border:1px solid rgba(255,106,26,.25);border-radius:12px;font-size:11.5px;line-height:1.5;color:#C9C9D2}
-.erkl i{width:7px;height:7px;border-radius:50%;background:#FF6A1A;margin-top:5px;flex:none}
+.reiter button{background:#12151E;border:1px solid #23293B;border-radius:12px;padding:11px 4px;color:#9EA9BF;font:inherit;font-size:10.5px;font-weight:600;cursor:pointer;line-height:1.3}
+.reiter button.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;box-shadow:0 6px 16px rgba(36,211,232,.32)}
+.erkl{display:flex;gap:9px;margin:11px 16px 0;padding:11px 12px;background:rgba(36,211,232,.07);border:1px solid rgba(36,211,232,.25);border-radius:12px;font-size:11.5px;line-height:1.5;color:#C0C9DA}
+.erkl i{width:7px;height:7px;border-radius:50%;background:#24D3E8;margin-top:5px;flex:none}
 .inhalt{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
-.karte{background:linear-gradient(180deg,#1A1A20,#141418);border:1px solid #272730;border-radius:16px;padding:4px 13px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
+.karte{background:linear-gradient(180deg,#171B26,#11141C);border:1px solid #242B3E;border-radius:16px;padding:4px 13px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
 .karte.p{padding:13px}
-.kt{font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:#8E8E99;margin:0 0 9px}
-.r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #23232B}
+.kt{font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:#8593AC;margin:0 0 9px}
+.r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #202636}
 .r:last-child{border-bottom:none}
-.r label,.r .lb{font-size:12.5px;color:#C9C9D2}
-.r .hint{font-size:10.5px;color:#7E7E89;margin-top:2px}
-input[type=text],input[type=number],select,textarea{background:#0E0E12;border:1px solid #2C2C35;border-radius:9px;color:#F4F4F5;padding:8px 9px;font:inherit;font-size:12.5px}
+.r label,.r .lb{font-size:12.5px;color:#C0C9DA}
+.r .hint{font-size:10.5px;color:#76849E;margin-top:2px}
+input[type=text],input[type=number],select,textarea{background:#0D1017;border:1px solid #2A3147;border-radius:9px;color:#ECF1F8;padding:8px 9px;font:inherit;font-size:12.5px}
 input[type=text],input[type=number]{text-align:right;width:92px}
 input.breit{text-align:left;width:100%}
 select{width:auto}
 textarea{width:100%;text-align:left;resize:vertical;min-height:92px;line-height:1.55;font-size:12px}
-.sch{width:46px;height:26px;border-radius:999px;background:#2A2A32;position:relative;flex:none;border:none;cursor:pointer;padding:0}
-.sch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#6E6E79;transition:.15s}
-.sch.an{background:#FF6A1A}.sch.an i{left:23px;background:#140B04}
+.sch{width:46px;height:26px;border-radius:999px;background:#272E42;position:relative;flex:none;border:none;cursor:pointer;padding:0}
+.sch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#66748E;transition:.15s}
+.sch.an{background:#24D3E8}.sch.an i{left:23px;background:#04161B}
 .pills{display:flex;gap:5px;flex-wrap:wrap}
-.pills button{background:#1E1E25;border:1px solid #2C2C35;color:#8E8E99;border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
-.pills button.an{background:#FF6A1A;border-color:#FF6A1A;color:#140B04;font-weight:600}
-.liste .e{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #202028}
+.pills button{background:#1B1F2C;border:1px solid #2A3147;color:#8593AC;border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
+.pills button.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;font-weight:600}
+.liste .e{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1D222F}
 .liste .e:last-child{border-bottom:none}
 .e .tx{flex:1;min-width:0}
 .e .ti{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.e .me{font-size:10.5px;color:#7E7E89;margin-top:2px}
-.ik{width:34px;height:34px;border-radius:9px;background:#1E1E25;border:1px solid #2C2C35;color:#E6E6EA;font-size:14px;cursor:pointer;flex:none}
-.leer{color:#6E6E79;font-size:12px;padding:12px 0;text-align:center}
-.leiste{position:fixed;left:0;right:0;bottom:0;padding:11px 16px calc(14px + env(safe-area-inset-bottom));background:#0B0B0D;border-top:1px solid #23232B;display:flex;flex-wrap:wrap;align-items:center;gap:11px;z-index:6}
-.lauf{flex:0 0 100%;display:none;align-items:center;gap:9px;padding:8px 11px;margin:-2px 0 2px;background:#17171C;border:1px solid #2A2A33;border-radius:11px;font-size:12.5px;color:#D2D2DA}
+.e .me{font-size:10.5px;color:#76849E;margin-top:2px}
+.ik{width:34px;height:34px;border-radius:9px;background:#1B1F2C;border:1px solid #2A3147;color:#E6E6EA;font-size:14px;cursor:pointer;flex:none}
+.leer{color:#66748E;font-size:12px;padding:12px 0;text-align:center}
+.leiste{position:fixed;left:0;right:0;bottom:0;padding:11px 16px calc(14px + env(safe-area-inset-bottom));background:#0A0C12;border-top:1px solid #202636;display:flex;flex-wrap:wrap;align-items:center;gap:11px;z-index:6}
+.lauf{flex:0 0 100%;display:none;align-items:center;gap:9px;padding:8px 11px;margin:-2px 0 2px;background:#141821;border:1px solid #2A2A33;border-radius:11px;font-size:12.5px;color:#D2D2DA}
 .lauf.an{display:flex}
 .lauf .pk{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#E8711A;animation:pul 1.3s ease-in-out infinite}
 .lauf .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lauf .zt{flex:0 0 auto;color:#9A9AA4;font-variant-numeric:tabular-nums}
+.lauf .zt{flex:0 0 auto;color:#919DB4;font-variant-numeric:tabular-nums}
 @keyframes pul{0%,100%{opacity:1}50%{opacity:.25}}
 .leiste .pr{flex:none}
-.leiste .pr .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#74747F}
+.leiste .pr .t{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#6C7A94}
 .leiste .pr .w{font-size:19px;font-weight:700;font-family:"Space Grotesk",sans-serif}
 .gen{flex:1;border-radius:14px;padding:16px 10px;font-size:15px}
-.dim{position:fixed;inset:0;background:rgba(5,5,7,.78);z-index:20;display:flex;align-items:flex-end;padding:16px}
-.dlg{background:linear-gradient(180deg,#1D1D24,#141418);border:1px solid #33333E;border-radius:22px;padding:20px;width:100%;box-shadow:0 28px 60px rgba(0,0,0,.8)}
+.dim{position:fixed;inset:0;background:rgba(5,6,10,.78);z-index:20;display:flex;align-items:flex-end;padding:16px}
+.dlg{background:linear-gradient(180deg,#1D1D24,#11141C);border:1px solid #313A54;border-radius:22px;padding:20px;width:100%;box-shadow:0 28px 60px rgba(0,0,0,.8)}
 .dlg h2{margin:0 0 4px;font-size:18px}
-.dlg p{margin:0 0 14px;font-size:12.5px;color:#8E8E99;line-height:1.5}
+.dlg p{margin:0 0 14px;font-size:12.5px;color:#8593AC;line-height:1.5}
 .dlg .zw{display:flex;gap:10px}
 .dlg .zw button{flex:1;border-radius:14px;padding:15px 8px;font-size:14px}
-.log{font:11px/1.6 ui-monospace,monospace;color:#9A9AA4;white-space:pre-wrap;word-break:break-word;max-height:170px;overflow:auto}
-.hinw{font-size:10.5px;color:#6E6E79;padding:4px 0 10px}
+.log{font:11px/1.6 ui-monospace,monospace;color:#919DB4;white-space:pre-wrap;word-break:break-word;max-height:170px;overflow:auto}
+.hinw{font-size:10.5px;color:#66748E;padding:4px 0 10px}
 .kind{padding-left:16px}
-.szn{background:#15151A;border:1px solid #24242C;border-radius:12px;padding:10px;margin-bottom:9px}
+.szn{background:#12151E;border:1px solid #212738;border-radius:12px;padding:10px;margin-bottom:9px}
 .szn .kopf{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:static;top:auto;z-index:auto;padding:0;background:none;border-bottom:0}
-.szn .nr{font-size:10px;color:#74747F;letter-spacing:.08em;flex:1}
-.szn .bildchen{width:100%;height:132px;object-fit:cover;border-radius:9px;background:#0B0B0D;display:block}
+.szn .nr{font-size:10px;color:#6C7A94;letter-spacing:.08em;flex:1}
+.szn .bildchen{width:100%;height:132px;object-fit:cover;border-radius:9px;background:#0A0C12;display:block}
 .szn textarea{width:100%;min-height:58px;margin-top:8px}
 .szz{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
-.szh{font-size:10.5px;color:#7E7E89}
-.hak{display:flex;align-items:center;gap:6px;font-size:12px;color:#A7A7B2;cursor:pointer}
-.hak input{width:17px;height:17px;accent-color:#FF6A1A}
+.szh{font-size:10.5px;color:#76849E}
+.hak{display:flex;align-items:center;gap:6px;font-size:12px;color:#9EA9BF;cursor:pointer}
+.hak input{width:17px;height:17px;accent-color:#24D3E8}
 .hak.aus{opacity:.45}
 .szn select,.szn input[type=text]{font-size:12px}
 .raster{display:grid;grid-template-columns:1fr 1fr;gap:7px}
-.zl{background:#15151A;border:1px solid #23232B;border-radius:9px;padding:7px 9px}
-.zt{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#74747F}
+.zl{background:#12151E;border:1px solid #202636;border-radius:9px;padding:7px 9px}
+.zt{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#6C7A94}
 .zw{font-size:12px;font-weight:600;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.me.warn{color:#FF6A1A}
+.me.warn{color:#24D3E8}
 .suchf{margin:12px 16px 0;position:relative}
-.suchf input[type=text]{width:100%;box-sizing:border-box;text-align:left;background:#15151A;border:1px solid #26262E;border-radius:12px;padding:11px 13px;color:#F4F4F5;font:inherit;font-size:13.5px}
+.suchf input[type=text]{width:100%;box-sizing:border-box;text-align:left;background:#12151E;border:1px solid #23293B;border-radius:12px;padding:11px 13px;color:#ECF1F8;font:inherit;font-size:13.5px}
 .suchf input::placeholder{color:#6B6B78}
 .sucherg:empty{display:none}
 .sucherg{position:absolute;left:0;right:0;top:46px;z-index:40;background:#17171D;border:1px solid #2E2E38;border-radius:12px;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.6)}
-.sucherg div{padding:11px 13px;border-bottom:1px solid #22222A;font-size:13px;cursor:pointer}
+.sucherg div{padding:11px 13px;border-bottom:1px solid #1F2432;font-size:13px;cursor:pointer}
 .sucherg div:last-child{border-bottom:none}
-.sucherg div:active{background:#22222A}
-.sucherg b{color:#FF6A1A;font-weight:600}
+.sucherg div:active{background:#1F2432}
+.sucherg b{color:#24D3E8;font-weight:600}
 .sucherg span{display:block;color:#7E7E8B;font-size:11px;margin-top:2px}
 .treffer{animation:blitz 2s ease-out}
-@keyframes blitz{0%,55%{background:rgba(255,106,26,.22)}100%{background:transparent}}
-.spaeter{margin:0 0 4px;padding:10px 12px;background:#15151A;border:1px dashed #33333E;border-radius:11px;font-size:11.5px;line-height:1.5;color:#8A8A96}
+@keyframes blitz{0%,55%{background:rgba(36,211,232,.22)}100%{background:transparent}}
+.spaeter{margin:0 0 4px;padding:10px 12px;background:#12151E;border:1px dashed #313A54;border-radius:11px;font-size:11.5px;line-height:1.5;color:#8A8A96}
 input[type=range]{-webkit-appearance:none;appearance:none;height:16px;border-radius:8px;
- outline:none;border:1px solid #2C2C35;margin:0;cursor:pointer}
+ outline:none;border:1px solid #2A3147;margin:0;cursor:pointer}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;
- border-radius:50%;background:#fff;border:2px solid #0B0B0D;box-shadow:0 1px 4px rgba(0,0,0,.7)}
+ border-radius:50%;background:#fff;border:2px solid #0A0C12;box-shadow:0 1px 4px rgba(0,0,0,.7)}
 input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#fff;
- border:2px solid #0B0B0D}
+ border:2px solid #0A0C12}
+
+/* Minus/Plus statt Schieberegler */
+.stufen{display:flex;align-items:center;gap:4px}
+.stufen .stuf{width:38px;height:38px;flex:none;border-radius:10px;border:1px solid #2A3147;
+  background:#1B1F2C;color:#ECF1F8;font-size:19px;font-weight:700;line-height:1;cursor:pointer}
+.stufen .stuf:active{background:#24D3E8;color:#04161B;border-color:#24D3E8}
+.stufwert{min-width:52px;text-align:center;font-size:14px;font-weight:700;color:#ECF1F8;
+  font-variant-numeric:tabular-nums}
+.stufwert i{font-style:normal;color:#8593AC;font-size:11px;margin-left:2px}
+
+/* Farbfelder statt Farbregler */
+.farbfeld{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:214px}
+.farbfeld .fb{width:30px;height:30px;flex:none;border-radius:8px;cursor:pointer;
+  border:2px solid #2A3147;padding:0}
+.farbfeld .fb.an{border-color:#ECF1F8;box-shadow:0 0 0 2px #24D3E8}
+
+/* Eingeklappte Abschnitte in den Einstellungen */
+details.falt{background:linear-gradient(180deg,#171B26,#11141C);border:1px solid #242B3E;
+  border-radius:16px;margin:0 0 11px;overflow:hidden}
+details.falt>summary{list-style:none;cursor:pointer;padding:15px 15px;font-family:"Space Grotesk",sans-serif;
+  font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#C0C9DA;
+  display:flex;align-items:center;justify-content:space-between}
+details.falt>summary::-webkit-details-marker{display:none}
+details.falt>summary::after{content:"▾";color:#6C7A94;font-size:15px;transition:transform .15s}
+details.falt[open]>summary::after{transform:rotate(180deg)}
+details.falt[open]>summary{color:#24D3E8;border-bottom:1px solid #202636}
+details.falt .faltin{padding:12px 0 2px}
+details.falt .faltin>.karte{box-shadow:none;border-radius:0;border-left:0;border-right:0;
+  background:transparent;border-color:#1F2432}
+details.falt .faltin>.karte:last-child{border-bottom:0}
+
+/* Zweitrangiges je Szene, eingeklappt */
+details.mehr{margin:9px 0 2px;border-top:1px solid #202636;padding-top:4px}
+details.mehr>summary{list-style:none;cursor:pointer;font-size:12px;color:#8593AC;
+  padding:7px 0;display:flex;align-items:center;gap:6px}
+details.mehr>summary::-webkit-details-marker{display:none}
+details.mehr>summary::before{content:"▸";color:#6C7A94;font-size:12px}
+details.mehr[open]>summary::before{content:"▾"}
+details.mehr[open]>summary{color:#24D3E8}
 </style>
 </head>
 <body>
@@ -145,12 +184,9 @@ input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;bac
 var S={kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
 
 var TABS=[
- ["start","Übersicht","Hier startest du ein Video von Hand, schaltest die Automatik und siehst die fertigen Videos."],
- ["prompt","Prompt","Worüber der Kanal spricht und in welchem Ton. Die Themenliste wird von oben abgearbeitet, erledigte kommen nicht wieder."],
- ["figuren","Charaktere","Figuren mit fester Stimme und freigestellten Posen. Im Szenen-Editor waehlst du, wer wo im Bild steht."],
- ["video","Video & Ton","Wie das Video aussieht und klingt: Format, Bildwechsel, Bewegung, Stimme, Musik."],
- ["texte","Text & Einblendung","Untertitel und Einblendungen. Schrift, Größe, Höhe im Bild, Farbe des mitlaufenden Wortes."],
- ["technik","KI & Technik","Welcher Dienst welche Arbeit macht, was er kostet und ob sein Schlüssel hinterlegt ist."]
+ ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
+ ["darsteller","Darsteller","Die beiden Figuren, die in jedem Video erklären."],
+ ["einst","Einstellungen","Format, Ton, Untertitel, Abspann, Modelle und Kanäle."]
 ];
 
 function h(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
@@ -161,7 +197,7 @@ function frage(titel,text,knopf,fn,gefahr){
   el("dialog").innerHTML='<div class="dim" onclick="if(event.target===this)zu()"><div class="dlg">'
    +'<h2>'+h(titel)+'</h2><p>'+text+'</p><div class="zw">'
    +'<button class="knopf" onclick="zu()">Abbrechen</button>'
-   +'<button class="knopf '+(gefahr?"":"or")+'" id="ja" style="'+(gefahr?"background:#B02A2A;border-color:#B02A2A;color:#fff;font-weight:700":"")+'">'+h(knopf)+'</button>'
+   +'<button class="knopf '+(gefahr?"":"or")+'" id="ja" style="'+(gefahr?"background:#9B2C3B;border-color:#9B2C3B;color:#fff;font-weight:700":"")+'">'+h(knopf)+'</button>'
    +'</div></div></div>';
   el("ja").onclick=function(){zu();fn()};
 }
@@ -232,12 +268,13 @@ function zeichne(){
     return '<button class="'+(S.tab===t[0]?"an":"")+'" onclick="zeige(\''+t[0]+'\')">'+h(t[1])+'</button>'}).join("");
   var e=TABS.filter(function(t){return t[0]===S.tab})[0];
   el("erkl").textContent=e?e[2]:"Kanäle anlegen, klonen oder löschen. Ein Kanal macht genau eine Videoart.";
-  el("leiste").style.display=(S.tab==="kanaele")?"none":"flex";
+  /* Der Erzeugen-Balken gehoert zum Machen, nicht zu den Einstellungen. */
+  el("leiste").style.display=(S.tab==="machen")?"flex":"none";
   el("preis").textContent=(S.preis.gesamt!=null?S.preis.gesamt.toFixed(2).replace(".",","):"—")+" €";
-  var f={start:tStart,prompt:tPrompt,figuren:tFiguren,video:tVideo,texte:tTexte,technik:tTechnik,kanaele:tKanaele}[S.tab]||tStart;
+  var f={machen:tMachen,darsteller:tDarstellerSeite,einst:tEinst,kanaele:tKanaele}[S.tab]||tMachen;
   el("inhalt").innerHTML=f();
   laufLeiste();
-  if(S.tab==="texte")p70Lade();
+  if(S.tab==="einst")p70Lade();
 }
 
 /* ---------- Bausteine ---------- */
@@ -293,26 +330,27 @@ function frZeig(id,feld,speichern){
   if(speichern)setz(feld,hex);
 }
 function farbregler(feld,wert,standard){
+  /* Keine Schieberegler. Antippbare Felder - am Handy schneller
+     und genauer als drei Regler zu ziehen. */
   var hex=String(wert||standard||'#FFFFFF').toUpperCase();
-  var p=frHsl(hex), id='fr'+feld.replace(/[^a-z0-9]/gi,'');
-  var ruf=function(sp){return 'frZeig(\''+id+'\',\''+feld+'\','+(sp?'1':'0')+')'};
-  var reg=function(teil,wert,max,hg){
-    return '<input type="range" id="'+id+'_'+teil+'" min="0" max="'+max+'" value="'+wert+'"'
-     +' style="width:100%;background:'+hg+'" oninput="'+ruf(0)+'" onchange="'+ruf(1)+'">';
-  };
-  return '<div style="display:flex;align-items:center;gap:9px">'
-   +'<div id="'+id+'_v" style="width:36px;height:36px;flex:none;border-radius:9px;'
-   +'border:1px solid #2C2C35;background:'+hex+'"></div>'
-   +'<div style="display:flex;flex-direction:column;gap:6px;width:160px">'
-   + reg('h',p[0],360,'linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)')
-   + reg('s',p[1],100,'linear-gradient(90deg,'+frHex(p[0],0,p[2])+','+frHex(p[0],100,p[2])+')')
-   + reg('l',p[2],100,'linear-gradient(90deg,#000,'+frHex(p[0],p[1],50)+',#fff)')
-   +'</div></div>';
+  var tafel=[
+    ['#FFFFFF','Weiss'],['#FFD400','Gelb'],['#FFA02E','Orange'],['#FF4D4D','Rot'],
+    ['#FF5FA2','Pink'],['#B06BFF','Violett'],['#4D8BFF','Blau'],['#24D3E8','Cyan'],
+    ['#3DDC84','Gruen'],['#C8FF3D','Limette'],['#9EA9BF','Grau'],['#000000','Schwarz']
+  ];
+  var o='<div class="farbfeld">';
+  tafel.forEach(function(f){
+    o+='<button class="fb'+(f[0]===hex?' an':'')+'" title="'+f[1]+'"'
+      +' style="background:'+f[0]+'"'
+      +' onclick="setz(\''+feld+'\',\''+f[0]+'\')"></button>';
+  });
+  o+='</div>';
+  return o;
 }
 function farbStandard(welche){
   var w=(S.einst.untertitel_stil||"klassisch");
   if(welche==="aktiv")return w==="wortweise"?"#FFFFFF":"#FFD400";
-  return w==="wortweise"?"#B4B4B4":"#FFFFFF";
+  return w==="wortweise"?"#AAB4C6":"#FFFFFF";
 }
 function reglerZeig(id,feld,speichern){
   var v=+el(id).value;
@@ -320,16 +358,31 @@ function reglerZeig(id,feld,speichern){
   if(speichern)setz(feld,v,1);
 }
 function regler(feld,wert,standard,mn,mx,einheit){
-  var v=(wert==null||wert==='')?standard:wert;
+  /* Keine Schieberegler mehr. Minus und Plus, dazwischen der Wert.
+     Lange gedrueckt halten geht in Zehnerschritten. */
+  var v=Number((wert==null||wert==='')?standard:wert);
   var id='rg'+feld.replace(/[^a-z0-9]/gi,'');
-  var ruf=function(sp){return 'reglerZeig(\''+id+'\',\''+feld+'\','+(sp?'1':'0')+')'};
-  return '<div style="display:flex;align-items:center;gap:8px">'
-   +'<span id="'+id+'_z" class="zahl" style="width:30px;text-align:right;font-size:13px;font-weight:700">'+h(v)+'</span>'
-   +(einheit?'<span class="hint" style="width:10px">'+h(einheit)+'</span>':'')
-   +'<input type="range" id="'+id+'" min="'+mn+'" max="'+mx+'" value="'+h(v)+'"'
-   +' style="width:140px;background:linear-gradient(90deg,#1A1A20,#5A5A6A)"'
-   +' oninput="'+ruf(0)+'" onchange="'+ruf(1)+'">'
-   +'</div>';
+  var spanne=Math.abs(Number(mx)-Number(mn));
+  var gross=spanne>120?10:(spanne>40?5:1);
+  function t(zeichen,schritt,titel){
+    return '<button class="stuf" title="'+titel+'" onclick="stufe(\''+feld+'\','+schritt
+      +','+mn+','+mx+')">'+zeichen+'</button>';
+  }
+  return '<div class="stufen">'
+   + t('&minus;',-gross,'kleiner')
+   + '<span id="'+id+'_z" class="stufwert">'+h(v)+(einheit?'<i>'+h(einheit)+'</i>':'')+'</span>'
+   + t('+',gross,'groesser')
+   + '</div>';
+}
+
+function stufe(feld,schritt,mn,mx){
+  var jetzt=Number(S.einst[feld]);
+  if(isNaN(jetzt))jetzt=0;
+  var neu=jetzt+Number(schritt);
+  if(neu<Number(mn))neu=Number(mn);
+  if(neu>Number(mx))neu=Number(mx);
+  if(neu===jetzt)return;
+  setz(feld,neu,1);
 }
 function utStandard(welche){
   /* genauso gerechnet wie in szenen_video.py, bei 1920 Pixeln Hoehe */
@@ -382,14 +435,39 @@ function setz(feld,wert,zahlFeld){
 }
 
 /* ---------- Reiter ---------- */
-function tStart(){
-  var l=S.daten.lauf||{};
-  var o=standKarte();
-  o+='<div class="karte"><div class="r"><div><div class="lb">Kanalname</div>'
+function tStartKopf(){
+  /* Nur noch, was du vor jedem Video anfasst. Alles Dauerhafte steht
+     unter Einstellungen in "Länge & Abspann". */
+  return '<div class="karte"><div class="r"><div><div class="lb">Kanalname</div>'
    +'<div class="hint">'+h((kanalDaten()||{}).name||"")+'</div></div>'
-   +'<button class="knopf" onclick="kanalUmbenennen()">ändern</button></div></div>';
-  o+='<div class="karte">'
+   +'<button class="knopf" onclick="kanalUmbenennen()">ändern</button></div></div>'
+   +'<div class="karte">'
    +reihe("Thema von Hand",'<input type="text" id="thema" placeholder="leer = nächstes aus der Liste" style="width:160px;text-align:left">',"leer lassen nimmt das nächste Thema")
+   +'</div>';
+}
+
+function tMusik(){
+  var d=S.szenen;
+  if(!d){ladeSzenen();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var o='';
+  o+='<div class="karte p"><h2 class="kt">Musik</h2><div class="liste">';
+  if(!d.musik)o+='<div class="leer">kein eigenes Lied — dann nimmt er die Automatik-Musik</div>';
+  else o+='<div class="e"><div class="tx"><div class="ti">'+h(d.musik)+'</div><div class="me">läuft unter dem ganzen Video</div></div>'
+        +'<button class="ik rot" onclick="musikWeg()">✕</button></div>';
+  o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="hochladen(\'musik\')">+ Lied hochladen</button>'
+   +reihe("Leise unter der Stimme",zahl("musik_leise",(S.einst.musik_leise==null?12:S.einst.musik_leise)),"in Prozent")
+   +reihe("Laut ohne Stimme",zahl("musik_laut",(S.einst.musik_laut==null?75:S.einst.musik_laut)),"in Prozent")
+   +'<div class="r"><div><div class="lb">Ohne Stimme lauter</div><div class="hint">'
+   +(S.einst.musik_anheben===false?"aus — bleibt durchgehend leise":"ab etwa 2,5 Sekunden Stille")+'</div></div>'
+   +schalter("musik_anheben",S.einst.musik_anheben!==false)+'</div>'
+   +reihe("Einblenden",zahl("musik_ein",(S.einst.musik_ein==null?1:S.einst.musik_ein)),"Sekunden am Anfang")
+   +reihe("Ausblenden",zahl("musik_aus",(S.einst.musik_aus==null?1.5:S.einst.musik_aus)),"Sekunden am Ende")
+   +'</div>';
+  return o;
+}
+
+function tAblauf(){
+  return '<div class="karte">'
    +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
    +reihe("Abspann",schalter("abspann_an",S.einst.abspann_an!==false),"feste Schlusstafel, kostet nichts")
    +(S.einst.abspann_an===false?'':(
@@ -397,15 +475,21 @@ function tStart(){
      +reihe("Abspann: obere Zeile",text("abspann_zeile1",S.einst.abspann_zeile1||"TEIL 2 FOLGT"))
      +reihe("Abspann: untere Zeile",text("abspann_zeile2",S.einst.abspann_zeile2||"FOLGEN · LIKEN · KOMMENTIEREN"))))
    +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde — danach wird die Wortzahl für die Länge berechnet")
-   +'</div>';
-  o+='<div class="karte"><div class="r"><div><div class="lb">Automatik</div><div class="hint">'
-    +(S.einst.automatik_an?"läuft":"ausgeschaltet")+'</div></div>'+schalter("automatik_an",!!S.einst.automatik_an)+'</div></div>';
-  if(l.laeuft||(l.zeilen&&l.zeilen.length)){
-    o+='<div class="karte p"><h2 class="kt">'+(l.laeuft?"Läuft gerade":"Letzter Lauf")+'</h2><div class="log">'
-      +h((l.zeilen||[]).join("\n")||"—")+'</div>'
-      +(l.laeuft?'<button class="knopf" style="width:100%;margin-top:10px" onclick="abbrechen()">Abbrechen</button>':'')+'</div>';
-  }
-  o+='<div class="karte p"><h2 class="kt">Fertige Videos</h2><div class="liste">';
+   +'</div>'
+   +'<div class="karte"><div class="r"><div><div class="lb">Automatik</div><div class="hint">'
+   +(S.einst.automatik_an?"läuft":"ausgeschaltet")+'</div></div>'+schalter("automatik_an",!!S.einst.automatik_an)+'</div></div>';
+}
+
+function tLauf(){
+  var l=S.daten.lauf||{};
+  if(!(l.laeuft||(l.zeilen&&l.zeilen.length)))return '';
+  return '<div class="karte p"><h2 class="kt">'+(l.laeuft?"Läuft gerade":"Letzter Lauf")+'</h2><div class="log">'
+    +h((l.zeilen||[]).join("\n")||"—")+'</div>'
+    +(l.laeuft?'<button class="knopf" style="width:100%;margin-top:10px" onclick="abbrechen()">Abbrechen</button>':'')+'</div>';
+}
+
+function tVideos(){
+  var o='<div class="karte p"><h2 class="kt">Fertige Videos</h2><div class="liste">';
   if(!S.videos.length)o+='<div class="leer">noch keine</div>';
   S.videos.forEach(function(v){
     o+='<div class="e"><div class="tx"><div class="ti">'+h(v.titel)+'</div><div class="me">'+h(v.zeit)+' · '+v.mb+' MB</div></div>'
@@ -415,6 +499,48 @@ function tStart(){
   });
   o+='</div><div class="hinw">Vor jedem Löschen kommt eine Abfrage.</div></div>';
   return o;
+}
+
+function tStart(){
+  return standKarte()+tStartKopf()+tLauf()+tVideos();
+}
+
+function tMachen(){
+  /* Der Ablauf von oben nach unten: was gebaut wird, woraus, dann die
+     Szenen mit ihren Clips, dann was gerade laeuft und was fertig ist. */
+  return tStartKopf()+tPrompt()+tLauf()+tVideos();
+}
+
+function tDarstellerSeite(){
+  var o=tDarsteller();
+  if(S.alt)o+=tFigurenNurAlt();
+  return o;
+}
+
+function falte(titel,inhalt,offen){
+  return '<details class="falt"'+(offen?' open':'')+'>'
+   +'<summary>'+h(titel)+'</summary>'
+   +'<div class="faltin">'+inhalt+'</div></details>';
+}
+
+function tEinst(){
+  var o=falte("Überblick",standKarte(),false)
+   +falte("Länge & Abspann",tAblauf(),false)
+   +falte("Video & Ton",tVideo(),false)
+   +falte("Musik",tMusik(),false)
+   +falte("Untertitel & Einblendung",tTexte(),false)
+   +falte("KI & Technik",tTechnik(),false)
+   +falte("Kanäle",tKanaele(),false);
+  o+='<div class="karte"><div class="r"><div><div class="lb">Alte Funktionen</div>'
+   +'<div class="hint">aufgeklebte Figuren, Avatar, altes Animationsmodell</div></div>'
+   +'<button class="sch'+(S.alt?" an":"")+'" onclick="altUm()"><i></i></button></div></div>';
+  return o;
+}
+
+function altUm(){
+  S.alt=!S.alt;
+  try{localStorage.setItem("aiu_alt",S.alt?"1":"0")}catch(e){}
+  zeichne();
 }
 
 function tPrompt(){
@@ -453,11 +579,11 @@ function tThemen(){
 }
 
 function tFiguren(){
-  return tFiguren();
+  return tDarstellerSeite();
 }
 function tFigurenAlt(){
   return '<div class="karte p"><h2 class="kt">Charaktere &amp; Bilder</h2>'
-   +'<p style="font-size:12.5px;color:#9A9AA4;line-height:1.55;margin:0">Feste Figuren mit fest zugeordneter Stimme, frei erfundene aus dem Stimmenvorrat, '
+   +'<p style="font-size:12.5px;color:#919DB4;line-height:1.55;margin:0">Feste Figuren mit fest zugeordneter Stimme, frei erfundene aus dem Stimmenvorrat, '
    +'Gespräche zwischen zwei Figuren und eigene Bilder zum Hochladen. Das ist der nächste Schritt — '
    +'der Motor dafür muss zuerst gebaut werden.</p></div>';
 }
@@ -488,7 +614,7 @@ function tVideo(){
    +'</div>';
   if(!S.modelle)ladeModelle();
   var kl=(S.modelle&&((S.modelle.apis||{}).video||[]).filter(function(e){return e.url&&e.key})[0])||null;
-  o+='<div class="karte p"><h2 class="kt">KI-Animation</h2>'
+  if(S.alt)o+='<div class="karte p"><h2 class="kt">KI-Animation</h2>'
    +(kl?reihe("Anteil bewegter Szenen",zahl("kling_anteil",(S.einst.kling_anteil==null?0:S.einst.kling_anteil)),
        "Prozent, nur für Szenen ohne Anführungszeichen. Wo die Figur redet, gibt es immer einen Sprechclip.")
       +'<div style="padding:11px 0 4px">'
@@ -624,7 +750,7 @@ function p70Karte(){
    +'<button class="knopf" style="padding:5px 12px" onclick="p70Zu()">ausblenden</button></div>'
    +'<div style="display:flex;gap:11px;align-items:flex-start">'
    +'<div id="p70b" onclick="p70Gross()" style="position:relative;width:128px;height:228px;flex:none;'
-   +'border-radius:10px;overflow:hidden;border:1px solid #2C2C35;cursor:pointer;background-color:#15151A;'
+   +'border-radius:10px;overflow:hidden;border:1px solid #2A3147;cursor:pointer;background-color:#12151E;'
    +'background-position:center;background-size:cover;background-repeat:no-repeat'
    +(P70.bild?';background-image:url(\''+P70.bild+'\')':'')+'">'
    +p70Zonen()
@@ -632,7 +758,7 @@ function p70Karte(){
    +';padding:10px;text-align:center;line-height:1.4;font-size:11px">Noch kein Bild. '
    +'Lade im Szenen-Editor eins hoch.</div>'
    +'<div id="p70sp" style="display:none;position:absolute;left:0;right:0;bottom:0;height:3px;'
-   +'background:linear-gradient(90deg,#FF8A45,#FFD400)"></div>'
+   +'background:linear-gradient(90deg,#6BE4F2,#FFD400)"></div>'
    +'</div>'
    +'<div style="flex:1;min-width:0">'
    +'<div class="pills" style="flex-wrap:wrap">'+P70_PLATT.map(function(x){
@@ -687,7 +813,7 @@ function tTexte(){
          ["links_oben","links oben"],["mitte_oben","mitte oben"],["rechts_oben","rechts oben"]]))
      +reihe("Größe",zahl("eb_groesse",(S.einst.eb_groesse==null?7:S.einst.eb_groesse)),"Prozent der Bildhöhe")
      +reihe("Wie lange",zahl("eb_dauer",(S.einst.eb_dauer==null?2.6:S.einst.eb_dauer)),"Sekunden je Einblendung")
-     +reihe("Farbe",farbregler("eb_farbe",S.einst.eb_farbe,"#FF6A1A"),"Farbton, Saettigung, Helligkeit")
+     +reihe("Farbe",farbregler("eb_farbe",S.einst.eb_farbe,"#24D3E8"),"Farbton, Saettigung, Helligkeit")
      +'<div class="hinw" style="margin:6px 0 10px">Die Grafik wird vom Code gezeichnet — du musst nichts hochladen. '
      +'Sie fliegt ein und wieder raus. Steht deine Figur rechts unten, nimm für die Einblendung die andere Seite.</div>'
      +'</div>';
@@ -702,8 +828,9 @@ function tTechnik(){
    +zeileDienst("Text · Claude",a.text,"Skript, Titel, Beschreibung",(p.text||0).toFixed(2)+" €")
    +zeileDienst("Bild · Flux Pro",a.bilder,(p.bilder||0)+" Bilder · "+(p.je_bild||0).toFixed(2)+" € je Bild",(((p.bilder||0)*(p.je_bild||0))||0).toFixed(2)+" €")
    +zeileDienst("Stimme",a.stimme,"über fal.ai",(p.stimme||0).toFixed(2)+" €")
-   +zeileDienst("Animation · Kling",a.animation,"noch nicht eingerichtet","—")
-   +zeileDienst("Avatar · Sprechclips",a.avatar,"nicht eingerichtet","—")
+   +zeileDienst("Referenzclip · Kling",a.ref,"noch nicht eingerichtet","—")
+   +(S.alt?zeileDienst("Animation · Kling",a.animation,"noch nicht eingerichtet","—")
+          +zeileDienst("Avatar · Sprechclips",a.avatar,"nicht eingerichtet","—"):"")
    +'</div>';
   o+='<div class="karte p"><h2 class="kt">Guthaben</h2>'
    +'<div class="r" style="padding-top:0"><div><div class="lb">fal.ai</div><div class="hint">Bilder und Stimme</div></div>'
@@ -731,7 +858,7 @@ function tKanaele(){
     var vn=(S.vorlagen[k.vorlage]||{}).name||k.vorlage;
     o+='<div class="e'+(k.eltern?" kind":"")+'">'
      +'<span class="punkt'+(k.aktiv?"":" aus")+'"></span>'
-     +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+(k.key===S.kanal?' <span style="color:#FF8A45">•</span>':'')+'</div>'
+     +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+(k.key===S.kanal?' <span style="color:#6BE4F2">•</span>':'')+'</div>'
      +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(vn)+' · '+h((k.sprachen||["de"])[0])+' · '+k.videos+' Videos</div></div>'
      +(k.eltern?'<button class="ik" title="lösen" onclick="fragLoesen(\''+k.key+'\')">⛓</button>':'')
      +'<button class="ik rot" onclick="fragKanalWeg(\''+k.key+'\',\''+h(k.name).replace(/'/g,"")+'\')">✕</button></div>';
@@ -764,7 +891,7 @@ function tKanaele(){
 /* ---------- Aktionen ---------- */
 function kanalMerken(k){try{localStorage.setItem("aiu_kanal",k||"")}catch(e){}}
 function kanalGemerkt(){try{return localStorage.getItem("aiu_kanal")||""}catch(e){return ""}}
-function waehle(k){S.kanal=k;kanalMerken(k);S.tab="start";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.gs=null;S.arten=null;laden()}
+function waehle(k){S.kanal=k;kanalMerken(k);S.tab="machen";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.gs=null;S.arten=null;laden()}
 function spiel(o){window.open("/video/"+o,"_blank")}
 function herunter(o){location.href="/laden/"+encodeURIComponent(o)}
 function jn(x){return x?"an":"aus"}
@@ -902,12 +1029,14 @@ function tTechnik(){
    +(S.guthaben?(S.guthaben.ok?Number(S.guthaben.betrag).toFixed(2)+" "+S.guthaben.waehrung:h(S.guthaben.text)):"—")
    +'</span><button class="knopf" onclick="holGuthaben()">abrufen</button></div></div></div>';
 
-  (m.slots||[]).forEach(function(s){
+  (m.slots||[]).filter(function(s){
+    return S.alt||(s!=="avatar"&&s!=="video");
+  }).forEach(function(s){
     var liste=(m.apis||{})[s]||[];
     o+='<div class="karte p"><h2 class="kt">'+h(SLOTNAME[s]||s)+'</h2><div class="liste">';
     if(!liste.length)o+='<div class="leer">nichts eingetragen</div>';
     liste.forEach(function(e,i){
-      o+='<div class="e"><button class="ik" style="'+(e.aktiv?"background:#FF6A1A;border-color:#FF6A1A;color:#140B04":"")+'" '
+      o+='<div class="e"><button class="ik" style="'+(e.aktiv?"background:#24D3E8;border-color:#24D3E8;color:#04161B":"")+'" '
         +'onclick="modellAktiv(\''+s+'\','+i+')" title="aktiv schalten">'+(e.aktiv?"●":"○")+'</button>'
         +'<div class="tx" onclick="modellBearbeiten(\''+s+'\','+i+')"><div class="ti">'+h(e.name||"ohne Namen")+'</div>'
         +'<div class="me">'+h(e.url||"keine Adresse")+(e.preis!==""&&e.preis!=null?" · "+h(e.preis)+" € "+(EINHEIT[s]||""):"")
@@ -917,7 +1046,15 @@ function tTechnik(){
     o+='</div><button class="knopf" style="width:100%;margin-top:9px" onclick="modellNeu(\''+s+'\')">+ Eigenes Modell</button></div>';
   });
   o+=tgKarte();
-  o+='<div class="karte p"><h2 class="kt">Avatar einrichten</h2>'
+  if(!S.alt)o+='<div class="karte p"><h2 class="kt">Referenzclip einrichten</h2>'
+   +'<div class="hinw" style="padding:0">Oben bei <b>Referenzclip</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
+   +'Name <b>Kling Referenz</b><br>'
+   +'Adresse <b>fal-ai/kling-video/o3/standard/reference-to-video</b><br>'
+   +'Preis <b>0.112</b> je Sekunde<br>'
+   +'Schl\u00fcssel leer lassen \u2014 der von fal.ai wird mitbenutzt.<br><br>'
+   +'Das ist das Modell, das aus Hintergrundbild und den beiden Darstellern '
+   +'den Clip einer Szene macht. Ohne das bleibt der Knopf <b>Clip</b> grau.</div></div>';
+  if(S.alt)o+='<div class="karte p"><h2 class="kt">Avatar einrichten</h2>'
    +'<div class="hinw" style="padding:0">Oben bei <b>Avatar</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
    +'Name <b>Kling Avatar</b><br>'
    +'Adresse <b>fal-ai/kling-video/ai-avatar/v2/standard</b><br>'
@@ -1053,7 +1190,7 @@ function clipZeile(s){
    +' onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>';
 
   if(hier){
-    o+='<div class="szz p62" style="display:block;color:#FF6A1A">'
+    o+='<div class="szz p62" style="display:block;color:#FFB454">'
      +'<b>Clip läuft…</b> '+h(txt||"wird geschickt")
      +'<div class="szh">Das dauert ein paar Minuten. Du kannst die Seite zumachen.</div></div>';
     return o;
@@ -1076,7 +1213,7 @@ function clipZeile(s){
    +' onclick="clipNeu(\''+s.id+'\')">Clip erzeugen'
    +(s.clip_dauer?(' · '+s.clip_dauer+' s'):'')+'</button>';
   if(stand==="fehler"&&txt)
-    o+='<div class="szh" style="margin-top:5px;color:#FF6A1A">'+h(txt)+'</div>';
+    o+='<div class="szh" style="margin-top:5px;color:#FFB454">'+h(txt)+'</div>';
   o+='</div>';
   return o;
 }
@@ -1086,7 +1223,7 @@ function clipKarte(){
   if(!d){ladeClips();return ''}
   var o='<div class="karte p"><h2 class="kt">Clips</h2>';
   if(!d.bereit){
-    o+='<div class="hinw" style="padding:0;color:#FF6A1A">'+h(d.grund||"noch nicht eingerichtet")+'</div>';
+    o+='<div class="hinw" style="padding:0;color:#24D3E8">'+h(d.grund||"noch nicht eingerichtet")+'</div>';
     o+='<div class="hinw" style="padding:0;margin-top:9px">Das Referenzmodell trägst du unter '
      +'<b>KI &amp; Technik</b> bei <b>Referenzclip</b> ein:<br>'
      +'Adresse <b>fal-ai/kling-video/o3/standard/reference-to-video</b><br>'
@@ -1095,7 +1232,7 @@ function clipKarte(){
   }
   if(d.laeuft){
     var l=d.lauf||{};
-    o+='<div class="hinw" style="padding:0;color:#FF6A1A"><b>Läuft.</b> '
+    o+='<div class="hinw" style="padding:0;color:#FFB454"><b>Läuft.</b> '
      +(l.gesamt>1?('Szene '+(l.nummer||1)+' von '+l.gesamt+'. '):'')
      +h(l.text||"")+' · '+(l.dauer||0)+' s</div>'
      +'<button class="knopf" style="width:100%;margin-top:9px" onclick="clipStop()">Nach diesem Clip aufhören</button></div>';
@@ -1155,19 +1292,6 @@ function tSzenen(){
   var li=d.szenen||[];
   var o='';
   o+=clipKarte();
-  o+='<div class="karte p"><h2 class="kt">Musik</h2><div class="liste">';
-  if(!d.musik)o+='<div class="leer">kein eigenes Lied — dann nimmt er die Automatik-Musik</div>';
-  else o+='<div class="e"><div class="tx"><div class="ti">'+h(d.musik)+'</div><div class="me">läuft unter dem ganzen Video</div></div>'
-        +'<button class="ik rot" onclick="musikWeg()">✕</button></div>';
-  o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="hochladen(\'musik\')">+ Lied hochladen</button>'
-   +reihe("Leise unter der Stimme",zahl("musik_leise",(S.einst.musik_leise==null?12:S.einst.musik_leise)),"in Prozent")
-   +reihe("Laut ohne Stimme",zahl("musik_laut",(S.einst.musik_laut==null?75:S.einst.musik_laut)),"in Prozent")
-   +'<div class="r"><div><div class="lb">Ohne Stimme lauter</div><div class="hint">'
-   +(S.einst.musik_anheben===false?"aus — bleibt durchgehend leise":"ab etwa 2,5 Sekunden Stille")+'</div></div>'
-   +schalter("musik_anheben",S.einst.musik_anheben!==false)+'</div>'
-   +reihe("Einblenden",zahl("musik_ein",(S.einst.musik_ein==null?1:S.einst.musik_ein)),"Sekunden am Anfang")
-   +reihe("Ausblenden",zahl("musik_aus",(S.einst.musik_aus==null?1.5:S.einst.musik_aus)),"Sekunden am Ende")
-   +'</div>';
 
   o+='<div class="karte p"><h2 class="kt">Szenen · '+li.length+' · etwa '+Math.round(szenenDauer())+' Sek.</h2>';
   if(!li.length)o+='<div class="leer">noch nichts — lade dein erstes Bild hoch</div>';
@@ -1181,58 +1305,62 @@ function tSzenen(){
      +'<button class="ik rot" onclick="szeneWeg(\''+s.id+'\',\''+h(s.datei).replace(/'/g,"")+'\')">✕</button></div>'
      +vor
      +'<textarea placeholder="Gesprochener Text. &quot;…&quot; spricht die Figur. [eckige Klammern sind Regie und werden nicht gesprochen]" onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea>'
-     +'<div class="szz">'
+     ;
+    var mehr='<div class="szz">'
      +'<label class="hak"><input type="checkbox"'+(s.gesprochen?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'gesprochen\',this.checked)">Gesprochen</label>'
      +'<label class="hak"><input type="checkbox"'+(s.untertitel?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'untertitel\',this.checked)">Untertitel</label>'
      +'</div>';
     if(!s.gesprochen){
-      o+='<div class="szz"><span class="szh">Sekunden</span><input type="text" style="width:62px" value="'
+      mehr+='<div class="szz"><span class="szh">Sekunden</span><input type="text" style="width:62px" value="'
         +h(String(s.sekunden||s.vorschlag))+'" onchange="szeneSetz(\''+s.id+'\',\'sekunden\',this.value)"></div>';
     }else{
-      o+='<div class="szz"><span class="szh">Dauert so lang wie der Satz, etwa '+s.vorschlag+' Sek.</span></div>';
+      mehr+='<div class="szz"><span class="szh">Dauert so lang wie der Satz, etwa '+s.vorschlag+' Sek.</span></div>';
     }
     if(s.typ!=="clip"){
-      o+='<div class="szz"><span class="szh">Bild</span><select onchange="szeneSetz(\''+s.id+'\',\'passen\',this.value)">'
+      mehr+='<div class="szz"><span class="szh">Bild</span><select onchange="szeneSetz(\''+s.id+'\',\'passen\',this.value)">'
        +(d.passenarten||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.passen===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
        +'</select></div>';
-      o+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'bewegung\',this.value)">'
+      mehr+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'bewegung\',this.value)">'
        +(d.bewegungen||[]).map(function(b){return '<option value="'+b[0]+'"'+(s.bewegung===b[0]?" selected":"")+'>'+h(b[1])+'</option>'}).join("")
        +'</select></div>';
     }
-    o+='<div class="szz"><span class="szh">Stimmung</span><select onchange="szeneSetz(\''+s.id+'\',\'stimmung\',this.value)">'
+    mehr+='<div class="szz"><span class="szh">Stimmung</span><select onchange="szeneSetz(\''+s.id+'\',\'stimmung\',this.value)">'
       +(d.stimmungen||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.stimmung===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
       +'</select></div>';
+    if(S.alt){
     if(!S.fig)ladeFiguren();
     var fn=figurNamen();
-    o+='<div class="szz"><span class="szh">Figur</span><select onchange="szeneSetz(\''+s.id+'\',\'figur\',this.value)">'
+    mehr+='<div class="szz"><span class="szh">Figur</span><select onchange="szeneSetz(\''+s.id+'\',\'figur\',this.value)">'
       +'<option value="">keine</option>'
       +fn.map(function(n){return '<option value="'+h(n)+'"'+(s.figur===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
       +'</select></div>';
     if(s.figur){
       var po=posenVon(s.figur);
-      o+='<div class="szz"><span class="szh">Pose</span><select onchange="szeneSetz(\''+s.id+'\',\'pose\',this.value)">'
+      mehr+='<div class="szz"><span class="szh">Pose</span><select onchange="szeneSetz(\''+s.id+'\',\'pose\',this.value)">'
         +'<option value="">erste</option>'
         +po.map(function(n){return '<option value="'+h(n)+'"'+(s.pose===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
         +'</select></div>';
-      o+='<div class="szz"><span class="szh">Platz</span><select onchange="szeneSetz(\''+s.id+'\',\'platz\',this.value)">'
+      mehr+='<div class="szz"><span class="szh">Platz</span><select onchange="szeneSetz(\''+s.id+'\',\'platz\',this.value)">'
         +(((S.fig||{}).plaetze)||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.platz===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
         +'</select><span class="szh">Größe</span><input type="text" style="width:54px" value="'+h(String(s.figur_groesse||55))
         +'" onchange="szeneSetz(\''+s.id+'\',\'figur_groesse\',this.value)"><span class="szh">%</span></div>';
-      o+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'figur_bewegung\',this.value)">'
+      mehr+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'figur_bewegung\',this.value)">'
         +(((S.szenen||{}).figur_bewegungen)||[["","wie bei der Figur"]]).map(function(x){
           return '<option value="'+x[0]+'"'+((s.figur_bewegung||"")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
         +'</select></div>';
     }
-    o+='<div class="szz p89"><label class="hak"><input type="checkbox"'+(s.ki_animation?" checked":"")
+    }
+    if(S.alt)mehr+='<div class="szz p89"><label class="hak"><input type="checkbox"'+(s.ki_animation?" checked":"")
       +' onchange="szeneSetz(\''+s.id+'\',\'ki_animation\',this.checked)">Diese Szene per KI animieren</label></div>';
     o+='<div class="szz p90" style="gap:7px">'
       +'<button class="knopf" onclick="szeneNeu(\''+s.id+'\')">Bild neu erzeugen</button>'
       +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\')">Eigenes Bild</button>'
       +'</div>';
     o+=clipZeile(s);
-    o+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
+    mehr+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
       +h(s.musik==="auto"?"":String(s.musik))+'" onchange="szeneSetz(\''+s.id+'\',\'musik\',this.value)"><span class="szh">% · leer = automatisch</span></div>';
-    if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FF6A1A">Datei fehlt auf dem Server</span></div>';
+    if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FFB454">Datei fehlt auf dem Server</span></div>';
+    if(mehr)o+='<details class="mehr"><summary>mehr einstellen</summary>'+mehr+'</details>';
     o+='</div>';
   });
   o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="hochladen(\'szene\')">+ Bild oder Clip</button></div>';
@@ -1288,7 +1416,7 @@ function stimmenKarte(){
   if(!li.length)o+='<div class="leer">keine eingetragen — dann nimmt er die Standardstimme des Modells</div>';
   li.forEach(function(e,i){
     var an=(e.id&&e.id===aktiv);
-    o+='<div class="e"><button class="ik" style="'+(an?"background:#FF6A1A;border-color:#FF6A1A;color:#140B04":"")+'"'
+    o+='<div class="e"><button class="ik" style="'+(an?"background:#24D3E8;border-color:#24D3E8;color:#04161B":"")+'"'
       +' onclick="stimmeAktiv('+i+')">'+(an?"●":"○")+'</button>'
       +'<div class="tx" onclick="stimmeBearbeiten('+i+')"><div class="ti">'+h(e.name)+'</div>'
       +'<div class="me">'+h(e.id||"ohne ID")+'</div></div>'
@@ -1348,7 +1476,7 @@ function promptAendern(neu){
    +'<p>'+text+'</p><div class="zw">'
    +'<button class="knopf" id="pnein">Verwerfen</button>'
    +'<button class="knopf '+(leer?"":"or")+'" id="pja"'
-   +(leer?' style="background:#B02A2A;border-color:#B02A2A;color:#fff;font-weight:700"':'')
+   +(leer?' style="background:#9B2C3B;border-color:#9B2C3B;color:#fff;font-weight:700"':'')
    +'>Speichern</button></div></div></div>';
   el("pnein").onclick=function(){zu();zeichne()};
   el("pja").onclick=function(){zu();setz("prompt",neu)};
@@ -1502,7 +1630,7 @@ function tDarsteller(){
          +(f.saetze||[]).map(function(g){return '<option value="'+h(g.id)+'"'+(g.id===gid?" selected":"")+'>'+h(g.name)+'</option>'}).join("")
          +'</select>';
       }else{
-        o+='<span class="szh" style="color:#FF6A1A">kein Kleidungssatz</span>';
+        o+='<span class="szh" style="color:#FFB454">kein Kleidungssatz</span>';
       }
     }
     o+='</div>';
@@ -1510,10 +1638,10 @@ function tDarsteller(){
 
   if(d.bereit){
     o+='<div class="hinw" style="padding:0;margin-top:10px">'
-     +(d.grund?('<span style="color:#FF6A1A">'+h(d.grund)+'</span><br>'):'<b>Bereit.</b> ')
+     +(d.grund?('<span style="color:#FFB454">'+h(d.grund)+'</span><br>'):'<b>Bereit.</b> ')
      +'Das Modell bekommt diesen Vorspann:<br>'+h(d.vorspann)+'</div>';
   }else{
-    o+='<div class="hinw" style="padding:0;margin-top:10px;color:#FF6A1A">'+h(d.grund)+'</div>';
+    o+='<div class="hinw" style="padding:0;margin-top:10px;color:#FFB454">'+h(d.grund)+'</div>';
   }
   o+=''
    +'<button class="knopf" style="width:100%;margin-top:10px" onclick="dsNeu()">+ Darsteller</button></div>';
@@ -1543,9 +1671,9 @@ function tDarsteller(){
          +'<img src="/darsteller/'+encodeURIComponent(b.datei)+'?k='+S.kanal+'" '
          +'title="'+(bi===0?'Frontalbild':'antippen: zum Frontalbild machen')+'" '
          +'onclick="dsBildVor(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(b.datei)+'\')" '
-         +'style="width:66px;height:88px;object-fit:cover;border-radius:8px;background:#0B0B0D;'
-         +'display:block;cursor:pointer;'+(bi===0?'outline:2px solid #FF6A1A;outline-offset:-2px':'')+'">'
-         +(bi===0?'<div style="position:absolute;left:0;right:0;bottom:0;background:#FF6A1A;color:#140B04;'
+         +'style="width:66px;height:88px;object-fit:cover;border-radius:8px;background:#0A0C12;'
+         +'display:block;cursor:pointer;'+(bi===0?'outline:2px solid #24D3E8;outline-offset:-2px':'')+'">'
+         +(bi===0?'<div style="position:absolute;left:0;right:0;bottom:0;background:#24D3E8;color:#04161B;'
                  +'font-size:9.5px;font-weight:700;text-align:center;padding:2px 0;'
                  +'border-radius:0 0 8px 8px;pointer-events:none">FRONTAL</div>':'')
          +'<button class="ik rot" title="Bild löschen" '
@@ -1567,11 +1695,10 @@ function tDarsteller(){
   return o;
 }
 
-function tFiguren(){
+function tFigurenNurAlt(){
   var d=S.fig;
   if(!d){ladeFiguren();return '<div class="karte p"><div class="leer">lade…</div></div>'}
   var o='';
-  o+=tDarsteller();
   if(!(d.figuren||[]).length)
     o+='<div class="karte p"><div class="leer">noch keine Figur angelegt</div></div>';
   (d.figuren||[]).forEach(function(f){
@@ -1587,13 +1714,13 @@ function tFiguren(){
      +((d.bewegungen||[["statisch","steht still"],["bewegt","atmet und wippt"],["animiert","Animationsschleife"]]))
        .map(function(x){return '<option value="'+x[0]+'"'+((f.bewegung||"bewegt")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
      +'</select>'+(((f.bewegung||"bewegt")==="animiert"&&!f.hat_schleife)
-       ?'<span class="szh" style="color:#FF6A1A">keine Schleife da — läuft als „bewegt"</span>':'')+'</div>';
+       ?'<span class="szh" style="color:#24D3E8">keine Schleife da — läuft als „bewegt"</span>':'')+'</div>';
     o+='<div class="liste" style="margin-top:9px">';
     if(!f.posen.length)o+='<div class="leer">keine Pose — lade ein Bild hoch</div>';
     f.posen.forEach(function(p){
       var sch=(p.art==="clip")?'':'<button class="ik" title="Hintergrund entfernen" onclick="poseFrei(\''+h(f.name).replace(/'/g,"")+'\',\''+h(p.datei).replace(/'/g,"")+'\')">✂</button>';
       o+='<div class="e"><img src="/figur/'+encodeURIComponent(p.vorschau||p.datei)+'?k='+S.kanal+'" '
-       +'style="width:44px;height:58px;object-fit:contain;background:#0B0B0D;border-radius:7px">'
+       +'style="width:44px;height:58px;object-fit:contain;background:#0A0C12;border-radius:7px">'
        +'<div class="tx"><div class="ti">'+h(p.name)+(p.art==="clip"?' · bewegt':'')+'</div><div class="me'+(p.frei?"":" warn")+'">'
        +(p.frei?(p.art==="clip"?"Animationsschleife, läuft durch":"freigestellt"):"mit Hintergrund — wirkt im Video aufgeklebt")+'</div></div>'
        +sch
@@ -1647,66 +1774,73 @@ function posenVon(n){
 /* ---------- Suche (Patch P4) ---------- */
 /* [Was im Dashboard steht, Reiter, Suchwoerter dazu] */
 var SUCHE=[
- ["Symbol","texte","einblendung symbol herz plus glocke daumen folgen like abo"],
- ["Text","texte","einblendung text beschriftung folgen"],
- ["Platz","texte","einblendung position ecke links rechts oben unten"],
- ["Wie lange","texte","einblendung dauer sekunden"],
- ["Farbe","texte","einblendung farbe orange kanalfarbe hex"],
- ["Am Anfang","texte","einblendung follow like abo cta anfang hook"],
- ["In der Mitte","texte","einblendung follow like abo cta mitte"],
- ["Am Ende","texte","einblendung follow like abo cta ende abspann"],
- ["Einblendung Anfang","texte","follow like abo cta aufforderung anfang hook"],
- ["Einblendung Mitte","texte","follow like abo cta aufforderung mitte"],
- ["Einblendung Ende","texte","follow like abo cta aufforderung ende abspann"],
- ["Auch gesprochen","texte","cta gesprochen vorlesen aufforderung"],
- ["Schrift","texte","untertitel schriftart font"],
- ["Größe","texte","untertitel schriftgroesse gross klein"],
- ["Höhe im Bild","texte","untertitel position hoehe unten oben"],
- ["Wörter pro Zeile","texte","untertitel woerter zeile umbruch"],
- ["Großbuchstaben","texte","untertitel caps grossschrift"],
- ["Format","video","9:16 4:5 1:1 16:9 hochkant quer tiktok instagram youtube seitenverhaeltnis"],
- ["Bilder pro Minute","video","bilder anzahl takt dichte"],
- ["Bewegung im Bild","video","ken burns zoom schwenk bewegung"],
- ["Stärke","video","bewegung staerke sanft stark"],
- ["Anteil bewegter Szenen","video","kling animation ki bewegt prozent anteil video"],
- ["Bewegungs-Anweisung","video","kling prompt kamerafahrt animation"],
- ["Abbrechen","prompt","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
- ["Videoart","video","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
- ["Tempo","video","schnitt schnelligkeit einstellungen teilen erklaervideo"],
- ["Geräusch beim Schnitt","video","whoosh swoosh pop klick schnittgeraeusch sound"],
- ["Lautstärke","video","schnittgeraeusch pegel laut leise"],
- ["Stimme an","video","sprecher tts elevenlabs stimme"],
- ["Musik an","video","musik lied hintergrund"],
- ["Geräusche","video","ambience umgebung atmosphaere"],
- ["Stimmen","video","stimme id elevenlabs figur sprecher liste"],
- ["Grundstimmung","video","stimmung ruhig lebendig dramatisch energie"],
- ["Stil-Anker","prompt","stil anker gleich aussehen figur konsistent look"],
- ["Deine Geschichte","prompt","geschichte text story erzaehlung eigener text maerchen"],
- ["Stil","prompt","geschichte stil maerchen comic foto aquarell aussehen"],
- ["Figur","prompt","geschichte figur held charakter gleich konsistent"],
- ["Wie das Video entsteht","prompt","modus claude schreibt ich baue selbst szenen eigene bilder geschichte"],
- ["Masterprompt","prompt","prompt anweisung thema stil text"],
- ["Sprache","prompt","sprache deutsch englisch uebersetzung"],
- ["Länge in Sekunden","prompt","dauer laenge sekunden"],
- ["Thema","prompt","themen liste naechstes video"],
- ["Szenen","prompt","szenen editor eigene bilder clips reihenfolge"],
- ["Lied hochladen","prompt","musik eigenes lied song hochladen"],
- ["Leise unter der Stimme","prompt","musik lautstaerke leise ducking"],
- ["Laut ohne Stimme","prompt","musik lautstaerke laut vordergrund"],
- ["Einblenden","prompt","musik fade anfang einblenden"],
- ["Ausblenden","prompt","musik fade ende ausblenden abklingen"],
- ["Bewegung","figuren","figur statisch bewegt animiert atmen wippen schleife"],
- ["Stimme","figuren","figur stimme zuordnen elevenlabs"],
- ["Automatik","start","zeitplan automatisch taeglich lauf"],
- ["Kanalname","start","name umbenennen kanal"],
- ["Fertige Videos","start","download herunterladen ansehen loeschen"],
- ["Eingestellt","start","uebersicht was eingestellt ist zusammenfassung"],
- ["Telegram","technik","telegram bot chat benachrichtigung senden"],
- ["Guthaben","technik","guthaben fal.ai kontostand credits"],
- ["Was ein Video kostet","technik","preis kosten euro rechnung"],
- ["Text","technik","modell api claude anthropic schluessel"],
- ["Bild","technik","modell api flux imagen bilder schluessel"],
- ["Animation","technik","kling video animation bewegte szene"]
+ ["Symbol","einst","einblendung symbol herz plus glocke daumen folgen like abo"],
+ ["Text","einst","einblendung text beschriftung folgen"],
+ ["Platz","einst","einblendung position ecke links rechts oben unten"],
+ ["Wie lange","einst","einblendung dauer sekunden"],
+ ["Farbe","einst","einblendung farbe orange kanalfarbe hex"],
+ ["Am Anfang","einst","einblendung follow like abo cta anfang hook"],
+ ["In der Mitte","einst","einblendung follow like abo cta mitte"],
+ ["Am Ende","einst","einblendung follow like abo cta ende abspann"],
+ ["Einblendung Anfang","einst","follow like abo cta aufforderung anfang hook"],
+ ["Einblendung Mitte","einst","follow like abo cta aufforderung mitte"],
+ ["Einblendung Ende","einst","follow like abo cta aufforderung ende abspann"],
+ ["Auch gesprochen","einst","cta gesprochen vorlesen aufforderung"],
+ ["Schrift","einst","untertitel schriftart font"],
+ ["Größe","einst","untertitel schriftgroesse gross klein"],
+ ["Höhe im Bild","einst","untertitel position hoehe unten oben"],
+ ["Wörter pro Zeile","einst","untertitel woerter zeile umbruch"],
+ ["Großbuchstaben","einst","untertitel caps grossschrift"],
+ ["Format","einst","9:16 4:5 1:1 16:9 hochkant quer tiktok instagram youtube seitenverhaeltnis"],
+ ["Bilder pro Minute","einst","bilder anzahl takt dichte"],
+ ["Bewegung im Bild","einst","ken burns zoom schwenk bewegung"],
+ ["Stärke","einst","bewegung staerke sanft stark"],
+ ["Anteil bewegter Szenen","einst","kling animation ki bewegt prozent anteil video"],
+ ["Bewegungs-Anweisung","einst","kling prompt kamerafahrt animation"],
+ ["Abbrechen","machen","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
+ ["Videoart","einst","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
+ ["Tempo","einst","schnitt schnelligkeit einstellungen teilen erklaervideo"],
+ ["Geräusch beim Schnitt","einst","whoosh swoosh pop klick schnittgeraeusch sound"],
+ ["Lautstärke","einst","schnittgeraeusch pegel laut leise"],
+ ["Stimme an","einst","sprecher tts elevenlabs stimme"],
+ ["Musik an","einst","musik lied hintergrund"],
+ ["Geräusche","einst","ambience umgebung atmosphaere"],
+ ["Stimmen","einst","stimme id elevenlabs figur sprecher liste"],
+ ["Grundstimmung","einst","stimmung ruhig lebendig dramatisch energie"],
+ ["Stil-Anker","machen","stil anker gleich aussehen figur konsistent look"],
+ ["Deine Geschichte","machen","geschichte text story erzaehlung eigener text maerchen"],
+ ["Stil","machen","geschichte stil maerchen comic foto aquarell aussehen"],
+ ["Figur","machen","geschichte figur held charakter gleich konsistent"],
+ ["Wie das Video entsteht","machen","modus claude schreibt ich baue selbst szenen eigene bilder geschichte"],
+ ["Masterprompt","machen","prompt anweisung thema stil text"],
+ ["Sprache","machen","sprache deutsch englisch uebersetzung"],
+ ["Länge in Sekunden","einst","dauer laenge sekunden"],
+ ["Thema","machen","themen liste naechstes video"],
+ ["Szenen","machen","szenen editor eigene bilder clips reihenfolge"],
+ ["Lied hochladen","einst","musik eigenes lied song hochladen"],
+ ["Leise unter der Stimme","einst","musik lautstaerke leise ducking"],
+ ["Laut ohne Stimme","einst","musik lautstaerke laut vordergrund"],
+ ["Einblenden","einst","musik fade anfang einblenden"],
+ ["Ausblenden","einst","musik fade ende ausblenden abklingen"],
+ ["Bewegung","darsteller","figur statisch bewegt animiert atmen wippen schleife"],
+ ["Stimme","darsteller","figur stimme zuordnen elevenlabs"],
+ ["Automatik","einst","zeitplan automatisch taeglich lauf"],
+ ["Kanalname","machen","name umbenennen kanal"],
+ ["Fertige Videos","machen","download herunterladen ansehen loeschen"],
+ ["Eingestellt","machen","uebersicht was eingestellt ist zusammenfassung"],
+ ["Telegram","einst","telegram bot chat benachrichtigung senden"],
+ ["Guthaben","einst","guthaben fal.ai kontostand credits"],
+ ["Was ein Video kostet","einst","preis kosten euro rechnung"],
+ ["Text","einst","modell api claude anthropic schluessel"],
+ ["Bild","einst","modell api flux imagen bilder schluessel"],
+ ["Darsteller","darsteller","figuren mara jonas reporter archaeologin platz 1 platz 2 bilder kleidung"],
+ ["Referenzclip","einst","kling reference to video modell clip szene schluessel fal"],
+ ["Clip erzeugen","machen","szene clip video kling referenz erzeugen"],
+ ["Was passiert in der Szene","machen","regie bewegung anweisung szene clip"],
+ ["Abspann","einst","schlusstafel ende teil 2 folgt folgen liken kommentieren"],
+ ["Sprechtempo","einst","woerter pro sekunde ruhig normal flott"],
+ ["Alte Funktionen","einst","alt aufgeklebte figuren avatar animationsmodell schalter"],
+ ["Animation","einst","kling video animation bewegte szene"]
 ];
 var SUCHZIEL=null;
 
@@ -1785,7 +1919,7 @@ function tGeschichte(){
       +'<option value="">keine</option>'
       +(g.figuren||[]).map(function(n){return '<option value="'+h(n)+'"'+((S.einst.geschichte_figur||"")===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
       +'</select>',"dieselbe Figur in jeder Szene")
-   +'<div style="padding:11px 0 4px;border-top:1px solid #23232B">'
+   +'<div style="padding:11px 0 4px;border-top:1px solid #202636">'
    +'<div class="lb" style="margin-bottom:6px">Stil-Anker</div>'
    +'<textarea id="anker" style="min-height:74px" placeholder="gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung"'
    +' onchange="p86Feld(\'stil_zusatz\',\'Stil-Anker\',\'anker\',this.value)">'+h(S.einst.stil_zusatz||"")+'</textarea>'
@@ -1981,6 +2115,7 @@ function teilWaehlen(i){
 
 /* ---------- Start ---------- */
 try{var _t=(location.search.match(/[?&]tab=([a-z]+)/)||[])[1];if(_t)S.tab=_t}catch(e){}
+try{S.alt=(localStorage.getItem("aiu_alt")==="1")}catch(e){S.alt=false}
 api("/api/vorlagen").then(function(v){S.vorlagen=v;return api("/api/schluessel")})
  .then(function(s){S.schluessel=s;return laden()})
  .then(function(){setInterval(function(){if((S.daten.lauf||{}).laeuft)laden()},4000)});
