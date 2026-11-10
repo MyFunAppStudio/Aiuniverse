@@ -232,6 +232,66 @@ def _ohne_anfuehrung(text):
     return " ".join(roh.split())
 
 
+GRUNDFARBE = "#FFFFFF"      # Wort, das noch nicht dran ist
+AKTIVFARBE = "#FFD400"      # Wort, das gerade gesprochen wird
+
+
+def _ass_farbe(wert, ersatz):
+    """#RRGGBB -> &H00BBGGRR, wie das Untertitelformat es haben will."""
+    s = str(wert or "").strip().lstrip("#")
+    if len(s) != 6:
+        s = str(ersatz).lstrip("#")
+    try:
+        r, g, b = int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16)
+    except Exception:
+        return "&H00FFFFFF"
+    return "&H00%02X%02X%02X" % (b, g, r)
+
+
+def _ass_kopf(fs, rand, schatten, ml, mv, schrift, vorn, hinten, breite, hoehe):
+    """Kopf der Untertiteldatei. vorn faerbt das gesprochene Wort, hinten den Rest."""
+    return (
+        "[Script Info]\n"
+        "ScriptType: v4.00+\n"
+        "WrapStyle: 0\n"
+        "ScaledBorderAndShadow: yes\n"
+        "YCbCr Matrix: TV.709\n"
+        "PlayResX: %d\n"
+        "PlayResY: %d\n\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
+        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: TT,%s,%d,%s,%s,&H00000000,&H96000000,"
+        "-1,0,0,0,100,100,0,0,1,%d,%d,2,%d,%d,%d,1\n\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
+        "Effect, Text\n"
+        % (breite, hoehe, schrift, fs, vorn, hinten, rand, schatten, ml, ml, mv))
+
+
+def _karaoke(worte, dauer):
+    """Teilt die Zeit nach Wortlaenge auf und setzt die Umfaerbe-Marken.
+
+    Die Stimme sagt nicht, wann welches Wort kommt - deshalb geschaetzt nach
+    Laenge. Bei zwei bis drei Woertern je Einblendung passt das gut.
+    """
+    laengen = [max(1, len(w)) for w in worte]
+    ganz = float(sum(laengen))
+    rest = int(round(max(0.1, dauer) * 100))
+    stuecke = []
+    for i, w in enumerate(worte):
+        if i == len(worte) - 1:
+            cs = rest
+        else:
+            cs = int(round(max(0.1, dauer) * 100 * laengen[i] / ganz))
+            cs = max(1, min(cs, rest - (len(worte) - 1 - i)))
+        rest -= cs
+        stuecke.append("{\\k%d}%s" % (max(1, cs), w))
+    return " ".join(stuecke)
+
+
 # ---------- Untertitel ----------
 def _ass(plan, ziel, b, h, kanal=None):
     import video_bauen as vb
@@ -248,12 +308,17 @@ def _ass(plan, ziel, b, h, kanal=None):
         woerter = 3
     woerter = max(1, min(6, woerter))
     caps = k.get("untertitel_caps") is not False
+    mitlauf = k.get("untertitel_mitlauf") is not False
+    vorn = _ass_farbe(k.get("untertitel_farbe_aktiv"), AKTIVFARBE)
+    hinten = _ass_farbe(k.get("untertitel_farbe"), GRUNDFARBE)
+    if not mitlauf:
+        hinten = vorn
     fs = max(24, int(h * 0.046 * groesse / 48.0))
     rand = max(3, int(fs * 0.11))
     schatten = max(2, int(fs * 0.07))
     ml = int(b * 0.085)
     mv = int(h * 0.17)
-    zeilen = [vb._tt_ass_kopf(fs, rand, schatten, ml, mv, schrift)]
+    zeilen = [_ass_kopf(fs, rand, schatten, ml, mv, schrift, vorn, hinten, b, h)]
     for s in plan:
         if not s["untertitel"] or not (s["text"] or "").strip():
             continue
@@ -266,9 +331,10 @@ def _ass(plan, ziel, b, h, kanal=None):
         t = s["start"]
         for st, z in zip(stuecke, zeichen):
             d = max(0.45, s["dauer"] * z / summe)
-            text = " ".join(st).replace("{", "(").replace("}", ")")
+            worte = [w.replace("{", "(").replace("}", ")") for w in st]
             if caps:
-                text = text.upper()
+                worte = [w.upper() for w in worte]
+            text = _karaoke(worte, d) if mitlauf else " ".join(worte)
             zeilen.append("Dialogue: 0,%s,%s,TT,,0,0,0,,{\\fad(90,90)}%s\n"
                           % (vb._tt_zeit(t), vb._tt_zeit(min(t + d, s["start"] + s["dauer"])), text))
             t += d

@@ -17,8 +17,12 @@ import urllib.request
 import schluessel
 
 BASIS = os.path.dirname(os.path.abspath(__file__))
-WARTE_MAX = 150.0
+WARTE_MAX = 150.0        # normales Bildmodell
+WARTE_VORLAGE = 420.0    # Modelle mit Vorlage stehen oft lange in der Warteschlange
 TAKT = 3.0
+VORLAGE_MAX = 1024       # laengste Kante eines Vorlagenbildes
+VORLAGE_GUETE = 88       # JPEG-Guete
+VORLAGE_RUHIG = 400000   # kleiner als das bleibt, wie es ist
 
 # Welches Feld das Modell fuer das Referenzbild benutzt
 REFERENZ_FELD = [("instant-character", "image_url"),
@@ -94,6 +98,38 @@ def _basis_url(adresse):
     if a.startswith("http://") or a.startswith("https://"):
         return a.rstrip("/")
     return "https://queue.fal.run/" + a.strip("/")
+
+
+def _klein(pfad):
+    """Macht aus einem grossen Vorlagenbild ein kleines JPEG.
+
+    Ein 3-MB-Bild wird als Anfrage 4 MB gross und muss bei jedem einzelnen
+    Bild neu hochgeladen werden. Die Modelle rechnen ohnehin kleiner.
+    """
+    try:
+        from PIL import Image
+    except Exception:
+        return pfad
+    try:
+        vorher = os.path.getsize(pfad)
+        if vorher < VORLAGE_RUHIG:
+            return pfad
+        b = Image.open(pfad)
+        b.load()
+        if max(b.size) <= VORLAGE_MAX and vorher < VORLAGE_RUHIG:
+            return pfad
+        b = b.convert("RGB")
+        art = getattr(getattr(Image, "Resampling", Image), "LANCZOS", 1)
+        b.thumbnail((VORLAGE_MAX, VORLAGE_MAX), art)
+        ziel = os.path.join(BASIS, "vorlage_klein.jpg")
+        b.save(ziel, "JPEG", quality=VORLAGE_GUETE, optimize=True)
+        nachher = os.path.getsize(ziel)
+        print("[Bild] Vorlage verkleinert: %.2f MB -> %.2f MB (%dx%d)"
+              % (vorher / 1048576.0, nachher / 1048576.0, b.size[0], b.size[1]))
+        return ziel
+    except Exception as f:
+        print("[Bild] Vorlage blieb gross:", f)
+        return pfad
 
 
 def _daten_uri(pfad):
@@ -204,7 +240,7 @@ def erzeuge(kanal, prompt, ziel, referenz=None, seite="9:16"):
                     feld = f
                     break
             try:
-                uri = _daten_uri(referenz)
+                uri = _daten_uri(_klein(referenz))
             except Exception as f:
                 print("[Bild] Referenzbild nicht lesbar:", f)
                 feld, uri = "", None
@@ -226,14 +262,9 @@ def erzeuge(kanal, prompt, ziel, referenz=None, seite="9:16"):
         except Exception as f:
             print("[Bild] Keine Verbindung:", f)
             return None
-        pfad = _abwarten(start, basis, key, ziel)
+        pfad = _abwarten(start, basis, key, ziel,
+                         WARTE_VORLAGE if uri else WARTE_MAX)
         if pfad:
-            try:
-                welche = [s for s in ("image_size", "aspect_ratio") if s in koerper]
-                print("[Bild] Groesse per %s (Variante %d)"
-                      % (welche[0] if welche else "Standard des Modells", nr))
-            except Exception:
-                pass
             return pfad
         if pfad is False:
             return None          # klarer Fehlschlag, sparsamer wird es nicht besser
@@ -242,7 +273,8 @@ def erzeuge(kanal, prompt, ziel, referenz=None, seite="9:16"):
     return None
 
 
-def _abwarten(start, basis, key, ziel):
+def _abwarten(start, basis, key, ziel, grenze=None):
+    grenze = float(grenze or WARTE_MAX)
     url = _bild_url(start)
     if url:
         return _laden(url, ziel)
@@ -253,7 +285,8 @@ def _abwarten(start, basis, key, ziel):
     t0 = time.time()
     daneben = 0
     letzte = ""
-    while time.time() - t0 < WARTE_MAX:
+    gemeldet = ""
+    while time.time() - t0 < grenze:
         time.sleep(TAKT)
         try:
             st = _ruf(status_url, key, zeit=40)
@@ -277,6 +310,9 @@ def _abwarten(start, basis, key, ziel):
                 return False
             continue
         zustand = (st.get("status") or "").upper()
+        if zustand != gemeldet:
+            gemeldet = zustand
+            print("[Bild] %s nach %d s" % (zustand or "ohne Angabe", int(time.time() - t0)))
         if zustand == "COMPLETED":
             break
         if zustand in ("FAILED", "ERROR", "CANCELLED"):
@@ -288,7 +324,7 @@ def _abwarten(start, basis, key, ziel):
             return False
     else:
         print("[Bild] Zeit abgelaufen nach %d Sekunden (%s)"
-              % (int(WARTE_MAX), letzte or "Modell hat nie fertig gemeldet"))
+              % (int(grenze), letzte or "Modell hat nie fertig gemeldet"))
         return False
     try:
         fertig = _ruf(antwort_url or status_url.replace("/status", ""), key, zeit=90)

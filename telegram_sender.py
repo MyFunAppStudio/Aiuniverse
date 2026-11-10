@@ -71,7 +71,20 @@ def sende_video(kanal, video_pfad, beschreibung=""):
 
 
 def melde_problem(kanal, problem):
-    return sende_text(kanal, f"{kanal.get('emoji','')} Problem: {problem}")
+    """Meldet ein Problem."""
+    return sende_text(kanal, f"WARNUNG {kanal['emoji']} {kanal['name']}\n\n{problem}")
+
+
+if __name__ == "__main__":
+    print("=" * 45)
+    print("TELEGRAM TEST")
+    print("=" * 45)
+    for k in config.KANAELE:
+        token = k.get("telegram_token", "")
+        status = "eingetragen" if token else "noch leer"
+        print(f"{k['emoji']} {k['name']}: Token {status}")
+        sende_text(k, f"Test von {k['name']}")
+    print("=" * 45)
 
 
 # ---------- Datei-Upload (Patch S6) ----------

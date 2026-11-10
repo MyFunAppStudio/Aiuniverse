@@ -1,7 +1,52 @@
-import einstellungen
+# ============================================
+# Text-Generator: Skript, Titel, Beschreibung
+# ============================================
 import json
+import urllib.request
 from pathlib import Path
 import config
+import einstellungen
+
+ZEICHEN_PRO_SEKUNDE = 9.0  # ZPS_KORRIGIERT (vorher 15.0)  # gesprochene Zeichen pro Sekunde
+
+
+def _claude_anfrage(prompt, max_tokens=20000, kanal=None):
+    """Fragt Claude ueber die API. Key kommt aus dem Dashboard."""
+    api = einstellungen.aktive_api(kanal, "text") if kanal else None
+    schluessel = (api or {}).get("key") or config.ANTHROPIC_KEY
+    basis = (api or {}).get("url") or "https://api.anthropic.com"
+    if not schluessel:
+        raise RuntimeError("Kein Anthropic-Key im Dashboard eingetragen (Kanal -> APIs -> TEXT)")
+    modelle = ["claude-sonnet-4-5", "claude-opus-4-5", "claude-haiku-4-5",
+               "claude-3-5-sonnet-latest"]
+    letzter = None
+    for modell in modelle:
+        daten = json.dumps({
+            "model": modell,
+            "max_tokens": max_tokens,
+            "messages": [{"role": "user", "content": prompt}]
+        }).encode()
+        anfrage = urllib.request.Request(
+            basis.rstrip("/") + "/v1/messages",
+            data=daten,
+            headers={
+                "x-api-key": schluessel,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            }
+        )
+        try:
+            with urllib.request.urlopen(anfrage, timeout=600) as antwort:
+                ergebnis = json.loads(antwort.read().decode())
+            print(f"[Text] Modell: {modell}")
+            return ergebnis["content"][0]["text"]
+        except urllib.error.HTTPError as f:
+            leib = f.read().decode()[:200]
+            letzter = f"{f.code}: {leib}"
+            if f.code in (404, 400):
+                continue
+            raise RuntimeError(f"Anthropic Fehler {letzter}")
+    raise RuntimeError(f"Kein Modell nutzbar. Letzter Fehler: {letzter}")
 
 
 def lade_prompt(kanal):
@@ -20,8 +65,34 @@ def lade_regeln(kanal):
     return ""
 
 
+def _test_paket(kanal):
+    """Platzhalter-Text fuer den Testmodus."""
+    return {
+        "titel": f"[TEST] Beispiel-Titel fuer {kanal['name']}",
+        "skript": (
+            "Das ist ein Testskript. Es simuliert was Claude spaeter schreibt. "
+            "Hook in den ersten Sekunden. Dann der Aufbau. "
+            "Dann die Wendung. Am Ende der Aufruf zu folgen."
+        ),
+        "bild_prompts": [
+            "Test-Bild 1: dunkle Strasse bei Nacht",
+            "Test-Bild 2: verlassenes Haus",
+            "Test-Bild 3: Nahaufnahme eines Briefes",
+        ],
+        "beschreibung_youtube": "[TEST] YouTube Beschreibung mit Hook und CTA.",
+        "beschreibung_tiktok": "[TEST] TikTok Text #test #fyp",
+        "beschreibung_instagram": "[TEST] Instagram Caption #test",
+        "hashtags": ["#test", "#beispiel", "#fyp"],
+        "pinned_comment": "[TEST] Welches Thema als naechstes?",
+    }
+
+
 def erzeuge_paket(kanal, eigenes_thema=None):
     """Erzeugt das komplette Text-Paket fuer EIN Video."""
+    if config.TESTMODUS:
+        print(f"[Text] {kanal['name']}: TESTMODUS -> Platzhalter")
+        return _test_paket(kanal)
+
     laenge = einstellungen.laenge_in_minuten(kanal)
     anzahl_bilder = max(3, int(laenge * kanal["bilder_pro_minute"]))
 
@@ -32,16 +103,119 @@ REGELN:
 
 AUFGABE:
 Erstelle EIN komplettes Video-Paket.
-Laenge: ca. {laenge*60:.0f} Sekunden gesprochen
-Das SKRIPT hat genau {anzahl_bilder} Szenen. Jede Szene ist EIN gesprochener Satz mit {max(4, int(laenge*60*_p37_wps(kanal)/max(1,anzahl_bilder)))} bis {max(6, int(laenge*60*_p37_wps(kanal)/max(1,anzahl_bilder))+3)} Woertern. Insgesamt rund {int(laenge*60*_p37_wps(kanal))} Woertern. Zaehle die Woerter und halte dich exakt daran. Lieber etwas laenger als kuerzer - zu kurz ist schlimmer!
+Sprache: {', '.join(kanal.get('sprachen', ['Deutsch']))}
+Laenge: ca. {laenge*60:.0f} Sekunden gesprochen\n{_tl_hinweis(kanal)}Das SKRIPT hat genau {anzahl_bilder} Szenen. Jede Szene ist EIN gesprochener Satz mit {max(4, int(laenge*60*_p37_wps(kanal)/max(1,anzahl_bilder)))} bis {max(6, int(laenge*60*_p37_wps(kanal)/max(1,anzahl_bilder))+3)} Woertern. Insgesamt rund {int(laenge*60*_p37_wps(kanal))} Woerter. Zaehle die Woerter mit und halte dich exakt daran. Lieber etwas laenger als kuerzer - zu kurz ist schlimmer!
 {P49_THEMA % eigenes_thema if eigenes_thema else "Waehle selbst ein passendes Thema."}
-"""
-    antwort = kanal.get("_testantwort") or "{}"
-    import json
+
+Bildbeschreibungen je maximal 120 Zeichen. Beschreibungen je maximal 400 Zeichen.\n\nBILDER - SEHR WICHTIG: JEDES Bild deutlich anders! Wechsle bei jedem Bild Motiv, Ort, Perspektive (nah/weit/von oben), Tageszeit und Farbstimmung. Keine zwei aehnlichen Bilder. Bildbeschreibungen auf Englisch, konkret und bildhaft. Schlecht: "money", "coins", "cash". Gut: "close-up hands counting euro bills on wooden table", "wide shot modern bank building at sunset", "overhead view piggy bank on desk with laptop".\n\nAntworte NUR mit JSON, ohne Erklaerung, ohne Markdown.
+Teile die Geschichte in {anzahl_bilder} SZENEN. Jede Szene hat ihren eigenen
+Text UND das Bild das GENAU dazu passt. Das Bild zeigt was in diesem Moment
+erzaehlt wird - nicht irgendein allgemeines Motiv.
+
+{{
+  "titel": "...",
+  "szenen": [
+    {{"text": "gesprochener Text dieser Szene",
+      "bild": "englische Bildbeschreibung die genau zu diesem Text passt"}}
+  ],
+  "beschreibung_youtube": "...",
+  "beschreibung_tiktok": "...",
+  "beschreibung_instagram": "...",
+  "hashtags": ["#...", "#..."],
+  "pinned_comment": "..."
+}}"""
+
+    print(f"[Text] {kanal['name']}: frage Claude...")
+    antwort = _claude_anfrage(prompt, kanal=kanal)
+    antwort = antwort.strip()
+    if "```" in antwort:
+        teile = antwort.split("```")
+        if len(teile) > 1:
+            antwort = teile[1]
+        if antwort.startswith("json"):
+            antwort = antwort[4:]
+    antwort = antwort.strip()
+    a, b = antwort.find("{"), antwort.rfind("}")
+    if a >= 0 and b > a:
+        antwort = antwort[a:b+1]
+    def _aus_szenen(d):
+        """Baut skript und bild_prompts aus den Szenen."""
+        sz = d.get("szenen") or []
+        if sz:
+            d["skript"] = " ".join((x.get("text") or "").strip() for x in sz).strip()
+            d["bild_prompts"] = [(x.get("bild") or "").strip() for x in sz if x.get("bild")]
+        d.setdefault("skript", "")
+        d.setdefault("bild_prompts", [])
+        return d
+
     try:
-        return _p40_json(antwort)
-    except json.JSONDecodeError:
-        return {"_prompt": prompt, "_fehler": "json"}
+        return _aus_szenen(_p40_json(antwort))
+    except json.JSONDecodeError as f:
+        print("[Text] JSON unvollstaendig - versuche Rettung...")
+        import re
+        d = {}
+        for feld in ["titel","skript","beschreibung_youtube","beschreibung_tiktok",
+                     "beschreibung_instagram","pinned_comment"]:
+            t = re.search(r'"' + feld + r'"\s*:\s*"((?:[^"\\]|\\.)*)"', antwort)
+            if t:
+                d[feld] = t.group(1).replace('\\n','\n').replace('\\"','"')
+        b = re.search(r'"bild_prompts"\s*:\s*\[(.*?)\]', antwort, re.S)
+        d["bild_prompts"] = re.findall(r'"((?:[^"\\]|\\.)*)"', b.group(1)) if b else []
+        h = re.search(r'"hashtags"\s*:\s*\[(.*?)\]', antwort, re.S)
+        d["hashtags"] = re.findall(r'"((?:[^"\\]|\\.)*)"', h.group(1)) if h else ["#fyp"]
+        for feld in ["titel","skript","beschreibung_youtube","beschreibung_tiktok",
+                     "beschreibung_instagram","pinned_comment"]:
+            d.setdefault(feld, "")
+        if not d["titel"] or not d["skript"] or not d["bild_prompts"]:
+            print("[Text] Rettung fehlgeschlagen. Ende der Antwort:", antwort[-150:])
+            raise
+        print(f"[Text] Gerettet: {len(d['bild_prompts'])} Bilder")
+        return d
+
+
+if __name__ == "__main__":
+    print("=" * 45)
+    print("TEXT-GENERATOR TEST")
+    print("=" * 45)
+    for k in config.KANAELE:
+        paket = erzeuge_paket(k)
+        print(f"\n{k['emoji']} {k['name']}")
+        print(f"  Titel:  {paket['titel']}")
+        print(f"  Bilder: {len(paket['bild_prompts'])} Prompts")
+        print(f"  Skript: {paket['skript'][:60]}...")
+    print("\n" + "=" * 45)
+
+
+# ===== Themenliste (Patch T1) =====
+import themen as _tl
+
+_erzeuge_paket_tl = erzeuge_paket
+
+
+def _tl_hinweis(kanal):
+    try:
+        return _tl.hinweis(kanal)
+    except Exception:
+        return ""
+
+
+def erzeuge_paket(kanal, eigenes_thema=None):
+    gewaehlt = (eigenes_thema or "").strip() or None
+    if not gewaehlt:
+        gewaehlt = _tl.naechstes(kanal)
+        if gewaehlt:
+            print("  Thema aus der Liste: %s" % gewaehlt)
+        else:
+            print("  Themenliste leer - Claude waehlt frei")
+    d = _erzeuge_paket_tl(kanal, gewaehlt)
+    try:
+        if d and gewaehlt:
+            _tl.erledigt(kanal, gewaehlt)
+            rest = len(_tl.laden(kanal)["offen"])
+            print("  Thema abgehakt, noch %d offen" % rest)
+    except Exception as ex:
+        print("  Themenliste: %s" % ex)
+    return d
 
 
 # ---------- Nachtrag p33: Serien ----------
@@ -225,77 +399,6 @@ def _p40_json(antwort):
     except Exception:
         raise _p40_json_modul.JSONDecodeError(
             "JSON auch nach dem Flicken unlesbar", antwort, 0)
-
-
-# ---------- Nachtrag p42: Rettung mit Spur ----------
-
-import os as _p42_os
-
-_P42_SPUR = _p42_os.path.join(
-    _p42_os.path.dirname(_p42_os.path.abspath(__file__)), "letzte_antwort.txt")
-_P42_SCHWAENZE = ("", "]}", "}]}", "\"}]}", "]", "}", "}}")
-
-
-def _p42_merken(antwort, grund):
-    try:
-        with open(_P42_SPUR, "w", encoding="utf-8") as f:
-            f.write("GRUND: %s\n" % grund)
-            f.write("ZEICHEN: %d\n" % len(antwort or ""))
-            f.write("ENDET AUF: %r\n" % (antwort or "")[-40:])
-            f.write("-" * 60 + "\n")
-            f.write(antwort or "")
-        print("[Text] Rohantwort liegt in %s" % _P42_SPUR)
-    except Exception:
-        pass
-
-
-def _p42_abschneiden(text):
-    """Bei abgeschnittener Antwort bis zur letzten ganzen Szene zurueck."""
-    stellen = [i for i, c in enumerate(text) if c == "}"]
-    for i in reversed(stellen[-60:]):
-        stueck = text[:i + 1]
-        for schwanz in _P42_SCHWAENZE:
-            try:
-                d = _p40_json_modul.loads(stueck + schwanz)
-            except Exception:
-                continue
-            if isinstance(d, dict) and d.get("szenen"):
-                return d
-    return None
-
-
-def _p40_json(antwort):
-    """Normal lesen, sonst Anfuehrungszeichen flicken, sonst abschneiden."""
-    erster = None
-    try:
-        return _p40_json_modul.loads(antwort)
-    except Exception as e:
-        erster = e
-
-    try:
-        d = _p40_json_modul.loads(_p40_flicken(antwort))
-        print("[Text] Anfuehrungszeichen im JSON geflickt")
-        return d
-    except Exception:
-        pass
-
-    d = _p42_abschneiden(antwort)
-    if d is not None:
-        print("[Text] Antwort war abgeschnitten - %d ganze Szenen gerettet"
-              % len(d.get("szenen") or []))
-        _p42_merken(antwort, "abgeschnitten, %d Szenen gerettet" % len(d.get("szenen") or []))
-        return d
-
-    d = _p42_abschneiden(_p40_flicken(antwort))
-    if d is not None:
-        print("[Text] geflickt und abgeschnitten - %d ganze Szenen gerettet"
-              % len(d.get("szenen") or []))
-        _p42_merken(antwort, "geflickt und abgeschnitten")
-        return d
-
-    _p42_merken(antwort, "unlesbar: %s" % erster)
-    raise _p40_json_modul.JSONDecodeError(
-        "unlesbar (%s) - Rohantwort liegt in %s" % (erster, _P42_SPUR), antwort or "", 0)
 
 
 # ---------- Nachtrag p49: das Thema durchsetzen ----------

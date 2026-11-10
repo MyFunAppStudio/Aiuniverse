@@ -51,6 +51,32 @@ echo "--- was sich geaendert hat ---"
 git log --oneline "$alt..$neu" 2>/dev/null | head -20
 echo
 
+echo "--- Probe: sind es echte Dateien? ---"
+# Am 9. November wurden Testnachbauten statt echter Technik eingespielt -
+# Sinustoene statt Sprache, kein KI-Aufruf. Das darf nie wieder passieren.
+attrappen=$(grep -l "Nachbau\|_testantwort" *.py 2>/dev/null)
+if [ -n "$attrappen" ]; then
+  echo "ACHT  In diesen Dateien stecken Testnachbauten statt echter Technik:"
+  for z in $attrappen; do echo "      $z"; done
+  echo "      Nichts uebernommen. Zurueck auf den vorherigen Stand mit:"
+  echo "      cd /root/aiuniverse && git reset --hard $alt && systemctl restart dashboard2"
+  git reset --hard "$alt" --quiet
+  exit 1
+fi
+winzig=""
+for z in medien.py musik.py video_bauen.py text_generator.py einstellungen.py; do
+  [ -f "$z" ] || continue
+  n=$(wc -l < "$z")
+  [ "$n" -lt 100 ] && winzig="$winzig $z($n)"
+done
+if [ -n "$winzig" ]; then
+  echo "ACHT  Diese Dateien sind verdaechtig kurz:$winzig"
+  echo "      Nichts uebernommen, zurueck auf $alt."
+  git reset --hard "$alt" --quiet
+  exit 1
+fi
+echo "OK    keine Attrappen"
+echo
 echo "--- Probe: laedt noch alles? ---"
 python3 - <<'PYENDE'
 import sys
