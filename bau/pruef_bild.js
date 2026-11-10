@@ -104,6 +104,37 @@ const ANTWORT = {
   const alt = await seite.evaluate(() => document.querySelectorAll('.szn .p89').length);
   console.log(`\n  Alte Funktionen an: KI-Animation-Haken je Szene wieder da = ${alt}`);
 
+  // Bleiben die Laden offen, wenn neu gezeichnet wird?
+  await seite.evaluate(() => { S.tab = 'einst'; S.offen = {}; zeichne(); });
+  await seite.waitForTimeout(300);
+  const falttest = await seite.evaluate(async () => {
+    const auf = () => [...document.querySelectorAll('details.falt')]
+      .filter(d => d.open).map(d => d.querySelector('summary').innerText.trim());
+    const d = [...document.querySelectorAll('details.falt')][2];
+    const name = d.querySelector('summary').innerText.trim();
+    d.open = true; d.dispatchEvent(new Event('toggle'));
+    const vorher = auf();
+    zeichne();
+    await new Promise(r => setTimeout(r, 120));
+    return { geoeffnet: name, vorher, nachher: auf() };
+  });
+  console.log(`\n  Lade "${falttest.geoeffnet}" geoeffnet, dann neu gezeichnet:`);
+  console.log(`    vorher offen:  ${JSON.stringify(falttest.vorher)}`);
+  console.log(`    nachher offen: ${JSON.stringify(falttest.nachher)}`);
+
+  // Szenen-Lade "mehr einstellen"
+  await seite.evaluate(() => { S.tab = 'machen'; zeichne(); });
+  await seite.waitForTimeout(300);
+  const mehrtest = await seite.evaluate(async () => {
+    const d = document.querySelector('details.mehr');
+    if (!d) return 'keine mehr-Lade da';
+    d.open = true; d.dispatchEvent(new Event('toggle'));
+    zeichne();
+    await new Promise(r => setTimeout(r, 120));
+    return document.querySelector('details.mehr').open ? 'bleibt offen' : 'KLAPPT ZU';
+  });
+  console.log(`  Szenen-Lade "mehr einstellen" nach dem Neuzeichnen: ${mehrtest}`);
+
   await browser.close();
   if (fehler.length) { console.log('\nFEHLER:'); fehler.forEach(f => console.log('  ' + f)); process.exit(1); }
   console.log('\nOK  keine JS-Fehler in allen drei Reitern');

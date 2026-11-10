@@ -202,7 +202,7 @@ details.mehr[open]>summary{color:#24D3E8}
 <div id="dialog"></div>
 
 <script>
-var S={kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
+var S={offen:{},kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
@@ -293,7 +293,10 @@ function zeichne(){
   el("leiste").style.display=(S.tab==="machen")?"flex":"none";
   el("preis").textContent=(S.preis.gesamt!=null?S.preis.gesamt.toFixed(2).replace(".",","):"—")+" €";
   var f={machen:tMachen,darsteller:tDarstellerSeite,einst:tEinst,kanaele:tKanaele}[S.tab]||tMachen;
+  /* Die Seite springt sonst bei jeder Aenderung nach oben. */
+  var stand=window.pageYOffset||document.documentElement.scrollTop||0;
   el("inhalt").innerHTML=f();
+  if(stand>0)window.scrollTo(0,stand);
   laufLeiste();
   if(S.tab==="einst")p70Lade();
 }
@@ -533,8 +536,26 @@ function tDarstellerSeite(){
   return o;
 }
 
+/* Beim Neuzeichnen wird die Seite komplett neu aufgebaut. Ohne das hier
+   klappt jede geoeffnete Lade bei jeder Aenderung wieder zu. */
+function faltSchluessel(t){return String(t||"").replace(/[^a-zA-Z0-9]+/g,"_").slice(0,40)}
+
+function faltMerk(d){
+  var k=d.getAttribute("data-falt");
+  if(!k)return;
+  if(!S.offen)S.offen={};
+  if(d.open)S.offen[k]=1; else delete S.offen[k];
+}
+
+function faltOffen(k,standard){
+  if(!S.offen)S.offen={};
+  return S.offen[k]?true:!!standard;
+}
+
 function falte(titel,inhalt,offen){
-  return '<details class="falt"'+(offen?' open':'')+'>'
+  var k=faltSchluessel(titel);
+  return '<details class="falt" data-falt="'+k+'" ontoggle="faltMerk(this)"'
+   +(faltOffen(k,offen)?' open':'')+'>'
    +'<summary>'+h(titel)+'</summary>'
    +'<div class="faltin">'+inhalt+'</div></details>';
 }
@@ -1496,7 +1517,12 @@ function tSzenen(){
     mehr+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
       +h(s.musik==="auto"?"":String(s.musik))+'" onchange="szeneSetz(\''+s.id+'\',\'musik\',this.value)"><span class="szh">% · leer = automatisch</span></div>';
     if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FFB454">Datei fehlt auf dem Server</span></div>';
-    if(mehr)o+='<details class="mehr"><summary>mehr einstellen</summary>'+mehr+'</details>';
+    if(mehr){
+      var mk="mehr_"+s.id;
+      o+='<details class="mehr" data-falt="'+mk+'" ontoggle="faltMerk(this)"'
+       +(faltOffen(mk,false)?' open':'')+'><summary>mehr einstellen</summary>'
+       +mehr+'</details>';
+    }
     o+='</div>';
   });
   o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="hochladen(\'szene\')">+ Bild oder Clip</button></div>';
