@@ -1,20 +1,29 @@
 # -*- coding: utf-8 -*-
 """Avatare je Kanal: eine Bibliothek wiederkehrender Figuren.
 
-Anders als die alten Figuren werden Avatare NICHT freigestellt und nicht
-ins Bild geklebt. Ihre Bilder sind Referenzbilder: sie gehen an das
-Videomodell, und das Modell zeichnet die Figur selbst in die Szene. Darum
-darf hier jedes normale Bild hochgeladen werden, mit Hintergrund.
+Ein Avatar ist ein Name, eine Rolle und bis zu BILDER_MAX Bilder. Mehr
+nicht. Das erste Bild ist das Frontalbild.
+
+Die Bilder werden NICHT freigestellt und nicht ins Bild geklebt. Sie gehen
+als Referenz an das Videomodell, und das zeichnet die Figur selbst in die
+Szene. Darum darf hier jedes normale Bild hochgeladen werden, mit
+Hintergrund.
 
 Die Bibliothek darf beliebig gross sein. Fuer ein Video hakst du an, wer
 mitspielt - das ist die Besetzung. Gleichzeitig im Bild gehen hoechstens
 BESETZUNG_MAX Figuren, denn das Videomodell nimmt zusammen mit dem
 Hintergrundbild nur vier Referenzen an.
 
-Ein Kleidungssatz sind mehrere Bilder derselben Figur in derselben Kleidung,
-aus verschiedenen Blickwinkeln. Das erste Bild ist das Frontalbild. Innerhalb
-eines Videos bleibt die Kleidung gleich - darum wird je Video ein Satz
-ausgewaehlt und nicht je Szene.
+Andere Kleidung fuer eine spaetere Folge wird als eigener Avatar angelegt
+("Mara Feldjacke") und statt der anderen angehakt. Das ist ein Eintrag
+mehr in der Liste und dafuer keine zweite Ebene in der Bedienung.
+
+Warum es ueberhaupt eine Rolle gibt und keine Beschreibung: Das Modell
+bekommt einen Vorspann, der sagt, welches Referenzbild wer ist - sonst
+versteht es "Mara zeigt nach oben" in der Regieanweisung nicht. Dafuer
+reichen Name und ein, zwei Woerter Rolle. Wie die Figur AUSSIEHT steht
+schon auf den Bildern; dasselbe nochmal als Text zu beschreiben bringt
+Bild und Text gegeneinander auf und laesst die Figur driften.
 """
 import json
 import os
@@ -27,13 +36,11 @@ REGELN = os.path.join(BASIS, "regeln")
 EIGENE = os.path.join(BASIS, "eigene")
 
 BILD_ARTEN = (".jpg", ".jpeg", ".png", ".webp")
-BILDER_MAX = 4          # je Kleidungssatz, das Modell nimmt nicht mehr
+BILDER_MAX = 4          # je Avatar, das Modell nimmt nicht mehr
 KANTE_MAX = 1024        # laengste Kante, damit die Anfrage klein bleibt
 BESETZUNG_MAX = 3       # gleichzeitig im Bild; vier Referenzen minus Hintergrund
 
-# Nur noch fuer das Umziehen alter Dateien, in denen die Besetzung ein
-# Woerterbuch mit den festen Plaetzen a und b war.
-ALTE_PLAETZE = ["a", "b"]
+ALTE_PLAETZE = ["a", "b"]   # nur noch zum Umziehen ganz alter Dateien
 
 
 # ---------- Ablage ----------
@@ -62,21 +69,74 @@ def _leer():
     return {"darsteller": [], "besetzung": []}
 
 
-def _besetzung_roh(d):
-    """Die gespeicherte Besetzung als Liste, egal wie alt die Datei ist."""
-    b = d.get("besetzung")
-    if isinstance(b, list):
-        return [e for e in b if isinstance(e, dict)]
-    if isinstance(b, dict):
-        # Alte Form: {"a": {...}, "b": {...}} - in der Reihenfolge der Plaetze
+def _neue_id(benutzt, kopf="d"):
+    i = 1
+    while "%s%d" % (kopf, i) in benutzt:
+        i += 1
+    return "%s%d" % (kopf, i)
+
+
+# ---------- Umziehen alter Dateien ----------
+
+def _alte_besetzung(roh):
+    """Jede je gespeicherte Form der Besetzung als Liste von (id, satz)."""
+    if isinstance(roh, dict):          # ganz alt: {"a": {...}, "b": {...}}
         raus = []
         for p in ALTE_PLAETZE:
-            e = b.get(p)
+            e = roh.get(p)
             if isinstance(e, dict) and str(e.get("d") or ""):
-                raus.append(e)
+                raus.append((str(e["d"]), str(e.get("g") or "")))
+        return raus
+    if isinstance(roh, list):
+        raus = []
+        for e in roh:
+            if isinstance(e, dict) and str(e.get("d") or ""):
+                raus.append((str(e["d"]), str(e.get("g") or "")))
+            elif isinstance(e, str) and e.strip():   # neu: nur noch die id
+                raus.append((e.strip(), ""))
         return raus
     return []
 
+
+def _umziehen(f, benutzt):
+    """Ein alter Eintrag mit Kleidungssaetzen wird zu einem oder mehreren
+    Avataren. Gibt (Liste neuer Avatare, {alte Satz-id: neue Avatar-id}).
+    """
+    name = str(f.get("name") or "").strip()[:40]
+    rolle = str(f.get("rolle") or "").strip()[:40]
+    alt_id = str(f.get("id") or "").strip()
+
+    # Schon im flachen Modell?
+    if isinstance(f.get("bilder"), list) and "saetze" not in f:
+        did = alt_id if alt_id and alt_id not in benutzt else _neue_id(benutzt)
+        benutzt.add(did)
+        bilder = [os.path.basename(str(b)) for b in f["bilder"] if str(b or "").strip()]
+        return [{"id": did, "name": name, "rolle": rolle,
+                 "bilder": bilder[:BILDER_MAX]}], {"": did}
+
+    raus, karte = [], {}
+    saetze = [g for g in (f.get("saetze") or []) if isinstance(g, dict)]
+    if not saetze:
+        saetze = [{"id": "", "name": "", "bilder": []}]
+    for nr, g in enumerate(saetze):
+        bilder = [os.path.basename(str(b)) for b in (g.get("bilder") or [])
+                  if str(b or "").strip()][:BILDER_MAX]
+        gname = str(g.get("name") or "").strip()[:40]
+        if nr == 0:
+            did = alt_id if alt_id and alt_id not in benutzt else _neue_id(benutzt)
+            wie = name
+        else:
+            did = _neue_id(benutzt)
+            # Der zweite Kleidungssatz wird eine eigene Figur
+            wie = ("%s %s" % (name, gname)).strip()[:40] if gname else \
+                  ("%s %d" % (name, nr + 1))[:40]
+        benutzt.add(did)
+        karte[str(g.get("id") or "")] = did
+        raus.append({"id": did, "name": wie, "rolle": rolle, "bilder": bilder})
+    return raus, karte
+
+
+# ---------- Laden und Speichern ----------
 
 def laden(kanal):
     try:
@@ -86,47 +146,28 @@ def laden(kanal):
         d = {}
     if not isinstance(d, dict):
         d = {}
+
     raus = _leer()
     benutzt = set()
+    karten = {}
     for f in d.get("darsteller") or []:
-        if not isinstance(f, dict):
+        if not isinstance(f, dict) or not str(f.get("name") or "").strip():
             continue
-        name = str(f.get("name") or "").strip()[:40]
-        if not name:
-            continue
-        did = str(f.get("id") or "").strip()
-        if not did or did in benutzt:
-            did = _neue_id(benutzt, "d")
-        benutzt.add(did)
-        saetze, gbenutzt = [], set()
-        for g in f.get("saetze") or []:
-            if not isinstance(g, dict):
-                continue
-            gid = str(g.get("id") or "").strip()
-            if not gid or gid in gbenutzt:
-                gid = _neue_id(gbenutzt, "g")
-            gbenutzt.add(gid)
-            bilder = [os.path.basename(str(b)) for b in (g.get("bilder") or [])
-                      if str(b or "").strip()]
-            saetze.append({"id": gid,
-                           "name": str(g.get("name") or "").strip()[:40] or "Kleidung",
-                           "bilder": bilder[:BILDER_MAX]})
-        raus["darsteller"].append({
-            "id": did, "name": name,
-            "rolle": str(f.get("rolle") or "").strip()[:40],
-            "beschreibung": str(f.get("beschreibung") or "").strip()[:300],
-            "saetze": saetze})
+        neue, karte = _umziehen(f, benutzt)
+        raus["darsteller"].extend(neue)
+        karten[str(f.get("id") or "")] = karte
+
     gesehen = set()
-    for e in _besetzung_roh(d):
-        did = str(e.get("d") or "")
-        f = _finde(raus, did)
-        if f is None or did in gesehen:
-            continue            # geloescht oder doppelt - faellt still weg
+    for alt_id, satz_id in _alte_besetzung(d.get("besetzung")):
+        karte = karten.get(alt_id) or {}
+        did = karte.get(satz_id) or karte.get("") or \
+            (alt_id if any(x["id"] == alt_id for x in raus["darsteller"]) else "")
+        if not did or did in gesehen:
+            continue
+        if not any(x["id"] == did for x in raus["darsteller"]):
+            continue
         gesehen.add(did)
-        gid = str(e.get("g") or "")
-        if _satz(f, gid) is None:
-            gid = f["saetze"][0]["id"] if f["saetze"] else ""
-        raus["besetzung"].append({"d": did, "g": gid})
+        raus["besetzung"].append(did)
         if len(raus["besetzung"]) >= BESETZUNG_MAX:
             break
     return raus
@@ -138,31 +179,10 @@ def speichern(kanal, d):
         json.dump(d, f, ensure_ascii=False, indent=2)
 
 
-def _neue_id(benutzt, kopf):
-    i = 1
-    while "%s%d" % (kopf, i) in benutzt:
-        i += 1
-    return "%s%d" % (kopf, i)
-
-
 def _finde(d, did):
     for f in d["darsteller"]:
         if f["id"] == str(did or ""):
             return f
-    return None
-
-
-def _satz(f, gid):
-    for g in (f or {}).get("saetze") or []:
-        if g["id"] == str(gid or ""):
-            return g
-    return None
-
-
-def _dabei(d, did):
-    for e in d["besetzung"]:
-        if e["d"] == str(did or ""):
-            return e
     return None
 
 
@@ -175,22 +195,22 @@ def anlegen(kanal, name, rolle=""):
         return {"ok": False, "fehler": "Name fehlt"}
     if any(f["name"].lower() == name.lower() for f in d["darsteller"]):
         return {"ok": False, "fehler": "Gibt es schon"}
-    did = _neue_id(set(f["id"] for f in d["darsteller"]), "d")
+    did = _neue_id(set(f["id"] for f in d["darsteller"]))
     d["darsteller"].append({"id": did, "name": name,
                             "rolle": str(rolle or "").strip()[:40],
-                            "beschreibung": "", "saetze": []})
+                            "bilder": []})
     speichern(kanal, d)
     return {"ok": True, "id": did}
 
 
 def aendern(kanal, did, feld, wert):
-    if feld not in ("name", "rolle", "beschreibung"):
+    if feld not in ("name", "rolle"):
         return {"ok": False, "fehler": "Feld unbekannt"}
     d = laden(kanal)
     f = _finde(d, did)
     if f is None:
         return {"ok": False, "fehler": "Avatar unbekannt"}
-    w = str(wert or "").strip()[:300 if feld == "beschreibung" else 40]
+    w = str(wert or "").strip()[:40]
     if feld == "name":
         if not w:
             return {"ok": False, "fehler": "Name darf nicht leer sein"}
@@ -215,58 +235,9 @@ def entfernen(kanal, did):
     f = _finde(d, did)
     if f is None:
         return {"ok": False, "fehler": "Avatar unbekannt"}
-    for g in f["saetze"]:
-        _weg(kanal, g["bilder"])
+    _weg(kanal, f["bilder"])
     d["darsteller"] = [x for x in d["darsteller"] if x["id"] != f["id"]]
-    d["besetzung"] = [e for e in d["besetzung"] if e["d"] != f["id"]]
-    speichern(kanal, d)
-    return {"ok": True}
-
-
-# ---------- Kleidungssaetze ----------
-
-def satz_anlegen(kanal, did, name=""):
-    d = laden(kanal)
-    f = _finde(d, did)
-    if f is None:
-        return {"ok": False, "fehler": "Avatar unbekannt"}
-    gid = _neue_id(set(g["id"] for g in f["saetze"]), "g")
-    f["saetze"].append({"id": gid,
-                        "name": str(name or "").strip()[:40]
-                                or ("Kleidung %d" % (len(f["saetze"]) + 1)),
-                        "bilder": []})
-    # Der erste Satz einer Figur wird gleich der gewaehlte, falls sie dabei ist
-    e = _dabei(d, did)
-    if e is not None and not e.get("g"):
-        e["g"] = gid
-    speichern(kanal, d)
-    return {"ok": True, "id": gid}
-
-
-def satz_aendern(kanal, did, gid, name):
-    d = laden(kanal)
-    g = _satz(_finde(d, did), gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
-    w = str(name or "").strip()[:40]
-    if not w:
-        return {"ok": False, "fehler": "Name darf nicht leer sein"}
-    g["name"] = w
-    speichern(kanal, d)
-    return {"ok": True}
-
-
-def satz_entfernen(kanal, did, gid):
-    d = laden(kanal)
-    f = _finde(d, did)
-    g = _satz(f, gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
-    _weg(kanal, g["bilder"])
-    f["saetze"] = [x for x in f["saetze"] if x["id"] != g["id"]]
-    e = _dabei(d, did)
-    if e is not None and e.get("g") == g["id"]:
-        e["g"] = f["saetze"][0]["id"] if f["saetze"] else ""
+    d["besetzung"] = [x for x in d["besetzung"] if x != f["id"]]
     speichern(kanal, d)
     return {"ok": True}
 
@@ -274,7 +245,6 @@ def satz_entfernen(kanal, did, gid):
 # ---------- Bilder ----------
 
 def _masse(pfad):
-    """(Breite, Hoehe) oder None."""
     r = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0",
                         "-show_entries", "stream=width,height",
                         "-of", "csv=p=0:s=x", str(pfad)],
@@ -306,10 +276,8 @@ def aufbereiten(kanal, datei):
         b, h = max(2, b // 2 * 2), max(2, h // 2 * 2)
     stamm = re.sub(r"[^a-z0-9_-]+", "_",
                    os.path.splitext(os.path.basename(datei))[0].lower())[:26]
-    # Der Hochlader haengt schon eine Uhrzeit an, die nicht zweimal hinein soll
     stamm = re.sub(r"_\d{6}$", "", stamm) or "ds"
-    # Zwei Bilder in derselben Sekunde duerfen sich nicht gegenseitig
-    # ueberschreiben, darum wird bei Bedarf durchgezaehlt.
+    # Zwei Bilder in derselben Sekunde duerfen sich nicht ueberschreiben
     uhr = time.strftime("%H%M%S")
     name = "ds_%s_%s.jpg" % (stamm, uhr)
     zaehler = 1
@@ -337,194 +305,140 @@ def aufbereiten(kanal, datei):
     return {"ok": True, "datei": name, "breite": b, "hoehe": h}
 
 
-def bild_dazu(kanal, did, gid, datei):
-    """Haengt ein schon aufbereitetes Bild an den Kleidungssatz."""
+def da(kanal, did):
+    """Gibt es diesen Avatar? Vor dem Hochladen zu pruefen."""
+    return _finde(laden(kanal), did) is not None
+
+
+def platz_frei(kanal, did):
+    """Wie viele Bilder der Avatar noch annimmt."""
+    f = _finde(laden(kanal), did)
+    if f is None:
+        return 0
+    return max(0, BILDER_MAX - len(f["bilder"]))
+
+
+def bild_dazu(kanal, did, datei):
+    """Haengt ein schon aufbereitetes Bild an den Avatar."""
     d = laden(kanal)
-    g = _satz(_finde(d, did), gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
-    if len(g["bilder"]) >= BILDER_MAX:
-        return {"ok": False, "fehler":
-                "Hoechstens %d Bilder je Kleidungssatz" % BILDER_MAX}
+    f = _finde(d, did)
+    if f is None:
+        return {"ok": False, "fehler": "Avatar unbekannt"}
+    if len(f["bilder"]) >= BILDER_MAX:
+        return {"ok": False, "fehler": "Hoechstens %d Bilder je Avatar" % BILDER_MAX}
     n = os.path.basename(datei or "")
     if not os.path.exists(datei_pfad(kanal, n)):
         return {"ok": False, "fehler": "Die Datei liegt nicht im Avatarordner"}
-    if n not in g["bilder"]:
-        g["bilder"].append(n)
+    if n not in f["bilder"]:
+        f["bilder"].append(n)
     speichern(kanal, d)
     return {"ok": True, "datei": n}
 
 
-def bild_weg(kanal, did, gid, datei):
+def bild_weg(kanal, did, datei):
     d = laden(kanal)
-    g = _satz(_finde(d, did), gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
+    f = _finde(d, did)
+    if f is None:
+        return {"ok": False, "fehler": "Avatar unbekannt"}
     n = os.path.basename(datei or "")
-    if n not in g["bilder"]:
+    if n not in f["bilder"]:
         return {"ok": False, "fehler": "Bild unbekannt"}
-    g["bilder"] = [x for x in g["bilder"] if x != n]
+    f["bilder"] = [x for x in f["bilder"] if x != n]
     speichern(kanal, d)
     _weg(kanal, [n])
     return {"ok": True}
 
 
-def bild_vor(kanal, did, gid, datei):
-    """Macht ein Bild zum Frontalbild, also zum ersten im Satz."""
+def bild_vor(kanal, did, datei):
+    """Macht ein Bild zum Frontalbild, also zum ersten."""
     d = laden(kanal)
-    g = _satz(_finde(d, did), gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
+    f = _finde(d, did)
+    if f is None:
+        return {"ok": False, "fehler": "Avatar unbekannt"}
     n = os.path.basename(datei or "")
-    if n not in g["bilder"]:
+    if n not in f["bilder"]:
         return {"ok": False, "fehler": "Bild unbekannt"}
-    g["bilder"] = [n] + [x for x in g["bilder"] if x != n]
+    f["bilder"] = [n] + [x for x in f["bilder"] if x != n]
     speichern(kanal, d)
     return {"ok": True}
 
 
-def satz_da(kanal, did, gid):
-    """Gibt es diesen Kleidungssatz? Vor dem Hochladen zu pruefen."""
-    return _satz(_finde(laden(kanal), did), gid) is not None
-
-
-def platz_frei(kanal, did, gid):
-    """Wie viele Bilder der Satz noch annimmt."""
-    g = _satz(_finde(laden(kanal), did), gid)
-    if g is None:
-        return 0
-    return max(0, BILDER_MAX - len(g["bilder"]))
-
-
-def bilder_pfade(kanal, did, gid):
-    """Vorhandene Bilddateien des Satzes, Frontalbild zuerst."""
-    g = _satz(_finde(laden(kanal), did), gid)
-    if g is None:
-        return []
-    raus = []
-    for n in g["bilder"]:
-        p = datei_pfad(kanal, n)
-        if os.path.exists(p):
-            raus.append(p)
-    return raus
-
-
 # ---------- Besetzung ----------
 
-def dabei_setzen(kanal, did, an, gid=""):
+def dabei_setzen(kanal, did, an):
     """Hakt einen Avatar fuer dieses Video an oder ab."""
     d = laden(kanal)
     f = _finde(d, did)
     if f is None:
         return {"ok": False, "fehler": "Avatar unbekannt"}
-    e = _dabei(d, did)
     if not an:
-        if e is None:
-            return {"ok": True}
-        d["besetzung"] = [x for x in d["besetzung"] if x["d"] != f["id"]]
+        d["besetzung"] = [x for x in d["besetzung"] if x != f["id"]]
         speichern(kanal, d)
         return {"ok": True}
-    if e is not None:
+    if f["id"] in d["besetzung"]:
         return {"ok": True}
-    if not f["saetze"]:
+    if not [n for n in f["bilder"] if os.path.exists(datei_pfad(kanal, n))]:
         return {"ok": False, "fehler":
-                "%s hat noch keinen Kleidungssatz. Leg einen an und lade "
-                "Bilder hoch." % f["name"]}
+                "%s hat noch kein Bild. Lad erst eins hoch." % f["name"]}
     if len(d["besetzung"]) >= BESETZUNG_MAX:
         return {"ok": False, "fehler":
                 "Hoechstens %d Avatare gleichzeitig - das Videomodell nimmt "
-                "mit dem Hintergrundbild nur vier Referenzen."
-                % BESETZUNG_MAX}
-    g = _satz(f, gid) or f["saetze"][0]
-    d["besetzung"].append({"d": f["id"], "g": g["id"]})
-    speichern(kanal, d)
-    return {"ok": True}
-
-
-def satz_waehlen(kanal, did, gid):
-    """Waehlt den Kleidungssatz, in dem ein Avatar dieses Video spielt."""
-    d = laden(kanal)
-    f = _finde(d, did)
-    if f is None:
-        return {"ok": False, "fehler": "Avatar unbekannt"}
-    g = _satz(f, gid)
-    if g is None:
-        return {"ok": False, "fehler": "Kleidungssatz unbekannt"}
-    e = _dabei(d, did)
-    if e is None:
-        if len(d["besetzung"]) >= BESETZUNG_MAX:
-            return {"ok": False, "fehler":
-                    "Hoechstens %d Avatare gleichzeitig" % BESETZUNG_MAX}
-        d["besetzung"].append({"d": f["id"], "g": g["id"]})
-    else:
-        e["g"] = g["id"]
+                "mit dem Hintergrundbild nur vier Referenzen." % BESETZUNG_MAX}
+    d["besetzung"].append(f["id"])
     speichern(kanal, d)
     return {"ok": True}
 
 
 def _stand(kanal):
-    """Je besetztem Avatar: (did, lage, text). Lage ist ok oder kaputt."""
+    """Je angehaktem Avatar: (id, lage, text). Lage ist ok oder kaputt."""
     d = laden(kanal)
     raus = []
-    for e in d["besetzung"]:
-        f = _finde(d, e.get("d"))
+    for did in d["besetzung"]:
+        f = _finde(d, did)
         if f is None:
             continue
-        g = _satz(f, e.get("g"))
-        if g is None:
-            raus.append((f["id"], "kaputt",
-                         "%s hat keinen Kleidungssatz mehr" % f["name"]))
+        if not [n for n in f["bilder"] if os.path.exists(datei_pfad(kanal, n))]:
+            raus.append((did, "kaputt", "%s hat kein Bild mehr" % f["name"]))
             continue
-        if not [n for n in g["bilder"] if os.path.exists(datei_pfad(kanal, n))]:
-            raus.append((f["id"], "kaputt",
-                         "%s: im Satz \"%s\" liegt kein Bild"
-                         % (f["name"], g["name"])))
-            continue
-        raus.append((f["id"], "ok", f["name"]))
+        raus.append((did, "ok", f["name"]))
     return raus
 
 
 def besetzung(kanal):
     """Die angehakten Avatare, in der Reihenfolge der Besetzung.
 
-    Je Eintrag: id, name, rolle, beschreibung, satz, bilder (ganze Pfade).
-    Avatare ohne brauchbares Bild fallen weg.
+    Je Eintrag: id, name, rolle, bilder (ganze Pfade). Avatare ohne
+    brauchbares Bild fallen weg.
     """
     d = laden(kanal)
     raus = []
-    for e in d["besetzung"]:
-        f = _finde(d, e.get("d"))
+    for did in d["besetzung"]:
+        f = _finde(d, did)
         if f is None:
             continue
-        g = _satz(f, e.get("g"))
-        if g is None:
-            continue
-        bilder = [datei_pfad(kanal, n) for n in g["bilder"]
+        bilder = [datei_pfad(kanal, n) for n in f["bilder"]
                   if os.path.exists(datei_pfad(kanal, n))]
         if not bilder:
             continue
-        raus.append({"id": f["id"], "name": f["name"], "rolle": f.get("rolle", ""),
-                     "beschreibung": f.get("beschreibung", ""),
-                     "satz": g["name"], "bilder": bilder})
+        raus.append({"id": f["id"], "name": f["name"],
+                     "rolle": f.get("rolle", ""), "bilder": bilder})
     return raus
 
 
 def bereit(kanal):
     """(ok, Grund) - ob die Besetzung fuer einen Referenzclip reicht.
 
-    Ein angehakter Avatar, der kein Bild hat, ist ein Fehler und nicht
-    einfach einer weniger: sonst laeuft das Video still mit einer Figur
-    weniger durch, und das faellt erst am Ende auf.
+    Ein angehakter Avatar ohne Bild ist ein Fehler und nicht einfach einer
+    weniger: sonst laeuft das Video still mit einer Figur weniger durch,
+    und das faellt erst am Ende auf.
     """
     st = _stand(kanal)
     kaputt = [t for _d, lage, t in st if lage == "kaputt"]
     if kaputt:
         return False, ". ".join(kaputt)
-    gut = [t for _d, lage, t in st if lage == "ok"]
-    if not gut:
+    if not [t for _d, lage, t in st if lage == "ok"]:
         return False, ("Kein Avatar angehakt. Leg im Reiter Avatare eine Figur "
-                       "an, gib ihr einen Kleidungssatz mit Bildern und hak sie "
-                       "fuer dieses Video an.")
+                       "an, lad ein paar Bilder hoch und hak sie an.")
     return True, ""
 
 
@@ -533,15 +447,13 @@ def prompt_vorspann(kanal, hintergrund=True):
 
     Das Videomodell spricht die Referenzen als @Element1, @Element2 und
     @Image1 an. Ohne diesen Vorspann weiss es nicht, welches Bild welche
-    Figur ist.
+    Figur ist, und die Regieanweisung mit den Namen laeuft ins Leere.
     """
     teile = []
     for i, x in enumerate(besetzung(kanal)):
         wer = x["name"]
         if x.get("rolle"):
             wer += ", %s" % x["rolle"]
-        if x.get("beschreibung"):
-            wer += " (%s)" % x["beschreibung"]
         teile.append("@Element%d is %s." % (i + 1, wer))
     if hintergrund:
         teile.append("@Image1 is the background scene they are standing in.")
@@ -554,23 +466,16 @@ def fuer_anzeige(kanal):
     d = laden(kanal)
     raus = []
     for f in d["darsteller"]:
-        saetze = []
-        for g in f["saetze"]:
-            bilder = []
-            for n in g["bilder"]:
-                p = datei_pfad(kanal, n)
-                bilder.append({"datei": n, "da": os.path.exists(p),
-                               "groesse": os.path.getsize(p) if os.path.exists(p) else 0})
-            saetze.append({"id": g["id"], "name": g["name"], "bilder": bilder,
-                           "voll": len(bilder) >= BILDER_MAX})
-        e = _dabei(d, f["id"])
+        bilder = []
+        for n in f["bilder"]:
+            p = datei_pfad(kanal, n)
+            bilder.append({"datei": n, "da": os.path.exists(p),
+                           "groesse": os.path.getsize(p) if os.path.exists(p) else 0})
         raus.append({"id": f["id"], "name": f["name"], "rolle": f.get("rolle", ""),
-                     "beschreibung": f.get("beschreibung", ""), "saetze": saetze,
-                     "dabei": e is not None,
-                     "gewaehlt": (e or {}).get("g", "")
-                                 or (saetze[0]["id"] if saetze else "")})
+                     "bilder": bilder, "voll": len(bilder) >= BILDER_MAX,
+                     "dabei": f["id"] in d["besetzung"]})
     ok, grund = bereit(kanal)
-    return {"darsteller": raus, "besetzung": d["besetzung"],
+    return {"darsteller": raus, "besetzung": list(d["besetzung"]),
             "max": BESETZUNG_MAX, "bilder_max": BILDER_MAX,
             "anzahl": len(d["besetzung"]),
             "bereit": ok, "grund": grund,

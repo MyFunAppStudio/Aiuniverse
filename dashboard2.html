@@ -1637,14 +1637,14 @@ function dsSetz(o){
 }
 
 function dsDabei(did,an){return dsSetz({aktion:"dabei",id:did,wert:!!an})}
-function dsSatzWaehlen(did,gid){return dsSetz({aktion:"satz_waehlen",id:did,satz:gid})}
 function dsFeld(did,feld,wert){return dsSetz({aktion:feld,id:did,wert:wert})}
 
 function dsNeu(){
   el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Avatar</h2>'
-   +'<p>Eine wiederkehrende Figur für deine Videos. Angelegt heißt noch nicht dabei — das hakst du je Video an.</p>'
+   +'<p>Eine wiederkehrende Figur für deine Videos. Angelegt heißt noch nicht dabei — '
+   +'das hakst du je Video an.</p>'
    +'<input type="text" id="dsn" class="breit" placeholder="Name, z.B. Mara" style="margin-bottom:9px">'
-   +'<input type="text" id="dsr" class="breit" placeholder="Rolle, z.B. Frau Mitte 20" style="margin-bottom:14px">'
+   +'<input type="text" id="dsr" class="breit" placeholder="Rolle, z.B. Archäologin" style="margin-bottom:14px">'
    +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
    +'<button class="knopf or" onclick="dsAnlegen()">Anlegen</button></div></div></div>';
 }
@@ -1654,44 +1654,26 @@ function dsAnlegen(){
   dsSetz({aktion:"neu",name:n,rolle:r}).then(function(x){if(x&&x.ok)zu()});
 }
 function dsWeg(did,name){
-  frage("Avatar löschen?","<b>"+h(name)+"</b><br><br>Alle Kleidungssätze und Bilder dieser Figur werden gelöscht.",
+  frage("Avatar löschen?","<b>"+h(name)+"</b><br><br>Die Bilder dieser Figur werden gelöscht.",
     "Löschen",function(){dsSetz({aktion:"weg",id:did})},true);
 }
-function dsSatzNeu(did){
-  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Kleidungssatz</h2>'
-   +'<p>Mehrere Bilder derselben Figur in <b>derselben</b> Kleidung, aus verschiedenen Blickwinkeln. '
-   +'Innerhalb eines Videos bleibt die Kleidung gleich.</p>'
-   +'<input type="text" id="dsgn" class="breit" placeholder="z.B. Jeans und Jeansjacke" style="margin-bottom:14px">'
-   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
-   +'<button class="knopf or" onclick="dsSatzOk(\''+did+'\')">Anlegen</button></div></div></div>';
-}
-function dsSatzOk(did){
-  var n=((el("dsgn")||{}).value||"").trim();
-  dsSetz({aktion:"satz_neu",id:did,name:n}).then(function(x){if(x&&x.ok)zu()});
-}
-function dsSatzWeg(did,gid,name){
-  frage("Kleidungssatz löschen?","<b>"+h(name)+"</b><br><br>Die Bilder dieses Satzes werden gelöscht.",
-    "Löschen",function(){dsSetz({aktion:"satz_weg",id:did,satz:gid})},true);
-}
-function dsBildWeg(did,gid,datei){
-  dsSetz({aktion:"bild_weg",id:did,satz:gid,datei:datei});
-}
-function dsBildVor(did,gid,datei){
-  dsSetz({aktion:"bild_vor",id:did,satz:gid,datei:datei});
-}
+function dsBildWeg(did,datei){dsSetz({aktion:"bild_weg",id:did,datei:datei})}
+function dsBildVor(did,datei){dsSetz({aktion:"bild_vor",id:did,datei:datei})}
 
-function dsHoch(did,gid){
+function dsHoch(did){
   var i=document.createElement("input");
   i.type="file"; i.accept="image/*";
   i.onchange=function(){
     var f=i.files&&i.files[0];if(!f)return;
     if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
-    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2><p id="dspro">'+h(f.name)+' · 0 %</p></div></div>';
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2>'
+      +'<p id="dspro">'+h(f.name)+' · 0 %</p></div></div>';
     var x=new XMLHttpRequest();
     x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=darsteller"
-      +"&id="+encodeURIComponent(did)+"&satz="+encodeURIComponent(gid)
-      +"&name="+encodeURIComponent(f.name));
-    x.upload.onprogress=function(e){if(e.lengthComputable&&el("dspro"))el("dspro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+      +"&id="+encodeURIComponent(did)+"&name="+encodeURIComponent(f.name));
+    x.upload.onprogress=function(e){
+      if(e.lengthComputable&&el("dspro"))
+        el("dspro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
     x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
       if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeDarsteller()};
     x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
@@ -1803,13 +1785,12 @@ function tAbspannBib(){
 function tDarsteller(){
   var d=S.ds;
   if(!d){ladeDarsteller();return '<div class="karte p"><div class="leer">lade…</div></div>'}
-  var liste=d.darsteller||[], max=d.max||3, anzahl=d.anzahl||0;
+  var liste=d.darsteller||[], max=d.max||3, anzahl=d.anzahl||0, bmax=d.bilder_max||4;
 
   var o='<div class="karte p"><h2 class="kt">Avatare</h2>'
    +'<div class="hinw" style="padding:0;margin-bottom:10px">'
-   +'Die Bibliothek darf beliebig groß sein. Für ein Video hakst du an, wer mitspielt. '
-   +'Gleichzeitig im Bild gehen höchstens '+max+' — das Videomodell nimmt mit dem '
-   +'Hintergrundbild nur vier Referenzen.<br><br>'
+   +'Ein Avatar ist ein Name, eine Rolle und bis zu '+bmax+' Bilder. Für ein Video hakst du an, '
+   +'wer mitspielt — gleichzeitig im Bild gehen höchstens '+max+'.<br><br>'
    +'Die Bilder werden <b>nicht</b> ins Bild geklebt. Sie gehen als Referenz an das Modell, '
    +'und das stellt die Figur selbst in die Szene. Darum dürfen sie einen Hintergrund haben.</div>'
    +'<div class="szz"><span class="szh">Für dieses Video dabei</span>'
@@ -1828,68 +1809,56 @@ function tDarsteller(){
     o+='<div class="karte p"><div class="leer">noch kein Avatar angelegt</div></div>';
 
   liste.forEach(function(f){
-    var an=!!f.dabei, gew=f.gewaehlt||"", saetze=f.saetze||[];
+    var an=!!f.dabei, bilder=f.bilder||[];
     o+='<div class="karte p'+(an?' mit':'')+'">'
-     +'<div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+     +'<div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:9px">'
      +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)
      +(f.rolle?' <span class="szh">· '+h(f.rolle)+'</span>':'')+'</h2>'
      +'<button class="sch'+(an?" an":"")+'" title="für dieses Video dabei" '
      +'onclick="dsDabei(\''+h(f.id)+'\','+(an?"false":"true")+')"><i></i></button>'
      +'<button class="ik rot" onclick="dsWeg(\''+h(f.id)+'\',\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
 
-    o+='<div class="szz"><span class="szh">Rolle</span>'
-     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Archäologin"'
-     +' onchange="dsFeld(\''+h(f.id)+'\',\'rolle\',this.value)"></div>';
-    o+='<div class="szz" style="margin-top:7px"><span class="szh">Beschreibung</span>'
-     +'<input type="text" class="breit" value="'+h(f.beschreibung||"")+'" placeholder="wer die Figur ist, nicht wie sie aussieht"'
-     +' onchange="dsFeld(\''+h(f.id)+'\',\'beschreibung\',this.value)"></div>';
-
-    if(an&&saetze.length>1){
-      o+='<div class="szz" style="margin-top:11px"><span class="szh">Kleidung in diesem Video</span></div>'
-       +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'
-       +saetze.map(function(g){
-          return '<button class="knopf'+(g.id===gew?' or':'')+'" style="flex:0 0 auto" '
-           +'onclick="dsSatzWaehlen(\''+h(f.id)+'\',\''+h(g.id)+'\')">'+h(g.name)+'</button>'}).join("")
+    o+='<div style="display:flex;flex-wrap:wrap;gap:7px">';
+    bilder.forEach(function(b,bi){
+      o+='<div style="position:relative;flex:0 0 66px;width:66px;height:88px">'
+       +'<img alt="" src="/darsteller/'+encodeURIComponent(b.datei)+'?k='+S.kanal+'" '
+       +'title="'+(bi===0?'Frontalbild':'antippen: zum Frontalbild machen')+'" '
+       +'onclick="dsBildVor(\''+h(f.id)+'\',\''+h(b.datei)+'\')" '
+       +'style="width:66px;height:88px;object-fit:cover;border-radius:8px;background:#0A0C12;'
+       +'display:block;cursor:pointer;'+(bi===0?'outline:2px solid #24D3E8;outline-offset:-2px':'')+'">'
+       +(bi===0?'<div style="position:absolute;left:0;right:0;bottom:0;background:#24D3E8;color:#04161B;'
+               +'font-size:9.5px;font-weight:700;text-align:center;padding:2px 0;'
+               +'border-radius:0 0 8px 8px;pointer-events:none">FRONTAL</div>':'')
+       +'<button class="ik rot" title="Bild löschen" '
+       +'onclick="event.stopPropagation();dsBildWeg(\''+h(f.id)+'\',\''+h(b.datei)+'\')" '
+       +'style="position:absolute;top:-7px;right:-7px;width:23px;height:23px;'
+       +'border-radius:50%;font-size:11px;line-height:1;padding:0">✕</button>'
        +'</div>';
-    }
-
-    if(!saetze.length)
-      o+='<div class="leer" style="margin-top:9px">noch kein Kleidungssatz</div>';
-
-    saetze.forEach(function(g){
-      var dran=an&&g.id===gew;
-      o+='<div class="szz" style="margin-top:11px;display:flex;align-items:center;gap:7px">'
-       +(dran?'<span class="szh" style="color:#24D3E8;flex:0 0 auto">▸</span>':'')
-       +'<input type="text" class="breit" value="'+h(g.name)+'" style="flex:1"'
-       +' onchange="dsSetz({aktion:\'satz_name\',id:\''+h(f.id)+'\',satz:\''+h(g.id)+'\',wert:this.value})">'
-       +'<button class="ik rot" onclick="dsSatzWeg(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(g.name).replace(/'/g,"")+'\')">✕</button></div>';
-      o+='<div style="display:flex;flex-wrap:wrap;gap:7px;margin-top:7px">';
-      (g.bilder||[]).forEach(function(b,bi){
-        o+='<div style="position:relative;flex:0 0 66px;width:66px;height:88px">'
-         +'<img src="/darsteller/'+encodeURIComponent(b.datei)+'?k='+S.kanal+'" '
-         +'title="'+(bi===0?'Frontalbild':'antippen: zum Frontalbild machen')+'" '
-         +'onclick="dsBildVor(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(b.datei)+'\')" '
-         +'style="width:66px;height:88px;object-fit:cover;border-radius:8px;background:#0A0C12;'
-         +'display:block;cursor:pointer;'+(bi===0?'outline:2px solid #24D3E8;outline-offset:-2px':'')+'">'
-         +(bi===0?'<div style="position:absolute;left:0;right:0;bottom:0;background:#24D3E8;color:#04161B;'
-                 +'font-size:9.5px;font-weight:700;text-align:center;padding:2px 0;'
-                 +'border-radius:0 0 8px 8px;pointer-events:none">FRONTAL</div>':'')
-         +'<button class="ik rot" title="Bild löschen" '
-         +'onclick="event.stopPropagation();dsBildWeg(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(b.datei)+'\')" '
-         +'style="position:absolute;top:-7px;right:-7px;width:23px;height:23px;'
-         +'border-radius:50%;font-size:11px;line-height:1;padding:0">✕</button>'
-         +'</div>';
-      });
-      if(!g.voll)
-        o+='<button class="knopf" style="flex:0 0 66px;width:66px;height:88px;font-size:12px" '
-         +'onclick="dsHoch(\''+h(f.id)+'\',\''+h(g.id)+'\')">+ Bild</button>';
-      o+='</div>';
-      if(!(g.bilder||[]).length)
-        o+='<div class="szh" style="margin-top:5px">Das erste Bild ist das Frontalbild. '
-         +'Dann zwei bis drei weitere derselben Kleidung von der Seite und von hinten.</div>';
     });
-    o+='<button class="knopf" style="width:100%;margin-top:11px" onclick="dsSatzNeu(\''+h(f.id)+'\')">+ Kleidungssatz</button></div>';
+    if(!f.voll)
+      o+='<button class="knopf" style="flex:0 0 66px;width:66px;height:88px;font-size:12px" '
+       +'onclick="dsHoch(\''+h(f.id)+'\')">+ Bild</button>';
+    o+='</div>';
+
+    if(!bilder.length)
+      o+='<div class="szh" style="margin-top:7px">Das erste Bild ist das Frontalbild. Dann zwei, '
+       +'drei weitere <b>derselben Figur in derselben Kleidung</b> von der Seite und von hinten. '
+       +'Gemischte Kleidung lässt das Modell eine dritte Variante erfinden.</div>';
+
+    o+='<div class="szz" style="margin-top:11px"><span class="szh">Name</span>'
+     +'<input type="text" class="breit" value="'+h(f.name)+'" '
+     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div>'
+     +'<div class="szz" style="margin-top:7px"><span class="szh">Rolle</span>'
+     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Archäologin" '
+     +'onchange="dsFeld(\''+h(f.id)+'\',\'rolle\',this.value)"></div>'
+     +'</div>';
   });
+
+  if(liste.length)
+    o+='<div class="karte p"><div class="hinw" style="padding:0">'
+     +'<b>Andere Kleidung für eine spätere Folge?</b> Leg die Figur ein zweites Mal an — '
+     +'„Mara Feldjacke" — und hak die an. Ein Eintrag mehr in der Liste, dafür keine zweite Ebene.'
+     +'</div></div>';
   return o;
 }
 

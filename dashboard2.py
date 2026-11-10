@@ -312,28 +312,19 @@ def darsteller_lesen(key):
 def darsteller_schreiben(key, b):
     a = b.get("aktion") or ""
     did = str(b.get("id") or "")
-    gid = str(b.get("satz") or "")
     wert = b.get("wert")
     if a == "neu":
         return darsteller.anlegen(key, b.get("name") or "", b.get("rolle") or "")
     if a == "weg":
         return darsteller.entfernen(key, did)
-    if a in ("name", "rolle", "beschreibung"):
+    if a in ("name", "rolle"):
         return darsteller.aendern(key, did, a, wert)
-    if a == "satz_neu":
-        return darsteller.satz_anlegen(key, did, b.get("name") or "")
-    if a == "satz_name":
-        return darsteller.satz_aendern(key, did, gid, wert)
-    if a == "satz_weg":
-        return darsteller.satz_entfernen(key, did, gid)
     if a == "bild_weg":
-        return darsteller.bild_weg(key, did, gid, b.get("datei") or "")
+        return darsteller.bild_weg(key, did, b.get("datei") or "")
     if a == "bild_vor":
-        return darsteller.bild_vor(key, did, gid, b.get("datei") or "")
+        return darsteller.bild_vor(key, did, b.get("datei") or "")
     if a == "dabei":
-        return darsteller.dabei_setzen(key, did, bool(wert), gid)
-    if a == "satz_waehlen":
-        return darsteller.satz_waehlen(key, did, gid)
+        return darsteller.dabei_setzen(key, did, bool(wert))
     return {"ok": False, "fehler": "Aktion unbekannt"}
 
 
@@ -873,13 +864,12 @@ class Griff(BaseHTTPRequestHandler):
                 return self.sende({"ok": False, "fehler":
                                    "Nur Bilder: jpg, png, webp"}, code=400)
             did = (q.get("id") or [""])[0]
-            gid = (q.get("satz") or [""])[0]
-            if not darsteller.satz_da(k, did, gid):
+            if not darsteller.da(k, did):
                 return self.sende({"ok": False, "fehler":
-                                   "Kleidungssatz unbekannt"}, code=400)
-            if not darsteller.platz_frei(k, did, gid):
+                                   "Avatar unbekannt"}, code=400)
+            if not darsteller.platz_frei(k, did):
                 return self.sende({"ok": False, "fehler":
-                                   "Dieser Kleidungssatz ist voll (%d Bilder)"
+                                   "Dieser Avatar hat schon %d Bilder"
                                    % darsteller.BILDER_MAX}, code=400)
             zname = szenen.sauberer_name(name)
             ziel = os.path.join(darsteller.ordner(k), zname)
@@ -903,7 +893,7 @@ class Griff(BaseHTTPRequestHandler):
             e = darsteller.aufbereiten(k, zname)
             if not e.get("ok"):
                 return self.sende(e, code=400)
-            r = darsteller.bild_dazu(k, did, gid, e["datei"])
+            r = darsteller.bild_dazu(k, did, e["datei"])
             if not r.get("ok"):
                 try:
                     os.remove(darsteller.datei_pfad(k, e["datei"]))
