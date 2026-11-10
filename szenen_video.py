@@ -827,6 +827,19 @@ def _p52_abspann(kanal, arbeit, b, h, fps):
         dauer = 6.0
     ziel = Path(arbeit) / "abspann.mp4"
     eigen = (kanal.get("abspann_datei") or "").strip()
+    # Zuerst in der Abspann-Bibliothek nachsehen. Dort liegen mehrere
+    # Abspaenne, und die Bibliothek sagt selbst, welcher diesmal dran ist -
+    # fest gewaehlt oder bei jedem Lauf ein anderer.
+    try:
+        import abspann as _ab
+        bib_pfad, bib_sek = _ab.naechster(kanal)
+    except Exception as e:
+        print("[Szenen] Abspann-Bibliothek ging nicht: %s" % str(e)[:120])
+        bib_pfad, bib_sek = None, 0.0
+    if bib_pfad:
+        eigen = bib_pfad
+        if bib_sek > 0:
+            dauer = max(2.0, min(20.0, float(bib_sek)))
     if eigen and os.path.exists(eigen):
         if eigen.lower().endswith((".mp4", ".mov", ".webm", ".mkv")):
             ok = _stueck_clip(eigen, ziel, dauer, b, h, fps)

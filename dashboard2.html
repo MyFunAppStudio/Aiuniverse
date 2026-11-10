@@ -149,6 +149,21 @@ details.mehr>summary::-webkit-details-marker{display:none}
 details.mehr>summary::before{content:"▸";color:#6C7A94;font-size:12px}
 details.mehr[open]>summary::before{content:"▾"}
 details.mehr[open]>summary{color:#24D3E8}
+
+/* Ein Avatar, der fuer dieses Video angehakt ist */
+.karte.mit{border-color:#24D3E8}
+
+/* Der Dreifachschalter je Szene */
+.schalt{display:flex;gap:6px;margin:10px 0 2px}
+.schalt .st{flex:1;padding:10px 6px;border-radius:9px;border:1px solid #2A3147;
+  background:#171B26;color:#8593AC;font-size:11.5px;font-weight:600;
+  line-height:1.3;cursor:pointer;text-align:center}
+.schalt .st.an{border-color:#24D3E8;color:#ECF1F8;background:rgba(36,211,232,0.12)}
+/* Der Verlauf: die letzten Fassungen, antippbar */
+.verl{display:flex;align-items:center;gap:6px;margin-top:7px;flex-wrap:wrap}
+.verl img,.verl video{width:46px;height:62px;object-fit:cover;border-radius:6px;
+  background:#0A0C12;cursor:pointer;border:1px solid #2A3147;display:block}
+.verl img:hover,.verl video:hover{border-color:#24D3E8}
 </style>
 </head>
 <body>
@@ -185,7 +200,7 @@ var S={kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},vi
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
- ["darsteller","Darsteller","Die beiden Figuren, die in jedem Video erklären."],
+ ["darsteller","Avatare","Deine Figurenbibliothek. Hak an, wer in diesem Video mitspielt."],
  ["einst","Einstellungen","Format, Ton, Untertitel, Abspann, Modelle und Kanäle."]
 ];
 
@@ -508,7 +523,7 @@ function tStart(){
 function tMachen(){
   /* Der Ablauf von oben nach unten: was gebaut wird, woraus, dann die
      Szenen mit ihren Clips, dann was gerade laeuft und was fertig ist. */
-  return tStartKopf()+tPrompt()+tLauf()+tVideos();
+  return tStartKopf()+tAbspannWahl()+tPrompt()+tLauf()+tVideos();
 }
 
 function tDarstellerSeite(){
@@ -525,7 +540,7 @@ function falte(titel,inhalt,offen){
 
 function tEinst(){
   var o=falte("Überblick",standKarte(),false)
-   +falte("Länge & Abspann",tAblauf(),false)
+   +falte("Länge & Abspann",tAblauf()+tAbspannBib(),false)
    +falte("Video & Ton",tVideo(),false)
    +falte("Musik",tMusik(),false)
    +falte("Untertitel & Einblendung",tTexte(),false)
@@ -891,7 +906,7 @@ function tKanaele(){
 /* ---------- Aktionen ---------- */
 function kanalMerken(k){try{localStorage.setItem("aiu_kanal",k||"")}catch(e){}}
 function kanalGemerkt(){try{return localStorage.getItem("aiu_kanal")||""}catch(e){return ""}}
-function waehle(k){S.kanal=k;kanalMerken(k);S.tab="machen";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.gs=null;S.arten=null;laden()}
+function waehle(k){S.kanal=k;kanalMerken(k);S.tab="machen";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.ds=null;S.ab=null;S.gs=null;S.arten=null;laden()}
 function spiel(o){window.open("/video/"+o,"_blank")}
 function herunter(o){location.href="/laden/"+encodeURIComponent(o)}
 function jn(x){return x?"an":"aus"}
@@ -1119,10 +1134,11 @@ function musikWeg(){
     function(){api("/api/szenen?k="+S.kanal,{aktion:"musik_weg"}).then(function(){ladeSzenen()})},true)
 }
 
-function hochladen(zweck,sid){
+function hochladen(zweck,sid,nur){
   var i=document.createElement("input");
   i.type="file";
-  i.accept=(zweck==="musik")?"audio/*":"image/*,video/*";
+  i.accept=(zweck==="musik")?"audio/*"
+    :(nur==="video"?"video/*":(nur==="bild"?"image/*":"image/*,video/*"));
   i.onchange=function(){
     var f=i.files&&i.files[0];if(!f)return;
     if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
@@ -1131,16 +1147,22 @@ function hochladen(zweck,sid){
     x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck="+zweck+"&name="+encodeURIComponent(f.name)+(sid?("&sid="+encodeURIComponent(sid)):""));
     x.upload.onprogress=function(e){if(e.lengthComputable&&el("hpro"))el("hpro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
     x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
-      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeSzenen()};
+      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");
+      R6.stand=null; ladeSzenen(); ladeClips()};
     x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
     x.send(f);
   };
   i.click();
 }
 
-function szeneNeu(id){
+function szeneNeu(id,hatClip){
+  var warn=hatClip
+    ? "<br><br><b>Achtung:</b> der vorhandene Clip ist dann noch vom alten Bild. "
+      +"Er wird als veraltet markiert und muss neu erzeugt werden — das kostet noch einmal."
+    : "";
   frage("Bild neu erzeugen?",
-    "Nur f\u00fcr diese eine Szene wird ein neues Bild erzeugt. Alle anderen Szenen bleiben unver\u00e4ndert.<br><br>Das kostet den Preis f\u00fcr ein Bild.",
+    "Nur f\u00fcr diese eine Szene wird ein neues Bild erzeugt. Das kostet den Preis f\u00fcr ein Bild."
+    +"<br><br>Das jetzige Bild rutscht in den Verlauf, du kannst es zur\u00fcckholen."+warn,
     "Neu erzeugen",function(){
       el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Wird erzeugt</h2><p>Einen Moment, das Bildmodell braucht ein paar Sekunden.</p></div></div>';
       api("/api/szene_neu?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
@@ -1180,14 +1202,67 @@ function clipLaeuftHier(id){
   return !!(d.laeuft && (d.lauf||{}).sid===id);
 }
 
+/* ---------- Schalter, Verlauf und Nachfragen je Szene (r6) ---------- */
+
+/* Der Schalter mit drei Stellungen. Er ersetzt Figur, Pose, Platz,
+   Groesse und die alte KI-Animation. */
+function schalterZeile(s,d){
+  var modi=(d&&d.modi)||[["avatare","Avatare im Bild"],
+                         ["bewegt","Nur Bild, bewegt"],
+                         ["still","Nur Bild, still"]];
+  var jetzt=s.modus||"still";
+  var o='<div class="schalt">';
+  modi.forEach(function(m){
+    o+='<button class="st'+(m[0]===jetzt?" an":"")+'" '
+     +'onclick="szeneSetz(\''+s.id+'\',\'modus\',\''+m[0]+'\')">'+h(m[1])+'</button>';
+  });
+  o+='</div>';
+  if(s.eigener_clip)
+    o+='<div class="szh" style="margin-top:5px;color:#24D3E8">'
+     +'Eigener Clip hochgeladen — Bild und Videomodell werden übersprungen.</div>';
+  return o;
+}
+
+/* Die letzten Fassungen, antippbar. Nichts wird überschrieben. */
+function versionen(s,welche){
+  var li=((welche==="bild")?s.bild_alt:s.clip_alt)||[];
+  if(!li.length)return "";
+  var o='<div class="verl"><span class="szh">vorher</span>';
+  li.forEach(function(n){
+    var ruf='szeneZurueck(\''+s.id+'\',\''+welche+'\',\''+h(n)+'\')';
+    o+=(welche==="bild")
+      ? '<img alt="" src="/eigen/'+encodeURIComponent(n)+'?k='+S.kanal+'" title="zurückschalten" onclick="'+ruf+'">'
+      : '<video src="/eigen/'+encodeURIComponent(n)+'?k='+S.kanal+'" muted preload="metadata" title="zurückschalten" onclick="'+ruf+'"></video>';
+  });
+  return o+'</div>';
+}
+
+function szeneZurueck(sid,welche,datei){
+  frage("Zurückschalten?",
+    (welche==="bild"?"Diese Szene nimmt wieder das ältere Bild."
+                    :"Diese Szene nimmt wieder den älteren Clip.")
+    +"<br><br>Die jetzige Fassung geht nicht verloren — sie rutscht in den Verlauf.",
+    "Zurückschalten",function(){
+      api("/api/szenen?k="+S.kanal,{aktion:"zurueck",id:sid,welche:welche,datei:datei})
+        .then(function(r){
+          if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+          R6.stand=null; ladeSzenen(); ladeClips();
+        });
+    });
+}
+
 function clipZeile(s){
   var st=clipStand(s.id)||{}, clip=st.clip||s.clip||"", stand=st.stand||s.clip_stand||"";
   var txt=st.text||s.clip_text||"", hier=clipLaeuftHier(s.id);
   var laeuft=(R6.stand||{}).laeuft;
   var o='<div class="szz" style="display:block"><span class="szh">Was passiert in der Szene</span>'
    +'<textarea class="breit" rows="2" style="margin-top:4px"'
-   +' placeholder="z.B. Im Hintergrund bricht der Vulkan aus, Asche steigt auf. Kamera fährt langsam zurück."'
+   +' placeholder="z.B. Mara zeigt nach oben, Jonas folgt ihrem Blick. Kamera steht fest."'
    +' onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>';
+  if(s.clip_veraltet)
+    o+='<div class="szz" style="display:block;color:#FFB454"><b>Der Clip ist noch vom alten Bild.</b>'
+     +'<div class="szh">Du hast das Bild danach ausgetauscht. Erzeuge den Clip neu, '
+     +'oder schalte unten auf das alte Bild zurück.</div></div>';
 
   if(hier){
     o+='<div class="szz p62" style="display:block;color:#FFB454">'
@@ -1201,16 +1276,17 @@ function clipZeile(s){
      +'style="width:100%;max-height:300px;border-radius:9px;background:#000;display:block"></video>'
      +'<div style="display:flex;gap:7px;margin-top:7px">'
      +'<button class="knopf" style="flex:1"'+(laeuft?' disabled':'')
-     +' onclick="clipNeu(\''+s.id+'\')">Clip neu machen</button>'
+     +' onclick="clipNeu(\''+s.id+'\','+(s.clip_dauer||0)+',true)">Clip neu machen</button>'
      +'<button class="knopf" onclick="clipWeg(\''+s.id+'\')">Verwerfen</button>'
      +'</div>'
+     +versionen(s,"clip")
      +'<div class="szh" style="margin-top:4px">Dieser Clip wird ins Video übernommen. '
      +'Das Standbild wird dann nicht mehr gebraucht.</div></div>';
     return o;
   }
   o+='<div class="szz p62" style="display:block">'
    +'<button class="knopf" style="width:100%"'+(laeuft?' disabled':'')
-   +' onclick="clipNeu(\''+s.id+'\')">Clip erzeugen'
+   +' onclick="clipNeu(\''+s.id+'\','+(s.clip_dauer||0)+',false)">Clip erzeugen'
    +(s.clip_dauer?(' · '+s.clip_dauer+' s'):'')+'</button>';
   if(stand==="fehler"&&txt)
     o+='<div class="szh" style="margin-top:5px;color:#FFB454">'+h(txt)+'</div>';
@@ -1253,11 +1329,19 @@ function clipKarte(){
   return o;
 }
 
-function clipNeu(id){
-  api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
-    if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
-    ladeClips();
-  });
+function clipNeu(id,sek,schon){
+  var js=((R6.stand||{}).je_sekunde)||0, preis=(js&&sek)?(js*sek):0;
+  frage("Clip erzeugen?",
+    "Das Videomodell baut aus dem Bild und den angehakten Avataren einen Clip"
+    +(sek?(" von "+sek+" Sekunden"):"")+"."
+    +(preis?("<br><br>Das kostet etwa <b>"+preis.toFixed(2).replace(".",",")+" €</b>."):"")
+    +(schon?"<br><br>Der jetzige Clip geht nicht verloren — er rutscht in den Verlauf.":""),
+    "Erzeugen",function(){
+      api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
+        if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+        ladeClips();
+      });
+    });
 }
 function clipAlle(){
   var d=R6.stand||{};
@@ -1277,7 +1361,8 @@ function clipStop(){
   });
 }
 function clipWeg(id){
-  frage("Clip verwerfen?","Die Clipdatei wird gelöscht. Das Standbild der Szene bleibt.",
+  frage("Clip verwerfen?","Der Clip rutscht in den Verlauf — gelöscht wird nichts. "
+    +"Das Standbild der Szene bleibt.",
     "Verwerfen",function(){
       api("/api/clip_weg?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
         if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
@@ -1304,10 +1389,16 @@ function tSzenen(){
      +'<button class="ik" onclick="szeneSchieb(\''+s.id+'\',\'runter\')"'+(i===li.length-1?" disabled":"")+'>↓</button>'
      +'<button class="ik rot" onclick="szeneWeg(\''+s.id+'\',\''+h(s.datei).replace(/'/g,"")+'\')">✕</button></div>'
      +vor
+     +versionen(s,"bild")
      +'<textarea placeholder="Gesprochener Text. &quot;…&quot; spricht die Figur. [eckige Klammern sind Regie und werden nicht gesprochen]" onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea>'
      ;
-    var mehr='<div class="szz">'
-     +'<label class="hak"><input type="checkbox"'+(s.gesprochen?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'gesprochen\',this.checked)">Gesprochen</label>'
+    o+=schalterZeile(s,d);
+    var mehr='<div class="szz"><span class="szh">Wer spricht</span>'
+     +'<select onchange="szeneSetz(\''+s.id+'\',\'spricht\',this.value)">'
+     +((d.sprichtarten||[["sprecher","Sprecher aus dem Off"]]).map(function(x){
+        return '<option value="'+x[0]+'"'+((s.spricht||"sprecher")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join(""))
+     +'</select></div>'
+     +'<div class="szz">'
      +'<label class="hak"><input type="checkbox"'+(s.untertitel?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'untertitel\',this.checked)">Untertitel</label>'
      +'</div>';
     if(!s.gesprochen){
@@ -1352,11 +1443,12 @@ function tSzenen(){
     }
     if(S.alt)mehr+='<div class="szz p89"><label class="hak"><input type="checkbox"'+(s.ki_animation?" checked":"")
       +' onchange="szeneSetz(\''+s.id+'\',\'ki_animation\',this.checked)">Diese Szene per KI animieren</label></div>';
-    o+='<div class="szz p90" style="gap:7px">'
-      +'<button class="knopf" onclick="szeneNeu(\''+s.id+'\')">Bild neu erzeugen</button>'
-      +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\')">Eigenes Bild</button>'
+    o+='<div class="szz p90" style="gap:7px;flex-wrap:wrap">'
+      +'<button class="knopf" onclick="szeneNeu(\''+s.id+'\','+(s.clip?"true":"false")+')">Bild neu</button>'
+      +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\',\'bild\')">Eigenes Bild</button>'
+      +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\',\'video\')">Eigener Clip</button>'
       +'</div>';
-    o+=clipZeile(s);
+    if(s.modus==="avatare"||s.clip)o+=clipZeile(s);
     mehr+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
       +h(s.musik==="auto"?"":String(s.musik))+'" onchange="szeneSetz(\''+s.id+'\',\'musik\',this.value)"><span class="szh">% · leer = automatisch</span></div>';
     if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FFB454">Datei fehlt auf dem Server</span></div>';
@@ -1544,12 +1636,13 @@ function dsSetz(o){
     return ladeDarsteller().then(function(){return r})});
 }
 
-function dsBes(platz,did,gid){return dsSetz({aktion:"besetzung",platz:platz,id:did,satz:gid})}
+function dsDabei(did,an){return dsSetz({aktion:"dabei",id:did,wert:!!an})}
+function dsSatzWaehlen(did,gid){return dsSetz({aktion:"satz_waehlen",id:did,satz:gid})}
 function dsFeld(did,feld,wert){return dsSetz({aktion:feld,id:did,wert:wert})}
 
 function dsNeu(){
-  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Darsteller</h2>'
-   +'<p>Eine wiederkehrende Figur, die in jedem Video erklärt.</p>'
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Avatar</h2>'
+   +'<p>Eine wiederkehrende Figur für deine Videos. Angelegt heißt noch nicht dabei — das hakst du je Video an.</p>'
    +'<input type="text" id="dsn" class="breit" placeholder="Name, z.B. Mara" style="margin-bottom:9px">'
    +'<input type="text" id="dsr" class="breit" placeholder="Rolle, z.B. Frau Mitte 20" style="margin-bottom:14px">'
    +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
@@ -1561,7 +1654,7 @@ function dsAnlegen(){
   dsSetz({aktion:"neu",name:n,rolle:r}).then(function(x){if(x&&x.ok)zu()});
 }
 function dsWeg(did,name){
-  frage("Darsteller löschen?","<b>"+h(name)+"</b><br><br>Alle Kleidungssätze und Bilder dieser Figur werden gelöscht.",
+  frage("Avatar löschen?","<b>"+h(name)+"</b><br><br>Alle Kleidungssätze und Bilder dieser Figur werden gelöscht.",
     "Löschen",function(){dsSetz({aktion:"weg",id:did})},true);
 }
 function dsSatzNeu(did){
@@ -1607,61 +1700,166 @@ function dsHoch(did,gid){
   i.click();
 }
 
+/* ---------- Abspann-Bibliothek (r6) ---------- */
+
+function ladeAbspann(){
+  return api("/api/abspann?k="+S.kanal).then(function(d){S.ab=d;zeichne()})
+}
+
+function abSetz(o){
+  return api("/api/abspann?k="+S.kanal,o).then(function(r){
+    if(!r||!r.ok){melde((r&&r.fehler)||"ging nicht");return r}
+    return ladeAbspann().then(function(){return r})});
+}
+
+function abWeg(eid,name){
+  frage("Abspann löschen?","<b>"+h(name)+"</b><br><br>Die Datei wird gelöscht.",
+    "Löschen",function(){abSetz({aktion:"weg",id:eid})},true);
+}
+
+function abHoch(){
+  var i=document.createElement("input");
+  i.type="file"; i.accept="image/*,video/*";
+  i.onchange=function(){
+    var f=i.files&&i.files[0];if(!f)return;
+    if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
+    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2>'
+      +'<p id="abpro">'+h(f.name)+' · 0 %</p></div></div>';
+    var x=new XMLHttpRequest();
+    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)
+      +"&zweck=abspann&name="+encodeURIComponent(f.name));
+    x.upload.onprogress=function(e){
+      if(e.lengthComputable&&el("abpro"))
+        el("abpro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
+    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeAbspann()};
+    x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
+    x.send(f);
+  };
+  i.click();
+}
+
+/* Welcher Abspann ans Video kommt - fest oder bei jedem Lauf ein anderer. */
+function abWahlZeile(d){
+  var li=d.eintraege||[], wahl=d.wahl||"";
+  var o='<div class="szz"><span class="szh">Welcher kommt ans Video</span>'
+   +'<select onchange="abSetz({aktion:\'waehlen\',wert:this.value})">'
+   +li.map(function(e){
+      return '<option value="'+h(e.id)+'"'+(wahl===e.id?" selected":"")+'>'+h(e.name)+'</option>'}).join("")
+   +'<option value="zufall"'+(wahl==="zufall"?" selected":"")+'>— bei jedem Video ein anderer —</option>'
+   +'</select></div>';
+  if(wahl==="zufall")
+    o+='<div class="szh" style="margin-top:6px">Gut zum Ausprobieren: drei Schluss&shy;aufforderungen '
+     +'zwanzig Videos lang laufen lassen und sehen, welche die meisten Abos bringt. '
+     +'Danach auf die Gewinnerin festschalten.</div>';
+  return o;
+}
+
+/* Im Reiter "Video machen" nur sichtbar, wenn es überhaupt etwas zu wählen gibt. */
+function tAbspannWahl(){
+  var d=S.ab;
+  if(!d){ladeAbspann();return ''}
+  if((d.eintraege||[]).length<2)return '';
+  return '<div class="karte">'+abWahlZeile(d)+'</div>';
+}
+
+function tAbspannBib(){
+  var d=S.ab;
+  if(!d){ladeAbspann();return '<div class="karte p"><div class="leer">lade…</div></div>'}
+  var li=d.eintraege||[], wahl=d.wahl||"";
+  var o='<div class="karte p"><h2 class="kt">Abspann-Bibliothek</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:4px">Standbilder und Videos gemischt. '
+   +'Bei einem Video gilt seine eigene Länge, bei einem Standbild die Sekundenzahl daneben.</div>';
+  if(!li.length)
+    o+='<div class="leer" style="margin-top:9px">noch keiner hochgeladen — '
+     +'dann baut der Code den Textabspann von oben</div>';
+  li.forEach(function(e){
+    var dran=(wahl===e.id);
+    o+='<div class="szz" style="display:flex;align-items:center;gap:8px;margin-top:10px">'
+     +(e.art==="video"
+        ? '<video src="/abspann/'+encodeURIComponent(e.datei)+'?k='+S.kanal+'" muted preload="metadata" '
+          +'style="width:46px;height:62px;object-fit:cover;border-radius:6px;background:#0A0C12;flex:0 0 46px'
+          +(dran?';outline:2px solid #24D3E8;outline-offset:-2px':'')+'"></video>'
+        : '<img alt="" src="/abspann/'+encodeURIComponent(e.datei)+'?k='+S.kanal+'" '
+          +'style="width:46px;height:62px;object-fit:cover;border-radius:6px;background:#0A0C12;flex:0 0 46px'
+          +(dran?';outline:2px solid #24D3E8;outline-offset:-2px':'')+'">')
+     +'<div style="flex:1;min-width:0">'
+     +'<input type="text" class="breit" value="'+h(e.name)+'" '
+     +'onchange="abSetz({aktion:\'name\',id:\''+h(e.id)+'\',wert:this.value})">'
+     +'<div class="szh" style="margin-top:5px">'
+     +(e.art==="video"
+        ? ('Video · '+h(String(e.sekunden))+' Sek.')
+        : ('Standbild · <input type="text" style="width:50px" value="'+h(String(e.sekunden))+'" '
+           +'onchange="abSetz({aktion:\'sekunden\',id:\''+h(e.id)+'\',wert:this.value})"> Sek.'))
+     +'</div></div>'
+     +'<button class="ik rot" onclick="abWeg(\''+h(e.id)+'\',\''+h(e.name).replace(/'/g,"")+'\')">✕</button>'
+     +'</div>';
+  });
+  o+='<button class="knopf" style="width:100%;margin-top:12px" onclick="abHoch()">+ Abspann hochladen</button>';
+  if(li.length)o+='<div style="margin-top:11px">'+abWahlZeile(d)+'</div>';
+  return o+'</div>';
+}
+
 function tDarsteller(){
   var d=S.ds;
   if(!d){ladeDarsteller();return '<div class="karte p"><div class="leer">lade…</div></div>'}
-  var liste=d.darsteller||[], bes=d.besetzung||{};
-  var o='<div class="karte p"><h2 class="kt">Darsteller</h2>'
-   +'<div class="hinw" style="padding:0;margin-bottom:10px">Zwei Figuren, die in jedem Video erklären. '
-   +'Ihre Bilder werden <b>nicht</b> ins Bild geklebt — sie gehen als Referenz an das Videomodell, '
-   +'und das stellt die Figuren selbst in die Szene. Darum dürfen diese Bilder einen Hintergrund haben.</div>';
+  var liste=d.darsteller||[], max=d.max||3, anzahl=d.anzahl||0;
 
-  (d.plaetze||[]).forEach(function(p){
-    var e=bes[p[0]]||{}, did=e.d||"", gid=e.g||"", f=null;
-    liste.forEach(function(x){if(x.id===did)f=x});
-    o+='<div class="szz"><span class="szh">'+h(p[1])+'</span>'
-     +'<select onchange="dsBes(\''+p[0]+'\',this.value,\'\')">'
-     +'<option value="">— frei —</option>'
-     +liste.map(function(x){return '<option value="'+h(x.id)+'"'+(x.id===did?" selected":"")+'>'+h(x.name)+'</option>'}).join("")
-     +'</select>';
-    if(f){
-      if((f.saetze||[]).length){
-        o+='<select onchange="dsBes(\''+p[0]+'\',\''+h(f.id)+'\',this.value)">'
-         +(f.saetze||[]).map(function(g){return '<option value="'+h(g.id)+'"'+(g.id===gid?" selected":"")+'>'+h(g.name)+'</option>'}).join("")
-         +'</select>';
-      }else{
-        o+='<span class="szh" style="color:#FFB454">kein Kleidungssatz</span>';
-      }
-    }
-    o+='</div>';
-  });
+  var o='<div class="karte p"><h2 class="kt">Avatare</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:10px">'
+   +'Die Bibliothek darf beliebig groß sein. Für ein Video hakst du an, wer mitspielt. '
+   +'Gleichzeitig im Bild gehen höchstens '+max+' — das Videomodell nimmt mit dem '
+   +'Hintergrundbild nur vier Referenzen.<br><br>'
+   +'Die Bilder werden <b>nicht</b> ins Bild geklebt. Sie gehen als Referenz an das Modell, '
+   +'und das stellt die Figur selbst in die Szene. Darum dürfen sie einen Hintergrund haben.</div>'
+   +'<div class="szz"><span class="szh">Für dieses Video dabei</span>'
+   +'<span style="font-weight:700;font-size:15px;color:'+(anzahl?'#24D3E8':'#8593AC')+'">'
+   +anzahl+' von '+max+'</span></div>';
 
   if(d.bereit){
-    o+='<div class="hinw" style="padding:0;margin-top:10px">'
-     +(d.grund?('<span style="color:#FFB454">'+h(d.grund)+'</span><br>'):'<b>Bereit.</b> ')
+    o+='<div class="hinw" style="padding:0;margin-top:10px"><b>Bereit.</b> '
      +'Das Modell bekommt diesen Vorspann:<br>'+h(d.vorspann)+'</div>';
   }else{
     o+='<div class="hinw" style="padding:0;margin-top:10px;color:#FFB454">'+h(d.grund)+'</div>';
   }
-  o+=''
-   +'<button class="knopf" style="width:100%;margin-top:10px" onclick="dsNeu()">+ Darsteller</button></div>';
+  o+='<button class="knopf" style="width:100%;margin-top:10px" onclick="dsNeu()">+ Avatar</button></div>';
+
+  if(!liste.length)
+    o+='<div class="karte p"><div class="leer">noch kein Avatar angelegt</div></div>';
 
   liste.forEach(function(f){
-    o+='<div class="karte p"><div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+(f.rolle?' <span class="szh">· '+h(f.rolle)+'</span>':'')+'</h2>'
+    var an=!!f.dabei, gew=f.gewaehlt||"", saetze=f.saetze||[];
+    o+='<div class="karte p'+(an?' mit':'')+'">'
+     +'<div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
+     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)
+     +(f.rolle?' <span class="szh">· '+h(f.rolle)+'</span>':'')+'</h2>'
+     +'<button class="sch'+(an?" an":"")+'" title="für dieses Video dabei" '
+     +'onclick="dsDabei(\''+h(f.id)+'\','+(an?"false":"true")+')"><i></i></button>'
      +'<button class="ik rot" onclick="dsWeg(\''+h(f.id)+'\',\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
+
     o+='<div class="szz"><span class="szh">Rolle</span>'
-     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Frau Mitte 20"'
+     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Archäologin"'
      +' onchange="dsFeld(\''+h(f.id)+'\',\'rolle\',this.value)"></div>';
-    o+='<div class="szz" style="margin-top:7px"><span class="szh">Aussehen</span>'
-     +'<input type="text" class="breit" value="'+h(f.beschreibung||"")+'" placeholder="dunkle Haare, moderne Kleidung"'
+    o+='<div class="szz" style="margin-top:7px"><span class="szh">Beschreibung</span>'
+     +'<input type="text" class="breit" value="'+h(f.beschreibung||"")+'" placeholder="wer die Figur ist, nicht wie sie aussieht"'
      +' onchange="dsFeld(\''+h(f.id)+'\',\'beschreibung\',this.value)"></div>';
 
-    if(!(f.saetze||[]).length)
+    if(an&&saetze.length>1){
+      o+='<div class="szz" style="margin-top:11px"><span class="szh">Kleidung in diesem Video</span></div>'
+       +'<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">'
+       +saetze.map(function(g){
+          return '<button class="knopf'+(g.id===gew?' or':'')+'" style="flex:0 0 auto" '
+           +'onclick="dsSatzWaehlen(\''+h(f.id)+'\',\''+h(g.id)+'\')">'+h(g.name)+'</button>'}).join("")
+       +'</div>';
+    }
+
+    if(!saetze.length)
       o+='<div class="leer" style="margin-top:9px">noch kein Kleidungssatz</div>';
 
-    (f.saetze||[]).forEach(function(g){
+    saetze.forEach(function(g){
+      var dran=an&&g.id===gew;
       o+='<div class="szz" style="margin-top:11px;display:flex;align-items:center;gap:7px">'
+       +(dran?'<span class="szh" style="color:#24D3E8;flex:0 0 auto">▸</span>':'')
        +'<input type="text" class="breit" value="'+h(g.name)+'" style="flex:1"'
        +' onchange="dsSetz({aktion:\'satz_name\',id:\''+h(f.id)+'\',satz:\''+h(g.id)+'\',wert:this.value})">'
        +'<button class="ik rot" onclick="dsSatzWeg(\''+h(f.id)+'\',\''+h(g.id)+'\',\''+h(g.name).replace(/'/g,"")+'\')">✕</button></div>';
@@ -1833,11 +2031,12 @@ var SUCHE=[
  ["Was ein Video kostet","einst","preis kosten euro rechnung"],
  ["Text","einst","modell api claude anthropic schluessel"],
  ["Bild","einst","modell api flux imagen bilder schluessel"],
- ["Darsteller","darsteller","figuren mara jonas reporter archaeologin platz 1 platz 2 bilder kleidung"],
+ ["Avatare","darsteller","figuren darsteller mara jonas reporter archaeologin bilder kleidung dabei besetzung"],
  ["Referenzclip","einst","kling reference to video modell clip szene schluessel fal"],
  ["Clip erzeugen","machen","szene clip video kling referenz erzeugen"],
  ["Was passiert in der Szene","machen","regie bewegung anweisung szene clip"],
  ["Abspann","einst","schlusstafel ende teil 2 folgt folgen liken kommentieren"],
+ ["Abspann-Bibliothek","einst","abspann hochladen standbild video mehrere zufall auswahl"],
  ["Sprechtempo","einst","woerter pro sekunde ruhig normal flott"],
  ["Alte Funktionen","einst","alt aufgeklebte figuren avatar animationsmodell schalter"],
  ["Animation","einst","kling video animation bewegte szene"]

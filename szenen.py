@@ -455,3 +455,270 @@ def fuer_anzeige(kanal):
         s["clip_text"] = q.get("clip_text", "")
         s["clip_dauer"] = r3_clip_dauer(q) if q else 5
     return d
+
+
+# ---------- Nachtrag r6: Schalter je Szene, Versionen, eigene Clips ----------
+#
+# Drei Dinge auf einmal, weil sie dieselben Felder anfassen:
+#
+# 1. Je Szene ein Schalter mit drei Stellungen statt der alten Felder figur,
+#    pose, platz, figur_groesse und ki_animation. Dazu ein Feld, wer spricht.
+# 2. Die letzten drei Fassungen von Bild und Clip bleiben liegen, damit ein
+#    misslungener zweiter Versuch den guten ersten nicht vernichtet.
+# 3. Ein selbst hochgeladener Clip ueberspringt Bild und Videomodell.
+
+_r6_laden_alt = laden
+_r6_aendern_alt = aendern
+_r6_anzeige_alt = fuer_anzeige
+_r6_datei_setzen_alt = p90_datei_setzen
+
+import subprocess as _r6_sub
+
+R6_MODI = [["avatare", "Avatare im Bild"],
+           ["bewegt", "Nur Bild, bewegt"],
+           ["still", "Nur Bild, still"]]
+R6_MODUS_NAMEN = [a[0] for a in R6_MODI]
+R6_SPRICHT = [["sprecher", "Sprecher aus dem Off"],
+              ["avatar", "Die Avatare reden"],
+              ["niemand", "Niemand, nur Bild und Ton"]]
+R6_SPRICHT_NAMEN = [a[0] for a in R6_SPRICHT]
+R6_VERSIONEN = 3
+
+for _f in ("modus", "spricht"):
+    if _f not in FELDER:
+        FELDER.append(_f)
+
+
+def _r6_modus_aus_alt(s):
+    """Welche Schalterstellung zu einer alten Szene passt."""
+    if s.get("figur"):
+        return "avatare"
+    if s.get("ki_animation"):
+        return "bewegt"
+    return "still"
+
+
+def laden(kanal):
+    d = _r6_laden_alt(kanal)
+    for s in d["szenen"]:
+        if s.get("modus") not in R6_MODUS_NAMEN:
+            s["modus"] = _r6_modus_aus_alt(s)
+        if s.get("spricht") not in R6_SPRICHT_NAMEN:
+            s["spricht"] = "sprecher" if s.get("gesprochen", True) else "niemand"
+        for feld in ("bild_alt", "clip_alt"):
+            v = s.get(feld)
+            if not isinstance(v, list):
+                v = []
+            s[feld] = [os.path.basename(str(x)) for x in v
+                       if str(x or "").strip()
+                       and os.path.exists(datei_pfad(kanal, os.path.basename(str(x))))
+                       ][:R6_VERSIONEN]
+        s["eigener_clip"] = bool(s.get("eigener_clip")) and bool(s.get("clip"))
+        s["clip_veraltet"] = bool(s.get("clip_veraltet")) and bool(s.get("clip"))
+    return d
+
+
+def aendern(kanal, sid, feld, wert):
+    if feld not in ("modus", "spricht"):
+        return _r6_aendern_alt(kanal, sid, feld, wert)
+    w = str(wert or "")
+    if w not in (R6_MODUS_NAMEN if feld == "modus" else R6_SPRICHT_NAMEN):
+        return {"ok": False, "fehler": "Wert unbekannt"}
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    d["szenen"][i][feld] = w
+    if feld == "spricht":
+        # Das alte Feld mitfuehren, damit der Zusammenbau es weiter versteht
+        d["szenen"][i]["gesprochen"] = (w != "niemand")
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+# ---------- Verlauf ----------
+
+def _r6_merken(d, i, feld, name):
+    """Legt eine Datei vorn in den Verlauf. Gibt zurueck, was hinten rausfaellt."""
+    if not name:
+        return []
+    v = [x for x in (d["szenen"][i].get(feld) or []) if x != name]
+    v.insert(0, name)
+    d["szenen"][i][feld] = v[:R6_VERSIONEN]
+    return v[R6_VERSIONEN:]
+
+
+def _r6_benutzt(d, name):
+    if not name:
+        return True
+    if d.get("musik") == name:
+        return True
+    for s in d["szenen"]:
+        if s.get("datei") == name or s.get("clip") == name:
+            return True
+        if name in (s.get("bild_alt") or []) or name in (s.get("clip_alt") or []):
+            return True
+    return False
+
+
+def _r6_aufraeumen(kanal, namen):
+    """Loescht Dateien, auf die keine Szene mehr zeigt."""
+    if not namen:
+        return
+    d = laden(kanal)
+    for n in namen:
+        if _r6_benutzt(d, n):
+            continue
+        try:
+            os.remove(datei_pfad(kanal, n))
+        except Exception:
+            pass
+
+
+def p90_datei_setzen(kanal, sid, datei):
+    """Wie vorher, aber das bisherige Bild wandert in den Verlauf.
+
+    Ein neues Bild macht einen vorhandenen Clip ungueltig: der waere sonst
+    noch vom alten Bild und faellt erst im fertigen Video auf.
+    """
+    r = _r6_datei_setzen_alt(kanal, sid, datei)
+    if not r.get("ok"):
+        return r
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return r
+    raus = _r6_merken(d, i, "bild_alt", r.get("vorher") or "")
+    d["szenen"][i]["bild_alt"] = [x for x in d["szenen"][i]["bild_alt"]
+                                  if x != d["szenen"][i].get("datei")]
+    if d["szenen"][i].get("clip") and not d["szenen"][i].get("eigener_clip"):
+        d["szenen"][i]["clip_veraltet"] = True
+    speichern(kanal, d)
+    _r6_aufraeumen(kanal, raus)
+    return r
+
+
+def r3_clip_setzen(kanal, sid, datei):
+    """Haengt einen fertigen Clip an die Szene. Leer heisst: Clip weg.
+
+    Der bisherige Clip wird nicht mehr geloescht, sondern in den Verlauf
+    gelegt - erst wenn er hinten herausfaellt, verschwindet die Datei.
+    """
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    name = os.path.basename(str(datei or ""))
+    if name:
+        if art(name) != "clip":
+            return {"ok": False, "fehler": "Das ist kein Videoclip"}
+        if not os.path.exists(datei_pfad(kanal, name)):
+            return {"ok": False, "fehler": "Die Datei liegt nicht im Szenenordner"}
+    alt = d["szenen"][i].get("clip") or ""
+    raus = _r6_merken(d, i, "clip_alt", alt) if alt and alt != name else []
+    d["szenen"][i]["clip"] = name
+    d["szenen"][i]["clip_stand"] = "fertig" if name else ""
+    d["szenen"][i]["clip_veraltet"] = False
+    if not name:
+        d["szenen"][i]["clip_text"] = ""
+        d["szenen"][i]["eigener_clip"] = False
+    d["szenen"][i]["clip_alt"] = [x for x in (d["szenen"][i].get("clip_alt") or [])
+                                  if x != name]
+    speichern(kanal, d)
+    _r6_aufraeumen(kanal, raus)
+    return {"ok": True, "clip": name}
+
+
+def r6_zurueck(kanal, sid, welche, datei):
+    """Schaltet auf eine aeltere Fassung zurueck. welche: bild oder clip."""
+    if welche not in ("bild", "clip"):
+        return {"ok": False, "fehler": "Unbekannt"}
+    name = os.path.basename(str(datei or ""))
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    s = d["szenen"][i]
+    feld = "bild_alt" if welche == "bild" else "clip_alt"
+    if name not in (s.get(feld) or []):
+        return {"ok": False, "fehler": "Diese Fassung gibt es nicht mehr"}
+    if not os.path.exists(datei_pfad(kanal, name)):
+        return {"ok": False, "fehler": "Die Datei ist weg"}
+    jetzt = s.get("datei" if welche == "bild" else "clip") or ""
+    s[feld] = [x for x in s[feld] if x != name]
+    if jetzt and jetzt != name:
+        s[feld].insert(0, jetzt)
+        s[feld] = s[feld][:R6_VERSIONEN]
+    if welche == "bild":
+        s["datei"] = name
+        s["typ"] = art(name)
+        if s.get("clip") and not s.get("eigener_clip"):
+            s["clip_veraltet"] = True
+    else:
+        s["clip"] = name
+        s["clip_stand"] = "fertig"
+        s["clip_veraltet"] = False
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+# ---------- Eigener Clip ----------
+
+def r6_dauer(pfad):
+    """Laenge einer Videodatei in Sekunden, oder 0."""
+    try:
+        r = _r6_sub.run(["ffprobe", "-v", "error", "-show_entries",
+                         "format=duration", "-of", "csv=p=0", str(pfad)],
+                        capture_output=True, text=True)
+        return round(float((r.stdout or "0").strip().split(",")[0]), 2)
+    except Exception:
+        return 0.0
+
+
+def r6_clip_eigen(kanal, sid, datei):
+    """Haengt einen selbst hochgeladenen Clip an die Szene.
+
+    Die Szene ueberspringt dann Bild und Videomodell, und ihre Laenge
+    richtet sich nach der Laenge des Videos.
+    """
+    r = r3_clip_setzen(kanal, sid, datei)
+    if not r.get("ok"):
+        return r
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return r
+    d["szenen"][i]["eigener_clip"] = True
+    sek = r6_dauer(datei_pfad(kanal, r.get("clip") or ""))
+    if sek > 0:
+        d["szenen"][i]["sekunden"] = sek
+    speichern(kanal, d)
+    r["sekunden"] = sek
+    return r
+
+
+def r6_braucht_clip(s):
+    """Soll fuer diese Szene ein Referenzclip erzeugt werden?"""
+    if s.get("eigener_clip"):
+        return False
+    if s.get("modus") != "avatare":
+        return False
+    return art(s.get("datei") or "") == "bild"
+
+
+def fuer_anzeige(kanal):
+    d = _r6_anzeige_alt(kanal)
+    roh = {s["id"]: s for s in laden(kanal)["szenen"]}
+    for s in d["szenen"]:
+        q = roh.get(s["id"]) or {}
+        s["modus"] = q.get("modus", "still")
+        s["spricht"] = q.get("spricht", "sprecher")
+        s["bild_alt"] = q.get("bild_alt", [])
+        s["clip_alt"] = q.get("clip_alt", [])
+        s["clip_veraltet"] = bool(q.get("clip_veraltet"))
+        s["eigener_clip"] = bool(q.get("eigener_clip"))
+        s["braucht_clip"] = r6_braucht_clip(q) if q else False
+    d["modi"] = [list(x) for x in R6_MODI]
+    d["sprichtarten"] = [list(x) for x in R6_SPRICHT]
+    d["versionen"] = R6_VERSIONEN
+    return d

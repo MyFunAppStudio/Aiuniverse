@@ -7,6 +7,7 @@ BASIS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASIS)
 import szenen
 import figuren
+import abspann
 import darsteller
 import einstellungen, kanaele, vorlagen, themen
 
@@ -329,10 +330,29 @@ def darsteller_schreiben(key, b):
         return darsteller.bild_weg(key, did, gid, b.get("datei") or "")
     if a == "bild_vor":
         return darsteller.bild_vor(key, did, gid, b.get("datei") or "")
-    if a == "besetzung":
-        return darsteller.besetzung_setzen(key, str(b.get("platz") or ""), did, gid)
+    if a == "dabei":
+        return darsteller.dabei_setzen(key, did, bool(wert), gid)
+    if a == "satz_waehlen":
+        return darsteller.satz_waehlen(key, did, gid)
     return {"ok": False, "fehler": "Aktion unbekannt"}
 
+
+# ---------- Abspann-Bibliothek (r6) ----------
+
+def abspann_lesen(key):
+    return abspann.fuer_anzeige(key)
+
+
+def abspann_schreiben(key, b):
+    a = b.get("aktion") or ""
+    eid = str(b.get("id") or "")
+    if a == "weg":
+        return abspann.entfernen(key, eid)
+    if a in ("name", "sekunden"):
+        return abspann.aendern(key, eid, a, b.get("wert"))
+    if a == "waehlen":
+        return abspann.waehlen(key, str(b.get("wert") or ""))
+    return {"ok": False, "fehler": "Aktion unbekannt"}
 
 def szenen_schreiben(key, b):
     a = b.get("aktion") or ""
@@ -341,6 +361,9 @@ def szenen_schreiben(key, b):
         return szenen.aendern(key, sid, a, b.get("wert"))
     if a in ("hoch", "runter"):
         return szenen.verschieben(key, sid, a)
+    if a == "zurueck":
+        return szenen.r6_zurueck(key, sid, str(b.get("welche") or ""),
+                                 b.get("datei") or "")
     if a == "weg":
         return szenen.entfernen(key, sid)
     if a == "musik_weg":
@@ -725,6 +748,9 @@ class Griff(BaseHTTPRequestHandler):
         if w == "/api/darsteller":
             return self.sende(darsteller_lesen(k))
 
+        if w == "/api/abspann":
+            return self.sende(abspann_lesen(k))
+
         if w == "/api/clip_stand":
             return self.sende(r5_clip_stand(k))
 
@@ -758,6 +784,9 @@ class Griff(BaseHTTPRequestHandler):
 
         if w.startswith("/darsteller/"):
             return self.datei(darsteller.datei_pfad(k, unquote(w[12:])))
+
+        if w.startswith("/abspann/"):
+            return self.datei(abspann.datei_pfad(k, unquote(w[9:])))
 
         if w.startswith("/figur/"):
             return self.datei(figuren.datei_pfad(k, unquote(w[7:])))
@@ -806,6 +835,39 @@ class Griff(BaseHTTPRequestHandler):
         if n > 90 * 1024 * 1024:
             return self.sende({"ok": False, "fehler": "Datei zu gross, hoechstens 90 MB"}, code=400)
         a = szenen.art(name)
+        if zweck == "abspann":
+            if abspann.art(name) not in ("bild", "video"):
+                return self.sende({"ok": False, "fehler":
+                                   "Nur Bilder oder Videos"}, code=400)
+            zname = abspann.sauberer_name(name)
+            ziel = os.path.join(abspann.ordner(k), zname)
+            rest = n
+            try:
+                with open(ziel, "wb") as f:
+                    while rest > 0:
+                        stueck = self.rfile.read(min(262144, rest))
+                        if not stueck:
+                            break
+                        f.write(stueck)
+                        rest -= len(stueck)
+            except Exception:
+                rest = -1
+            if rest != 0:
+                try:
+                    os.remove(ziel)
+                except Exception:
+                    pass
+                return self.sende({"ok": False, "fehler": "Hochladen abgebrochen"}, code=400)
+            r = abspann.annehmen(k, zname, (q.get("bez") or [""])[0])
+            if not r.get("ok"):
+                try:
+                    os.remove(ziel)
+                except Exception:
+                    pass
+                return self.sende(r, code=400)
+            return self.sende({"ok": True, "datei": zname,
+                               "id": r.get("id"), "sekunden": r.get("sekunden")})
+
         if zweck == "darsteller":
             if a != "bild":
                 return self.sende({"ok": False, "fehler":
@@ -987,6 +1049,9 @@ class Griff(BaseHTTPRequestHandler):
 
         if w == "/api/darsteller":
             return self.sende(darsteller_schreiben(k, b))
+
+        if w == "/api/abspann":
+            return self.sende(abspann_schreiben(k, b))
 
         if w == "/api/szene_clip":
             return self.sende(r5_clip_start(k, b))
@@ -1412,9 +1477,19 @@ import time as _p90_time
 
 
 def _p90_annehmen(k, zname, q):
-    """Nach dem Hochladen: ersetzen, wenn eine Szene genannt ist, sonst anhaengen."""
+    """Nach dem Hochladen: ersetzen, wenn eine Szene genannt ist, sonst anhaengen.
+
+    Ein Videoclip, der zu einer bestehenden Szene hochgeladen wird, ersetzt
+    nicht deren Bild, sondern wird ihr fertiger Clip: die Szene ueberspringt
+    dann Bild und Videomodell.
+    """
     sid = (q.get("sid") or [""])[0]
     if sid:
+        if szenen.art(zname) == "clip" and hasattr(szenen, "r6_clip_eigen"):
+            r = szenen.r6_clip_eigen(k, sid, zname)
+            if r.get("ok"):
+                print("[Szene] eigener Clip %s, %s Sek." % (zname, r.get("sekunden")))
+            return r
         d = einstellungen.laden().get(k) or {}
         r = szenen.p90_datei_setzen(d, sid, zname)
         if r.get("ok"):
@@ -1643,8 +1718,7 @@ def r5_clip_start(k, b):
     alle = bool(b.get("alle"))
     d = szenen.laden(k)
     if alle:
-        sids = [s["id"] for s in d["szenen"]
-                if not s.get("clip") and szenen.art(s.get("datei") or "") == "bild"]
+        sids = [s["id"] for s in d["szenen"] if _r6_offen(s)]
         if not sids:
             return {"ok": False, "fehler":
                     "Keine Szene offen - alle haben schon einen Clip."}
@@ -1664,6 +1738,19 @@ def r5_clip_start(k, b):
     t.start()
     return {"ok": True, "anzahl": len(sids)}
 
+
+def _r6_offen(s):
+    """Braucht diese Szene (noch) einen Referenzclip?
+
+    Offen ist sie, wenn der Schalter auf "Avatare im Bild" steht und
+    entweder noch kein Clip da ist oder das Bild inzwischen ausgetauscht
+    wurde - dann ist der vorhandene Clip noch vom alten Bild.
+    """
+    if not hasattr(szenen, "r6_braucht_clip"):
+        return not s.get("clip") and szenen.art(s.get("datei") or "") == "bild"
+    if not szenen.r6_braucht_clip(s):
+        return False
+    return (not s.get("clip")) or bool(s.get("clip_veraltet"))
 
 def r5_clip_stop(k):
     with _R5_SPERRE:
@@ -1691,8 +1778,7 @@ def r5_clip_stand(k):
            for s in d["szenen"]]
     bereit, grund = animation.ref_bereit(kanal)
     dsok, dsgrund = darsteller.bereit(k)
-    offen = [s for s in d["szenen"]
-             if not s.get("clip") and szenen.art(s.get("datei") or "") == "bild"]
+    offen = [s for s in d["szenen"] if _r6_offen(s)]
     sek = sum(szenen.r3_clip_dauer(s) for s in offen)
     return {"laeuft": laeuft, "lauf": e, "szenen": szn,
             "bereit": bool(bereit and dsok),
