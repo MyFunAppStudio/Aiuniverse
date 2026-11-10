@@ -867,89 +867,40 @@ def _p52_zeit(s):
     return "%d:%02d:%05.2f" % (st, m, s)
 
 
-def _p52_abspann_bauen(kanal, b, h, fps, dauer, ziel, arbeit):
-    """Dunkler Grund, zwei Zeilen Text. Reines ffmpeg, kostet nichts."""
-    import video_bauen as vb
-    gewaehlt = (kanal.get("untertitel_schrift") or "auto")
-    try:
-        schrift = vb._tt_schrift() if gewaehlt in ("", "auto") else gewaehlt
-    except Exception:
-        schrift = "DejaVu Sans"
-    z1 = (kanal.get("abspann_zeile1") or "TEIL 2 FOLGT").strip()
-    z2 = (kanal.get("abspann_zeile2") or "FOLGEN · LIKEN · KOMMENTIEREN").strip()
-    vorn = _p52_farbe(kanal.get("untertitel_farbe_aktiv"))
-    gross = max(30, int(h * 0.055))
-    klein = max(18, int(h * 0.026))
-    kopf = (
-        "[Script Info]\n"
-        "ScriptType: v4.00+\n"
-        "WrapStyle: 0\n"
-        "ScaledBorderAndShadow: yes\n"
-        "YCbCr Matrix: TV.709\n"
-        "PlayResX: %d\n"
-        "PlayResY: %d\n\n"
-        "[V4+ Styles]\n"
-        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
-        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, "
-        "ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
-        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        "Style: AB,%s,%d,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,"
-        "-1,0,0,0,100,100,2,0,1,0,0,5,70,70,0,1\n\n"
-        "[Events]\n"
-        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
-        "Effect, Text\n" % (b, h, schrift, gross))
-    text = "{\\fad(500,500)}%s\\N\\N{\\fs%d\\c%s}%s" % (z1, klein, vorn, z2)
-    zeile = ("Dialogue: 0,%s,%s,AB,,0,0,0,,%s\n"
-             % (_p52_zeit(0.3), _p52_zeit(max(0.6, dauer - 0.2)), text))
-    pfad = Path(arbeit) / "abspann.ass"
-    pfad.write_text(kopf + zeile, encoding="utf-8")
-    grund = "color=c=0x101014:s=%dx%d:d=%.3f:r=%d" % (b, h, dauer, fps)
-    gefiltert = "ass='%s'" % str(pfad).replace("\\", "/").replace(":", "\\:")
-    r = _lauf(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", grund,
-               "-vf", gefiltert, "-t", "%.3f" % dauer, "-r", str(fps),
-               "-pix_fmt", "yuv420p", "-c:v", "libx264", "-preset", "veryfast",
-               "-crf", "22", "-an", str(ziel)])
-    return r.returncode == 0 and os.path.exists(str(ziel))
-
-
 def _p52_abspann(kanal, arbeit, b, h, fps):
-    """Gibt (Pfad, Dauer) des Abspanns zurueck, oder (None, 0) wenn keiner."""
-    if kanal.get("abspann_an") is False:
-        return None, 0.0
-    try:
-        dauer = max(2.0, min(15.0, float(kanal.get("abspann_sekunden") or 6)))
-    except Exception:
-        dauer = 6.0
-    ziel = Path(arbeit) / "abspann.mp4"
-    eigen = (kanal.get("abspann_datei") or "").strip()
-    # Zuerst in der Abspann-Bibliothek nachsehen. Dort liegen mehrere
-    # Abspaenne, und die Bibliothek sagt selbst, welcher diesmal dran ist -
-    # fest gewaehlt oder bei jedem Lauf ein anderer.
+    """Gibt (Pfad, Dauer) des Abspanns zurueck, oder (None, 0) wenn keiner.
+
+    Der Abspann kommt ausschliesslich aus der Abspann-Bibliothek: entweder
+    ein fertiges Video, dann gilt seine eigene Laenge, oder ein Standbild,
+    dann gilt die Sekundenzahl, die daneben steht. Einen vom Code gebauten
+    Textabspann gibt es nicht mehr - ist nichts hochgeladen, haengt auch
+    nichts ans Video.
+    """
     try:
         import abspann as _ab
-        bib_pfad, bib_sek = _ab.naechster(kanal)
+        eigen, dauer = _ab.naechster(kanal)
     except Exception as e:
         print("[Szenen] Abspann-Bibliothek ging nicht: %s" % str(e)[:120])
-        bib_pfad, bib_sek = None, 0.0
-    if bib_pfad:
-        eigen = bib_pfad
-        if bib_sek > 0:
-            dauer = max(2.0, min(20.0, float(bib_sek)))
-    if eigen and os.path.exists(eigen):
-        if eigen.lower().endswith((".mp4", ".mov", ".webm", ".mkv")):
-            ok = _stueck_clip(eigen, ziel, dauer, b, h, fps)
-        else:
-            ok = _stueck_bild(eigen, ziel, "aus", 0, dauer, b, h, fps, "auto")
-        if ok and ziel.exists():
-            print("[Szenen] Abspann aus eigener Datei, %.1f s" % dauer)
-            return str(ziel), dauer
-        print("[Szenen] eigene Abspanndatei ging nicht, nehme den gebauten")
-    try:
-        if _p52_abspann_bauen(kanal, b, h, fps, dauer, ziel, arbeit):
-            print("[Szenen] Abspann gebaut, %.1f s" % dauer)
-            return str(ziel), dauer
-    except Exception as e:
-        print("[Szenen] Abspann ging nicht: %s" % str(e)[:120])
+        return None, 0.0
+    if not eigen or not os.path.exists(eigen):
+        return None, 0.0
+    dauer = float(dauer or 0)
+    if dauer <= 0:
+        return None, 0.0
+
+    ziel = Path(arbeit) / "abspann.mp4"
+    if eigen.lower().endswith((".mp4", ".mov", ".m4v", ".webm", ".mkv")):
+        ok = _stueck_clip(eigen, ziel, dauer, b, h, fps)
+        art = "Video"
+    else:
+        ok = _stueck_bild(eigen, ziel, "aus", 0, dauer, b, h, fps, "auto")
+        art = "Standbild"
+    if ok and ziel.exists():
+        print("[Szenen] Abspann (%s) %s, %.1f s"
+              % (art, os.path.basename(eigen), dauer))
+        return str(ziel), dauer
+    print("[Szenen] Abspanndatei %s liess sich nicht verarbeiten"
+          % os.path.basename(eigen))
     return None, 0.0
 
 

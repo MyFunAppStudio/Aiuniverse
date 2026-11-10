@@ -490,11 +490,6 @@ function tMusik(){
 function tAblauf(){
   return '<div class="karte">'
    +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
-   +reihe("Abspann",schalter("abspann_an",S.einst.abspann_an!==false),"feste Schlusstafel, kostet nichts")
-   +(S.einst.abspann_an===false?'':(
-      reihe("Abspann: Sekunden",zahl("abspann_sekunden",S.einst.abspann_sekunden||6,1))
-     +reihe("Abspann: obere Zeile",text("abspann_zeile1",S.einst.abspann_zeile1||"TEIL 2 FOLGT"))
-     +reihe("Abspann: untere Zeile",text("abspann_zeile2",S.einst.abspann_zeile2||"FOLGEN · LIKEN · KOMMENTIEREN"))))
    +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde — danach wird die Wortzahl für die Länge berechnet")
    +'</div>'
    +'<div class="karte"><div class="r"><div><div class="lb">Automatik</div><div class="hint">'
@@ -1816,11 +1811,14 @@ function tAbspannBib(){
   if(!d){ladeAbspann();return '<div class="karte p"><div class="leer">lade…</div></div>'}
   var li=d.eintraege||[], wahl=d.wahl||"";
   var o='<div class="karte p"><h2 class="kt">Abspann-Bibliothek</h2>'
-   +'<div class="hinw" style="padding:0;margin-bottom:4px">Standbilder und Videos gemischt. '
-   +'Bei einem Video gilt seine eigene Länge, bei einem Standbild die Sekundenzahl daneben.</div>';
+   +'<div class="hinw" style="padding:0;margin-bottom:4px">Zwei Sorten: <b>fertiges Video</b> — '
+   +'das läuft genau so lang, wie du es gemacht hast. Oder <b>Standbild</b> — da trägst du '
+   +'die Sekunden daneben ein.<br><br>'
+   +'Ist nichts hochgeladen, hängt auch nichts ans Video. Einen vom Code gebauten '
+   +'Schlusstext gibt es nicht mehr.</div>';
   if(!li.length)
     o+='<div class="leer" style="margin-top:9px">noch keiner hochgeladen — '
-     +'dann baut der Code den Textabspann von oben</div>';
+     +'die Videos laufen dann ohne Abspann aus</div>';
   li.forEach(function(e){
     var dran=(wahl===e.id);
     o+='<div class="szz" style="display:flex;align-items:center;gap:8px;margin-top:10px">'
@@ -1836,7 +1834,7 @@ function tAbspannBib(){
      +'onchange="abSetz({aktion:\'name\',id:\''+h(e.id)+'\',wert:this.value})">'
      +'<div class="szh" style="margin-top:5px">'
      +(e.art==="video"
-        ? ('Video · '+h(String(e.sekunden))+' Sek.')
+        ? ('Video · '+h(String(e.sekunden))+' Sek. — so lang, wie du es gemacht hast')
         : ('Standbild · <input type="text" style="width:50px" value="'+h(String(e.sekunden))+'" '
            +'onchange="abSetz({aktion:\'sekunden\',id:\''+h(e.id)+'\',wert:this.value})"> Sek.'))
      +'</div></div>'

@@ -110,11 +110,22 @@ def laden(kanal):
                 i += 1
             eid = "a%d" % i
         benutzt.add(eid)
+        # Beim Standbild gilt die eingetragene Sekundenzahl und damit auch
+        # ihre Grenzen. Beim Video gilt die Laenge des Videos - die wird
+        # nicht gestutzt, der Abspann ist so lang, wie er gemacht wurde.
+        if a == "video":
+            try:
+                sek = round(float(str(e.get("sekunden")).replace(",", ".")), 2)
+            except Exception:
+                sek = 0.0
+            if sek <= 0:
+                sek = _dauer_messen(datei_pfad(kanal, datei))
+        else:
+            sek = _sekunden(e.get("sekunden"))
         raus["eintraege"].append({
             "id": eid,
             "name": str(e.get("name") or "").strip()[:40] or "Abspann",
-            "datei": datei, "art": a,
-            "sekunden": _sekunden(e.get("sekunden"))})
+            "datei": datei, "art": a, "sekunden": sek})
     wahl = str(d.get("wahl") or "")
     if wahl != ZUFALL and wahl not in benutzt:
         wahl = raus["eintraege"][0]["id"] if raus["eintraege"] else ""
