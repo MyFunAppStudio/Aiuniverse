@@ -314,10 +314,10 @@ def darsteller_schreiben(key, b):
     did = str(b.get("id") or "")
     wert = b.get("wert")
     if a == "neu":
-        return darsteller.anlegen(key, b.get("name") or "", b.get("rolle") or "")
+        return darsteller.anlegen(key, b.get("name") or "")
     if a == "weg":
         return darsteller.entfernen(key, did)
-    if a in ("name", "rolle"):
+    if a == "name":
         return darsteller.aendern(key, did, a, wert)
     if a == "bild_weg":
         return darsteller.bild_weg(key, did, b.get("datei") or "")
@@ -864,13 +864,28 @@ class Griff(BaseHTTPRequestHandler):
                 return self.sende({"ok": False, "fehler":
                                    "Nur Bilder: jpg, png, webp"}, code=400)
             did = (q.get("id") or [""])[0]
-            if not darsteller.da(k, did):
+            frisch = ""
+            if not did:
+                # Kein Avatar genannt: einer wird angelegt und nach der
+                # Datei benannt. So reicht ein einziger Knopf zum Hochladen.
+                # Geht das Bild schief, muss er wieder weg - sonst bleibt
+                # eine leere Karte stehen.
+                neu = darsteller.anlegen_fuer_datei(k, name)
+                if not neu.get("ok"):
+                    return self.sende(neu, code=400)
+                did = frisch = neu["id"]
+            elif not darsteller.da(k, did):
                 return self.sende({"ok": False, "fehler":
                                    "Avatar unbekannt"}, code=400)
+            def _zurueck(antwort):
+                if frisch:
+                    darsteller.entfernen(k, frisch)
+                return self.sende(antwort, code=400)
+
             if not darsteller.platz_frei(k, did):
-                return self.sende({"ok": False, "fehler":
-                                   "Dieser Avatar hat schon %d Bilder"
-                                   % darsteller.BILDER_MAX}, code=400)
+                return _zurueck({"ok": False, "fehler":
+                                 "Dieser Avatar hat schon %d Bilder"
+                                 % darsteller.BILDER_MAX})
             zname = szenen.sauberer_name(name)
             ziel = os.path.join(darsteller.ordner(k), zname)
             rest = n
@@ -889,18 +904,22 @@ class Griff(BaseHTTPRequestHandler):
                     os.remove(ziel)
                 except Exception:
                     pass
-                return self.sende({"ok": False, "fehler": "Hochladen abgebrochen"}, code=400)
+                return _zurueck({"ok": False, "fehler": "Hochladen abgebrochen"})
             e = darsteller.aufbereiten(k, zname)
             if not e.get("ok"):
-                return self.sende(e, code=400)
+                try:
+                    os.remove(os.path.join(darsteller.ordner(k), zname))
+                except Exception:
+                    pass
+                return _zurueck(e)
             r = darsteller.bild_dazu(k, did, e["datei"])
             if not r.get("ok"):
                 try:
                     os.remove(darsteller.datei_pfad(k, e["datei"]))
                 except Exception:
                     pass
-                return self.sende(r, code=400)
-            return self.sende({"ok": True, "datei": e["datei"]})
+                return _zurueck(r)
+            return self.sende({"ok": True, "datei": e["datei"], "id": did})
 
         if zweck == "figur":
             schleife = (a == "clip" or name.lower().endswith(".gif"))

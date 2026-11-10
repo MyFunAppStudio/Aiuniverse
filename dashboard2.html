@@ -1639,48 +1639,65 @@ function dsSetz(o){
 function dsDabei(did,an){return dsSetz({aktion:"dabei",id:did,wert:!!an})}
 function dsFeld(did,feld,wert){return dsSetz({aktion:feld,id:did,wert:wert})}
 
-function dsNeu(){
-  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Neuer Avatar</h2>'
-   +'<p>Eine wiederkehrende Figur für deine Videos. Angelegt heißt noch nicht dabei — '
-   +'das hakst du je Video an.</p>'
-   +'<input type="text" id="dsn" class="breit" placeholder="Name, z.B. Mara" style="margin-bottom:9px">'
-   +'<input type="text" id="dsr" class="breit" placeholder="Rolle, z.B. Archäologin" style="margin-bottom:14px">'
-   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
-   +'<button class="knopf or" onclick="dsAnlegen()">Anlegen</button></div></div></div>';
+/* Ein Knopf. Dateiwaehler auf, Bilder markieren, fertig - ohne id legt
+   das erste Bild einen neuen Avatar an und benennt ihn nach der Datei. */
+function dsHoch(did){
+  var bmax=((S.ds||{}).bilder_max)||4, frei=bmax;
+  if(did){
+    var f=((S.ds||{}).darsteller||[]).filter(function(x){return x.id===did})[0];
+    if(f)frei=bmax-((f.bilder||[]).length);
+  }
+  if(frei<1)return melde("Dieser Avatar hat schon "+bmax+" Bilder.");
+  var i=document.createElement("input");
+  i.type="file"; i.accept="image/*"; i.multiple=true;
+  i.onchange=function(){
+    var dateien=[].slice.call(i.files||[]);
+    if(!dateien.length)return;
+    var uebrig=dateien.length-frei;
+    if(uebrig>0)dateien=dateien.slice(0,frei);
+    dsSchicken(dateien,did||"",0,dateien.length,uebrig>0?bmax:0);
+  };
+  i.click();
 }
-function dsAnlegen(){
-  var n=((el("dsn")||{}).value||"").trim(), r=((el("dsr")||{}).value||"").trim();
-  if(!n)return melde("Ein Name muss sein.");
-  dsSetz({aktion:"neu",name:n,rolle:r}).then(function(x){if(x&&x.ok)zu()});
+function dsNeu(){dsHoch("")}
+
+/* Schickt die Bilder nacheinander. Das erste bekommt die id zurueck, die
+   weiteren haengen sich an denselben Avatar. */
+function dsSchicken(dateien,did,nr,gesamt,zuviel){
+  if(nr>=dateien.length){
+    zu(); ladeDarsteller();
+    if(zuviel)melde("Mehr als "+zuviel+" Bilder nimmt das Modell nicht an — "
+      +"die übrigen habe ich weggelassen.");
+    return;
+  }
+  var f=dateien[nr];
+  if(f.size>90*1024*1024){zu();ladeDarsteller();
+    return melde("„"+f.name+"“ ist zu groß — höchstens 90 MB.")}
+  var wo=f.name+(gesamt>1?(" · Bild "+(nr+1)+" von "+gesamt):"");
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2>'
+    +'<p id="dspro">'+h(wo)+' · 0 %</p></div></div>';
+  var x=new XMLHttpRequest();
+  x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=darsteller"
+    +"&id="+encodeURIComponent(did)+"&name="+encodeURIComponent(f.name));
+  x.upload.onprogress=function(e){
+    if(e.lengthComputable&&el("dspro"))
+      el("dspro").textContent=wo+" · "+Math.round(e.loaded/e.total*100)+" %"};
+  x.onload=function(){
+    var r={};try{r=JSON.parse(x.responseText)}catch(err){}
+    if(!r.ok){zu();ladeDarsteller();return melde(r.fehler||"Hochladen ging nicht")}
+    dsSchicken(dateien,did||r.id||"",nr+1,gesamt,zuviel);
+  };
+  x.onerror=function(){zu();ladeDarsteller();
+    melde("Hochladen fehlgeschlagen — Verbindung weg?")};
+  x.send(f);
 }
+
 function dsWeg(did,name){
   frage("Avatar löschen?","<b>"+h(name)+"</b><br><br>Die Bilder dieser Figur werden gelöscht.",
     "Löschen",function(){dsSetz({aktion:"weg",id:did})},true);
 }
 function dsBildWeg(did,datei){dsSetz({aktion:"bild_weg",id:did,datei:datei})}
 function dsBildVor(did,datei){dsSetz({aktion:"bild_vor",id:did,datei:datei})}
-
-function dsHoch(did){
-  var i=document.createElement("input");
-  i.type="file"; i.accept="image/*";
-  i.onchange=function(){
-    var f=i.files&&i.files[0];if(!f)return;
-    if(f.size>90*1024*1024){melde("Datei zu groß — höchstens 90 MB.");return}
-    el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Lädt hoch</h2>'
-      +'<p id="dspro">'+h(f.name)+' · 0 %</p></div></div>';
-    var x=new XMLHttpRequest();
-    x.open("POST","/api/hochladen?k="+encodeURIComponent(S.kanal)+"&zweck=darsteller"
-      +"&id="+encodeURIComponent(did)+"&name="+encodeURIComponent(f.name));
-    x.upload.onprogress=function(e){
-      if(e.lengthComputable&&el("dspro"))
-        el("dspro").textContent=f.name+" · "+Math.round(e.loaded/e.total*100)+" %"};
-    x.onload=function(){zu();var r={};try{r=JSON.parse(x.responseText)}catch(err){}
-      if(!r.ok)return melde(r.fehler||"Hochladen ging nicht");ladeDarsteller()};
-    x.onerror=function(){zu();melde("Hochladen fehlgeschlagen — Verbindung weg?")};
-    x.send(f);
-  };
-  i.click();
-}
 
 /* ---------- Abspann-Bibliothek (r6) ---------- */
 
@@ -1789,10 +1806,13 @@ function tDarsteller(){
 
   var o='<div class="karte p"><h2 class="kt">Avatare</h2>'
    +'<div class="hinw" style="padding:0;margin-bottom:10px">'
-   +'Ein Avatar ist ein Name, eine Rolle und bis zu '+bmax+' Bilder. Für ein Video hakst du an, '
-   +'wer mitspielt — gleichzeitig im Bild gehen höchstens '+max+'.<br><br>'
+   +'Ein Avatar sind ein paar Bilder und ein Name — höchstens '+bmax+' Bilder, das erste ist '
+   +'das Frontalbild. Für ein Video hakst du an, wer mitspielt; gleichzeitig im Bild gehen '
+   +'höchstens '+max+'.<br><br>'
    +'Die Bilder werden <b>nicht</b> ins Bild geklebt. Sie gehen als Referenz an das Modell, '
-   +'und das stellt die Figur selbst in die Szene. Darum dürfen sie einen Hintergrund haben.</div>'
+   +'und das stellt die Figur selbst in die Szene. Darum dürfen sie einen Hintergrund haben.<br><br>'
+   +'Den Namen braucht das Modell nur, damit deine Regieanweisung „Mara zeigt nach oben" '
+   +'bei der richtigen Figur ankommt.</div>'
    +'<div class="szz"><span class="szh">Für dieses Video dabei</span>'
    +'<span style="font-weight:700;font-size:15px;color:'+(anzahl?'#24D3E8':'#8593AC')+'">'
    +anzahl+' von '+max+'</span></div>';
@@ -1803,7 +1823,8 @@ function tDarsteller(){
   }else{
     o+='<div class="hinw" style="padding:0;margin-top:10px;color:#FFB454">'+h(d.grund)+'</div>';
   }
-  o+='<button class="knopf" style="width:100%;margin-top:10px" onclick="dsNeu()">+ Avatar</button></div>';
+  o+='<button class="knopf or" style="width:100%;margin-top:10px" onclick="dsNeu()">'
+   +'+ Avatar — Bilder aussuchen</button></div>';
 
   if(!liste.length)
     o+='<div class="karte p"><div class="leer">noch kein Avatar angelegt</div></div>';
@@ -1812,8 +1833,7 @@ function tDarsteller(){
     var an=!!f.dabei, bilder=f.bilder||[];
     o+='<div class="karte p'+(an?' mit':'')+'">'
      +'<div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:9px">'
-     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)
-     +(f.rolle?' <span class="szh">· '+h(f.rolle)+'</span>':'')+'</h2>'
+     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+'</h2>'
      +'<button class="sch'+(an?" an":"")+'" title="für dieses Video dabei" '
      +'onclick="dsDabei(\''+h(f.id)+'\','+(an?"false":"true")+')"><i></i></button>'
      +'<button class="ik rot" onclick="dsWeg(\''+h(f.id)+'\',\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
@@ -1847,11 +1867,7 @@ function tDarsteller(){
 
     o+='<div class="szz" style="margin-top:11px"><span class="szh">Name</span>'
      +'<input type="text" class="breit" value="'+h(f.name)+'" '
-     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div>'
-     +'<div class="szz" style="margin-top:7px"><span class="szh">Rolle</span>'
-     +'<input type="text" class="breit" value="'+h(f.rolle||"")+'" placeholder="z.B. Archäologin" '
-     +'onchange="dsFeld(\''+h(f.id)+'\',\'rolle\',this.value)"></div>'
-     +'</div>';
+     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div></div>';
   });
 
   if(liste.length)

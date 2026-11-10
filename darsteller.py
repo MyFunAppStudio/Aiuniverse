@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """Avatare je Kanal: eine Bibliothek wiederkehrender Figuren.
 
-Ein Avatar ist ein Name, eine Rolle und bis zu BILDER_MAX Bilder. Mehr
-nicht. Das erste Bild ist das Frontalbild.
+Ein Avatar ist ein Name und bis zu BILDER_MAX Bilder. Mehr nicht. Das
+erste Bild ist das Frontalbild.
 
 Die Bilder werden NICHT freigestellt und nicht ins Bild geklebt. Sie gehen
 als Referenz an das Videomodell, und das zeichnet die Figur selbst in die
@@ -18,12 +18,12 @@ Andere Kleidung fuer eine spaetere Folge wird als eigener Avatar angelegt
 ("Mara Feldjacke") und statt der anderen angehakt. Das ist ein Eintrag
 mehr in der Liste und dafuer keine zweite Ebene in der Bedienung.
 
-Warum es ueberhaupt eine Rolle gibt und keine Beschreibung: Das Modell
-bekommt einen Vorspann, der sagt, welches Referenzbild wer ist - sonst
-versteht es "Mara zeigt nach oben" in der Regieanweisung nicht. Dafuer
-reichen Name und ein, zwei Woerter Rolle. Wie die Figur AUSSIEHT steht
-schon auf den Bildern; dasselbe nochmal als Text zu beschreiben bringt
-Bild und Text gegeneinander auf und laesst die Figur driften.
+Warum ueberhaupt ein Name: Das Modell bekommt einen Vorspann, der sagt,
+welches Referenzbild wer ist - sonst versteht es "Mara zeigt nach oben"
+in der Regieanweisung nicht. Wie die Figur AUSSIEHT steht schon auf den
+Bildern. Dasselbe nochmal als Text zu beschreiben bringt Bild und Text
+gegeneinander auf und laesst die Figur driften, darum gibt es hier kein
+einziges Feld dafuer.
 """
 import json
 import os
@@ -103,7 +103,6 @@ def _umziehen(f, benutzt):
     Avataren. Gibt (Liste neuer Avatare, {alte Satz-id: neue Avatar-id}).
     """
     name = str(f.get("name") or "").strip()[:40]
-    rolle = str(f.get("rolle") or "").strip()[:40]
     alt_id = str(f.get("id") or "").strip()
 
     # Schon im flachen Modell?
@@ -111,7 +110,7 @@ def _umziehen(f, benutzt):
         did = alt_id if alt_id and alt_id not in benutzt else _neue_id(benutzt)
         benutzt.add(did)
         bilder = [os.path.basename(str(b)) for b in f["bilder"] if str(b or "").strip()]
-        return [{"id": did, "name": name, "rolle": rolle,
+        return [{"id": did, "name": name,
                  "bilder": bilder[:BILDER_MAX]}], {"": did}
 
     raus, karte = [], {}
@@ -132,7 +131,7 @@ def _umziehen(f, benutzt):
                   ("%s %d" % (name, nr + 1))[:40]
         benutzt.add(did)
         karte[str(g.get("id") or "")] = did
-        raus.append({"id": did, "name": wie, "rolle": rolle, "bilder": bilder})
+        raus.append({"id": did, "name": wie, "bilder": bilder})
     return raus, karte
 
 
@@ -188,36 +187,75 @@ def _finde(d, did):
 
 # ---------- Avatare ----------
 
+def _eindeutig(name, vorhanden):
+    """Haengt bei Bedarf eine Zahl an, damit kein Name zweimal vorkommt."""
+    if name.lower() not in vorhanden:
+        return name
+    grund, i = name, 2
+    while name.lower() in vorhanden:
+        name = ("%s %d" % (grund, i))[:40]
+        i += 1
+    return name
+
+
+def _name_aus_datei(dateiname, vorhanden):
+    """Macht aus einem Dateinamen einen brauchbaren Avatarnamen.
+
+    Bildgeneratoren spucken Namen wie 1000057330.png aus - daraus laesst
+    sich nichts machen, dann heisst der Avatar eben "Avatar 1" und wird
+    auf der Karte umbenannt.
+    """
+    stamm = os.path.splitext(os.path.basename(dateiname or ""))[0]
+    stamm = re.sub(r"[_\-]+", " ", stamm)
+    stamm = re.sub(r"\s+", " ", stamm).strip()[:40]
+    if re.fullmatch(r"[\d\s.]*", stamm or ""):
+        i = 1
+        while ("avatar %d" % i) in vorhanden:
+            i += 1
+        return "Avatar %d" % i
+    return _eindeutig(stamm[0].upper() + stamm[1:], vorhanden)
+
+
 def anlegen(kanal, name, rolle=""):
+    """Legt einen Avatar an. Ohne Namen wird nach der Datei benannt."""
     d = laden(kanal)
+    vorhanden = set(f["name"].lower() for f in d["darsteller"])
     name = str(name or "").strip()[:40]
     if not name:
         return {"ok": False, "fehler": "Name fehlt"}
-    if any(f["name"].lower() == name.lower() for f in d["darsteller"]):
+    if name.lower() in vorhanden:
         return {"ok": False, "fehler": "Gibt es schon"}
     did = _neue_id(set(f["id"] for f in d["darsteller"]))
-    d["darsteller"].append({"id": did, "name": name,
-                            "rolle": str(rolle or "").strip()[:40],
-                            "bilder": []})
+    d["darsteller"].append({"id": did, "name": name, "bilder": []})
     speichern(kanal, d)
-    return {"ok": True, "id": did}
+    return {"ok": True, "id": did, "name": name}
+
+
+def anlegen_fuer_datei(kanal, dateiname):
+    """Legt beim Hochladen einen Avatar an, benannt nach der Datei."""
+    d = laden(kanal)
+    vorhanden = set(f["name"].lower() for f in d["darsteller"])
+    name = _name_aus_datei(dateiname, vorhanden)
+    did = _neue_id(set(f["id"] for f in d["darsteller"]))
+    d["darsteller"].append({"id": did, "name": name, "bilder": []})
+    speichern(kanal, d)
+    return {"ok": True, "id": did, "name": name}
 
 
 def aendern(kanal, did, feld, wert):
-    if feld not in ("name", "rolle"):
+    if feld != "name":
         return {"ok": False, "fehler": "Feld unbekannt"}
     d = laden(kanal)
     f = _finde(d, did)
     if f is None:
         return {"ok": False, "fehler": "Avatar unbekannt"}
     w = str(wert or "").strip()[:40]
-    if feld == "name":
-        if not w:
-            return {"ok": False, "fehler": "Name darf nicht leer sein"}
-        if any(x["name"].lower() == w.lower() and x["id"] != f["id"]
-               for x in d["darsteller"]):
-            return {"ok": False, "fehler": "Gibt es schon"}
-    f[feld] = w
+    if not w:
+        return {"ok": False, "fehler": "Name darf nicht leer sein"}
+    if any(x["name"].lower() == w.lower() and x["id"] != f["id"]
+           for x in d["darsteller"]):
+        return {"ok": False, "fehler": "Gibt es schon"}
+    f["name"] = w
     speichern(kanal, d)
     return {"ok": True}
 
@@ -297,7 +335,11 @@ def aufbereiten(kanal, datei):
             os.remove(ziel)
         except Exception:
             pass
-        return {"ok": False, "fehler": (r.stderr or "")[-160:] or "Umwandeln ging nicht"}
+        # ffmpeg redet in Fachkauderwelsch; das hilft niemandem weiter
+        print("[Avatar] ffmpeg: %s" % (r.stderr or "")[-300:])
+        return {"ok": False, "fehler":
+                "Das Bild lässt sich nicht lesen. Probier es als JPG oder PNG "
+                "noch einmal."}
     try:
         os.remove(quelle)
     except Exception:
@@ -420,8 +462,7 @@ def besetzung(kanal):
                   if os.path.exists(datei_pfad(kanal, n))]
         if not bilder:
             continue
-        raus.append({"id": f["id"], "name": f["name"],
-                     "rolle": f.get("rolle", ""), "bilder": bilder})
+        raus.append({"id": f["id"], "name": f["name"], "bilder": bilder})
     return raus
 
 
@@ -451,10 +492,7 @@ def prompt_vorspann(kanal, hintergrund=True):
     """
     teile = []
     for i, x in enumerate(besetzung(kanal)):
-        wer = x["name"]
-        if x.get("rolle"):
-            wer += ", %s" % x["rolle"]
-        teile.append("@Element%d is %s." % (i + 1, wer))
+        teile.append("@Element%d is %s." % (i + 1, x["name"]))
     if hintergrund:
         teile.append("@Image1 is the background scene they are standing in.")
     return " ".join(teile)
@@ -471,7 +509,7 @@ def fuer_anzeige(kanal):
             p = datei_pfad(kanal, n)
             bilder.append({"datei": n, "da": os.path.exists(p),
                            "groesse": os.path.getsize(p) if os.path.exists(p) else 0})
-        raus.append({"id": f["id"], "name": f["name"], "rolle": f.get("rolle", ""),
+        raus.append({"id": f["id"], "name": f["name"],
                      "bilder": bilder, "voll": len(bilder) >= BILDER_MAX,
                      "dabei": f["id"] in d["besetzung"]})
     ok, grund = bereit(kanal)
