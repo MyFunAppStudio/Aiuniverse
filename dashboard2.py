@@ -352,6 +352,8 @@ def szenen_schreiben(key, b):
         return szenen.aendern(key, sid, a, b.get("wert"))
     if a in ("hoch", "runter"):
         return szenen.verschieben(key, sid, a)
+    if a == "wer_um":
+        return szenen.r7_wer_um(key, sid, b.get("wer") or "")
     if a == "zurueck":
         return szenen.r6_zurueck(key, sid, str(b.get("welche") or ""),
                                  b.get("datei") or "")
@@ -1611,11 +1613,17 @@ def _r5_regie(s, kanal):
     return (kanal.get("kling_prompt") or "").strip()
 
 
+def _r5_wer(s):
+    """Welche Avatare in dieser Szene stehen. Leer heisst: die ganze Besetzung."""
+    w = (s or {}).get("wer")
+    return [str(x) for x in w if str(x or "").strip()] if isinstance(w, list) else []
+
+
 def _r5_prompt(k, kanal, s):
     """Vorspann, wer wer ist. Dann was passiert. Dann die feste Regel."""
     import animation
     teile = []
-    v = darsteller.prompt_vorspann(k)
+    v = darsteller.prompt_vorspann(k, nur=_r5_wer(s))
     if v:
         teile.append(v)
     r = _r5_regie(s, kanal)
@@ -1625,9 +1633,9 @@ def _r5_prompt(k, kanal, s):
     return " ".join(t for t in teile if t)
 
 
-def _r5_figuren(k):
+def _r5_figuren(k, s=None):
     return [{"name": x["name"], "bilder": x["bilder"]}
-            for x in darsteller.besetzung(k)]
+            for x in darsteller.besetzung(k, _r5_wer(s))]
 
 
 def _r5_einen(k, sid):
@@ -1649,7 +1657,7 @@ def _r5_einen(k, sid):
         p = szenen.datei_pfad(k, s["datei"])
         if os.path.exists(p):
             hintergrund = p
-    figuren = _r5_figuren(k)
+    figuren = _r5_figuren(k, s)
     if not figuren and not hintergrund:
         return False, "Diese Szene hat weder Hintergrundbild noch Besetzung"
 

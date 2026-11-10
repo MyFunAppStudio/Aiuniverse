@@ -722,3 +722,80 @@ def fuer_anzeige(kanal):
     d["sprichtarten"] = [list(x) for x in R6_SPRICHT]
     d["versionen"] = R6_VERSIONEN
     return d
+
+
+# ---------- Nachtrag r7: wer in welcher Szene steht ----------
+#
+# Die Besetzung oben sagt, wer in dieser FOLGE vorkommt. Hier steht, wer
+# in der einzelnen SZENE im Bild ist. Leer heisst: die ganze Besetzung.
+#
+# Das ist nicht nur Bequemlichkeit: Das Videomodell nimmt vier Referenzen
+# an, eine davon ist der Hintergrund. Steht eine Figur allein in der Szene,
+# bekommt sie drei Bilder von sich statt einem und bleibt sich deutlich
+# aehnlicher.
+
+_r7_laden_alt = laden
+_r7_aendern_alt = aendern
+_r7_anzeige_alt = fuer_anzeige
+
+if "wer" not in FELDER:
+    FELDER.append("wer")
+
+
+def _r7_liste(w):
+    if isinstance(w, str):
+        w = w.split(",")
+    if not isinstance(w, list):
+        return []
+    raus = []
+    for x in w:
+        x = str(x or "").strip()
+        if x and x not in raus:
+            raus.append(x)
+    return raus[:8]
+
+
+def laden(kanal):
+    d = _r7_laden_alt(kanal)
+    for s in d["szenen"]:
+        s["wer"] = _r7_liste(s.get("wer"))
+    return d
+
+
+def aendern(kanal, sid, feld, wert):
+    if feld != "wer":
+        return _r7_aendern_alt(kanal, sid, feld, wert)
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    d["szenen"][i]["wer"] = _r7_liste(wert)
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+def r7_wer_um(kanal, sid, did):
+    """Haengt einen Avatar an die Szene an oder nimmt ihn heraus."""
+    did = str(did or "").strip()
+    if not did:
+        return {"ok": False, "fehler": "Avatar fehlt"}
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    w = list(d["szenen"][i].get("wer") or [])
+    if did in w:
+        w = [x for x in w if x != did]
+    else:
+        w.append(did)
+    d["szenen"][i]["wer"] = w[:8]
+    speichern(kanal, d)
+    return {"ok": True, "wer": d["szenen"][i]["wer"]}
+
+
+def fuer_anzeige(kanal):
+    d = _r7_anzeige_alt(kanal)
+    roh = {s["id"]: s for s in laden(kanal)["szenen"]}
+    for s in d["szenen"]:
+        s["wer"] = (roh.get(s["id"]) or {}).get("wer", [])
+    return d

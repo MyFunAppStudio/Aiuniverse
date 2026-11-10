@@ -408,6 +408,52 @@ def ref_preis(kanal, sekunden=5.0):
     return round(max(0.0, je_sek) * max(1.0, float(sekunden)), 4)
 
 
+R4_PLAETZE = 4      # so viele Referenzen nimmt das Modell insgesamt an
+
+
+def ref_verteilen(figuren, hintergrund):
+    """Teilt die vier Referenzplaetze auf Hintergrund und Figuren auf.
+
+    Jede Figur bekommt ihr Frontalbild, und was danach uebrig ist, wird
+    reihum als zusaetzliches Referenzbild verteilt. Steht eine Figur allein
+    in der Szene, bekommt sie also drei Bilder von sich und bleibt sich
+    deutlich aehnlicher, als wenn zwei Figuren sich die Plaetze teilen.
+
+    Gibt (Liste von Bildlisten je Figur, Hintergrund oder None) zurueck.
+    """
+    dabei = []
+    for f in figuren or []:
+        bilder = [p for p in (f.get("bilder") or []) if os.path.exists(p)]
+        if bilder:
+            dabei.append(bilder)
+    hg = hintergrund if (hintergrund and os.path.exists(hintergrund)) else None
+
+    frei = R4_PLAETZE - (1 if hg else 0)
+    if not dabei:
+        return [], hg
+    # Wenn nicht einmal fuer je ein Frontalbild Platz ist, fallen die
+    # hintersten Figuren weg - lieber weniger Figuren als eine Absage.
+    dabei = dabei[:max(1, frei)]
+    genommen = [b[:1] for b in dabei]
+    uebrig = frei - len(genommen)
+    i = 0
+    while uebrig > 0:
+        gewachsen = False
+        for nr in range(len(dabei)):
+            if uebrig <= 0:
+                break
+            if len(genommen[nr]) < len(dabei[nr]):
+                genommen[nr].append(dabei[nr][len(genommen[nr])])
+                uebrig -= 1
+                gewachsen = True
+        if not gewachsen:
+            break           # keine weiteren Bilder vorhanden
+        i += 1
+        if i > R4_PLAETZE:
+            break
+    return genommen, hg
+
+
 def ref_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16",
                 dauer_als_text=True):
     """Baut die Anfrage. Getrennt, damit sie sich pruefen laesst."""
@@ -415,30 +461,25 @@ def ref_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16",
     k = {"prompt": (prompt or "")[:2000],
          "duration": str(dauer) if dauer_als_text else dauer,
          "aspect_ratio": seite or "9:16"}
+    verteilt, hg = ref_verteilen(figuren, hintergrund)
     elemente = []
-    for f in figuren or []:
-        bilder = [p for p in (f.get("bilder") or []) if os.path.exists(p)]
-        if not bilder:
-            continue
+    for bilder in verteilt:
         e = {"frontal_image_url": _daten_uri(bilder[0])}
-        weitere = [_daten_uri(p) for p in bilder[1:4]]
+        weitere = [_daten_uri(p) for p in bilder[1:]]
         if weitere:
             e["reference_image_urls"] = weitere
         elemente.append(e)
     if elemente:
         k["elements"] = elemente
-    if hintergrund and os.path.exists(hintergrund):
-        k["image_urls"] = [_daten_uri(hintergrund)]
+    if hg:
+        k["image_urls"] = [_daten_uri(hg)]
     return k
 
 
 def ref_platz(figuren, hintergrund):
-    """Wie viele der vier Plaetze belegt waeren."""
-    n = len([f for f in (figuren or [])
-             if any(os.path.exists(p) for p in (f.get("bilder") or []))])
-    if hintergrund and os.path.exists(hintergrund):
-        n += 1
-    return n
+    """Wie viele der vier Plaetze wirklich belegt werden."""
+    verteilt, hg = ref_verteilen(figuren, hintergrund)
+    return sum(len(b) for b in verteilt) + (1 if hg else 0)
 
 
 def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,

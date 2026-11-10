@@ -426,6 +426,35 @@ def _ton_kleben(teile, ziel):
     return str(ziel) if r.returncode == 0 and os.path.exists(ziel) else None
 
 
+def _r7_sprecher(kanal, s):
+    """Wer in dieser Szene spricht.
+
+    Das ist der erste Avatar der Szene. Die Stimme wird danach wie bisher
+    ueber den Namen in der Stimmenliste des Kanals gesucht - heisst dort
+    ein Eintrag "Mara", bekommt jede Szene mit Mara vorn diese Stimme.
+
+    Steht in der Szene kein Avatar, bleibt es beim Erzaehler, also der
+    Kanalstimme. Das gilt auch fuer Szenen ohne Avatare im Bild: ob jemand
+    zu sehen ist, entscheidet der Schalter, wer redet diese Liste. Eine
+    Figur kann also ueber einem Standbild weitersprechen.
+
+    Heute bekommt eine Szene genau eine Figurenstimme. Fuer einen
+    Wortwechsel mit zwei verschiedenen Stimmen in DERSELBEN Szene muesste
+    der Text sagen, wer welchen Satz hat - das kann er noch nicht.
+    """
+    wer = s.get("wer")
+    if isinstance(wer, list) and [x for x in wer if str(x or "").strip()]:
+        try:
+            import darsteller
+            leute = darsteller.besetzung(kanal, [str(x) for x in wer])
+            if leute:
+                return leute[0]["name"]
+        except Exception as e:
+            print("[Stimme] Avatar nicht gefunden: %s" % str(e)[:100])
+    # Altes Feld und Geschichten-Modus weiter bedienen
+    return ((s.get("figur") or "").strip()
+            or (kanal.get("geschichte_figur") or "").strip())
+
 def _stimme_fuer(kanal, figur):
     """Sucht die Stimme einer Figur in der Stimmenliste des Kanals."""
     name = (figur or "").strip().lower()
@@ -531,7 +560,7 @@ def plan_bauen(kanal, ordner):
             k2 = dict(kanal)
             if s.get("stimmung") and s["stimmung"] in szenen.ENERGIE:
                 k2["stimme_energie"] = szenen.ENERGIE[s["stimmung"]]
-            figur_name = (s.get("figur") or "").strip() or (kanal.get("geschichte_figur") or "").strip()
+            figur_name = _r7_sprecher(kanal, s)
             eigene = _stimme_fuer(kanal, figur_name)
 
             def _sprich(wort, stimme, wohin):

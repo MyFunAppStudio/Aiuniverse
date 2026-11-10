@@ -164,6 +164,12 @@ details.mehr[open]>summary{color:#24D3E8}
 .verl img,.verl video{width:46px;height:62px;object-fit:cover;border-radius:6px;
   background:#0A0C12;cursor:pointer;border:1px solid #2A3147;display:block}
 .verl img:hover,.verl video:hover{border-color:#24D3E8}
+
+/* Wer in der Szene im Bild steht */
+.wer{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:9px}
+.wer .wn{padding:7px 13px;border-radius:999px;border:1px solid #2A3147;
+  background:#171B26;color:#8593AC;font-size:12.5px;font-weight:600;cursor:pointer}
+.wer .wn.an{border-color:#24D3E8;color:#ECF1F8;background:rgba(36,211,232,0.12)}
 </style>
 </head>
 <body>
@@ -1206,6 +1212,49 @@ function clipLaeuftHier(id){
 
 /* Der Schalter mit drei Stellungen. Er ersetzt Figur, Pose, Platz,
    Groesse und die alte KI-Animation. */
+/* Wer in dieser Szene im Bild steht. Leere Liste heisst: die ganze
+   Besetzung - deshalb schreibt die Oberflaeche beim ersten Antippen
+   die volle Liste und nimmt dann einen heraus. */
+function werZeile(s){
+  if(s.modus!=="avatare")return "";
+  if(!S.ds){ladeDarsteller();return ""}
+  var dabei=(S.ds.darsteller||[]).filter(function(f){return f.dabei});
+  if(!dabei.length)
+    return '<div class="szh" style="margin-top:8px;color:#FFB454">Kein Avatar angehakt — '
+     +'im Reiter <b>Avatare</b> anhaken, sonst kann für diese Szene kein Clip entstehen.</div>';
+  var wer=(s.wer&&s.wer.length)?s.wer:dabei.map(function(f){return f.id});
+  var o='<div class="wer"><span class="szh" style="flex:0 0 100%">Wer steht im Bild</span>';
+  dabei.forEach(function(f){
+    var drin=wer.indexOf(f.id)>=0;
+    o+='<button class="wn'+(drin?" an":"")+'" '
+     +'onclick="szeneWer(\''+s.id+'\',\''+h(f.id)+'\')">'+h(f.name)+'</button>';
+  });
+  o+='</div>';
+  var n=wer.length, je=Math.max(1,Math.floor(3/Math.max(1,n)));
+  o+='<div class="szh" style="margin-top:5px">'
+   +(n===1?('Allein im Bild — bekommt bis zu drei Referenzbilder von sich und bleibt sich '
+            +'dadurch ähnlicher.')
+          :(n+' Figuren — je bis zu '+je+' Referenzbild'+(je>1?'er':'')+'. '
+            +'Weniger Figuren heißt ähnlichere Gesichter.'))
+   +' Wer vorn steht, spricht.</div>';
+  return o;
+}
+
+function szeneWer(sid,did){
+  var dabei=((S.ds||{}).darsteller||[]).filter(function(f){return f.dabei})
+              .map(function(f){return f.id});
+  var s=(((S.szenen||{}).szenen)||[]).filter(function(x){return x.id===sid})[0]||{};
+  var wer=(s.wer&&s.wer.length)?s.wer.slice():dabei.slice();
+  var i=wer.indexOf(did);
+  if(i>=0)wer.splice(i,1); else wer.push(did);
+  if(!wer.length)
+    return melde("Mindestens eine Figur. Soll in der Szene niemand zu sehen sein, "
+      +"stell den Schalter auf <b>Nur Bild</b>.");
+  // In der Reihenfolge der Besetzung halten, damit nichts herumspringt
+  wer=dabei.filter(function(x){return wer.indexOf(x)>=0});
+  szeneSetz(sid,"wer",wer);
+}
+
 function schalterZeile(s,d){
   var modi=(d&&d.modi)||[["avatare","Avatare im Bild"],
                          ["bewegt","Nur Bild, bewegt"],
@@ -1392,7 +1441,7 @@ function tSzenen(){
      +versionen(s,"bild")
      +'<textarea placeholder="Gesprochener Text. &quot;…&quot; spricht die Figur. [eckige Klammern sind Regie und werden nicht gesprochen]" onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea>'
      ;
-    o+=schalterZeile(s,d);
+    o+=schalterZeile(s,d)+werZeile(s);
     var mehr='<div class="szz"><span class="szh">Wer spricht</span>'
      +'<select onchange="szeneSetz(\''+s.id+'\',\'spricht\',this.value)">'
      +((d.sprichtarten||[["sprecher","Sprecher aus dem Off"]]).map(function(x){

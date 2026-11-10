@@ -446,15 +446,26 @@ def _stand(kanal):
     return raus
 
 
-def besetzung(kanal):
+def besetzung(kanal, nur=None):
     """Die angehakten Avatare, in der Reihenfolge der Besetzung.
 
-    Je Eintrag: id, name, rolle, bilder (ganze Pfade). Avatare ohne
-    brauchbares Bild fallen weg.
+    Je Eintrag: id, name, bilder (ganze Pfade). Avatare ohne brauchbares
+    Bild fallen weg.
+
+    Mit "nur" (Liste von ids) kommen nur diese zurueck, und zwar in der
+    Reihenfolge, in der sie dort stehen - in einer Szene steht so die
+    sprechende Figur vorn und bekommt das zusaetzliche Referenzbild.
+    Was nicht angehakt ist, wird ignoriert; eine leere oder unbekannte
+    Liste heisst "die ganze Besetzung".
     """
     d = laden(kanal)
+    reihe = list(d["besetzung"])
+    if nur:
+        gewaehlt = [x for x in nur if x in d["besetzung"]]
+        if gewaehlt:
+            reihe = gewaehlt
     raus = []
-    for did in d["besetzung"]:
+    for did in reihe:
         f = _finde(d, did)
         if f is None:
             continue
@@ -483,15 +494,17 @@ def bereit(kanal):
     return True, ""
 
 
-def prompt_vorspann(kanal, hintergrund=True):
+def prompt_vorspann(kanal, hintergrund=True, nur=None):
     """Der Satz, der dem Modell sagt, wer wer ist.
 
     Das Videomodell spricht die Referenzen als @Element1, @Element2 und
     @Image1 an. Ohne diesen Vorspann weiss es nicht, welches Bild welche
     Figur ist, und die Regieanweisung mit den Namen laeuft ins Leere.
+
+    "nur" schraenkt auf die Avatare einer Szene ein.
     """
     teile = []
-    for i, x in enumerate(besetzung(kanal)):
+    for i, x in enumerate(besetzung(kanal, nur)):
         teile.append("@Element%d is %s." % (i + 1, x["name"]))
     if hintergrund:
         teile.append("@Image1 is the background scene they are standing in.")

@@ -58,6 +58,7 @@ S.r3_clip_setzen(K, s1, "c_neu.mp4")       # der alte wandert in den Verlauf
 S.p90_datei_setzen(K, s1, "alt1.png")      # macht den Clip veraltet
 S.p90_datei_setzen(K, s1, "alt2.png")
 S.aendern(K, s2, "modus", "still")
+S.aendern(K, s1, "wer", ["d1"])        # Mara allein in der ersten Szene
 
 # ---------- Abspann ----------
 for n, bez in (("ab_folgen.png", "Folgen & Liken"),
