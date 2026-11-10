@@ -867,8 +867,24 @@ def _p52_zeit(s):
     return "%d:%02d:%05.2f" % (st, m, s)
 
 
+def _abspann_ton(quelle, ziel, dauer):
+    """Holt den Ton aus der Abspanndatei. Hat sie keinen, wird es still.
+
+    Der Abspann klingt so, wie du ihn gemacht hast. Die Kanalmusik endet
+    vorher, mit der letzten Szene - sonst laege sie ueber deinem eigenen
+    Ton und beide wuerden sich in die Quere kommen.
+    """
+    r = _lauf(["ffmpeg", "-y", "-loglevel", "error", "-i", str(quelle),
+               "-vn", "-t", "%.3f" % dauer,
+               "-af", "apad=whole_dur=%.3f" % dauer,
+               "-ac", "2", "-ar", "48000", "-c:a", "pcm_s16le", str(ziel)])
+    if r.returncode == 0 and os.path.exists(str(ziel)) and _dauer(ziel) > 0.05:
+        return True
+    _stille(ziel, dauer)
+    return False
+
 def _p52_abspann(kanal, arbeit, b, h, fps):
-    """Gibt (Pfad, Dauer) des Abspanns zurueck, oder (None, 0) wenn keiner.
+    """Gibt (Pfad, Dauer, Quelldatei) zurueck, oder (None, 0, None).
 
     Der Abspann kommt ausschliesslich aus der Abspann-Bibliothek: entweder
     ein fertiges Video, dann gilt seine eigene Laenge, oder ein Standbild,
@@ -881,12 +897,12 @@ def _p52_abspann(kanal, arbeit, b, h, fps):
         eigen, dauer = _ab.naechster(kanal)
     except Exception as e:
         print("[Szenen] Abspann-Bibliothek ging nicht: %s" % str(e)[:120])
-        return None, 0.0
+        return None, 0.0, None
     if not eigen or not os.path.exists(eigen):
-        return None, 0.0
+        return None, 0.0, None
     dauer = float(dauer or 0)
     if dauer <= 0:
-        return None, 0.0
+        return None, 0.0, None
 
     ziel = Path(arbeit) / "abspann.mp4"
     if eigen.lower().endswith((".mp4", ".mov", ".m4v", ".webm", ".mkv")):
@@ -898,10 +914,10 @@ def _p52_abspann(kanal, arbeit, b, h, fps):
     if ok and ziel.exists():
         print("[Szenen] Abspann (%s) %s, %.1f s"
               % (art, os.path.basename(eigen), dauer))
-        return str(ziel), dauer
+        return str(ziel), dauer, eigen
     print("[Szenen] Abspanndatei %s liess sich nicht verarbeiten"
           % os.path.basename(eigen))
-    return None, 0.0
+    return None, 0.0, None
 
 
 def baue(kanal, ziel_pfad, ordner=None):
@@ -952,7 +968,7 @@ def baue(kanal, ziel_pfad, ordner=None):
     if len(teile) > len(plan):
         print("[Szenen] %d Einstellungen aus %d Szenen (Tempo: %s)"
               % (len(teile), len(plan), (kanal.get("tempo") or "normal")))
-    abspann, ab_dauer = _p52_abspann(kanal, arbeit, b, h, fps)
+    abspann, ab_dauer, ab_quelle = _p52_abspann(kanal, arbeit, b, h, fps)
     if abspann:
         teile.append(Path(abspann))
     stumm = arbeit / "ohne_ton.mp4"
@@ -972,16 +988,20 @@ def baue(kanal, ziel_pfad, ordner=None):
         if not w.exists() or _dauer(w) <= 0:
             _stille(w, s["dauer"])
         toene.append(w)
+    musik_bis = gesamt          # Die Musik endet mit der letzten Szene
     if abspann:
         w = arbeit / "a_abspann.wav"
-        _stille(w, ab_dauer)
+        hat_ton = _abspann_ton(ab_quelle, w, ab_dauer)
+        print("[Szenen] Abspann %s eigenen Ton"
+              % ("hat" if hat_ton else "hat keinen"))
         toene.append(w)
         gesamt += ab_dauer
     stimme = arbeit / "stimme.wav"
     if not _zusammen(toene, arbeit / "a.txt", stimme):
         print("[Szenen] Tonspur fehlgeschlagen")
         return None
-    return _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h, musik, schnittzeiten)
+    return _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt,
+                   b, h, musik, schnittzeiten, musik_bis=musik_bis)
 
 
 def _musikdatei(kanal, daten, gesamt, arbeit, musik):
@@ -1068,7 +1088,11 @@ def _einblendung_filter(kanal, gesamt, b, h, quelle):
     return ";".join(teile), ["-i", str(pfad)]
 
 
-def _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h, musik, schnitte=None):
+def _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h,
+            musik, schnitte=None, musik_bis=None):
+    """musik_bis: wann die Kanalmusik endet. Ohne Angabe laeuft sie bis zum
+    Schluss; mit Abspann endet sie mit der letzten Szene, damit der Abspann
+    mit seinem eigenen Ton dasteht."""
     ziel_pfad = Path(ziel_pfad)
     ziel_pfad.parent.mkdir(parents=True, exist_ok=True)
 
@@ -1083,8 +1107,9 @@ def _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h, 
     ziel_lufs = zahl("lautheit", -14.0, -30.0, -6.0)
     ein = zahl("musik_ein", 1.0, 0.0, 10.0)
     aus = zahl("musik_aus", 1.5, 0.0, 10.0)
-    ein = min(ein, max(0.0, gesamt / 3.0))
-    aus = min(aus, max(0.0, gesamt / 3.0))
+    mus_ende = gesamt if musik_bis is None else max(0.5, min(gesamt, float(musik_bis)))
+    ein = min(ein, max(0.0, mus_ende / 3.0))
+    aus = min(aus, max(0.0, mus_ende / 3.0))
     anheben = kanal.get("musik_anheben", True) is not False
 
     lied = _musikdatei(kanal, daten, gesamt, arbeit, musik)
@@ -1101,9 +1126,9 @@ def _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h, 
         if ein > 0.05:
             blenden += ",afade=t=in:st=0:d=%.2f" % ein
         if aus > 0.05:
-            blenden += ",afade=t=out:st=%.3f:d=%.2f" % (max(0.0, gesamt - aus), aus)
+            blenden += ",afade=t=out:st=%.3f:d=%.2f" % (max(0.0, mus_ende - aus), aus)
         stufen.append("[%d:a]atrim=0:%.3f,asetpts=N/SR/TB,volume='%s':eval=frame%s[mus]"
-                      % (nr, gesamt, _musik_ausdruck(plan, leise, laut, anheben), blenden))
+                      % (nr, mus_ende, _musik_ausdruck(plan, leise, laut, anheben), blenden))
         quellen.append("[mus]")
         nr += 1
     if knack and knack_pegel > 0.01:
