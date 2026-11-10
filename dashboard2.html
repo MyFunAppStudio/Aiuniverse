@@ -1834,7 +1834,7 @@ function tAbspannBib(){
      +'onchange="abSetz({aktion:\'name\',id:\''+h(e.id)+'\',wert:this.value})">'
      +'<div class="szh" style="margin-top:5px">'
      +(e.art==="video"
-        ? ('Video · '+h(String(e.sekunden))+' Sek. — so lang, wie du es gemacht hast')
+        ? ('Video · '+h(String(e.sekunden))+' Sek.')
         : ('Standbild · <input type="text" style="width:50px" value="'+h(String(e.sekunden))+'" '
            +'onchange="abSetz({aktion:\'sekunden\',id:\''+h(e.id)+'\',wert:this.value})"> Sek.'))
      +'</div></div>'
