@@ -2163,11 +2163,16 @@ def slot_bereit(key, slot, *teile):
 # wie ein Historienbild, so wie er es ausgesucht hat. Aendern kann er
 # ihn im Feld jederzeit; der Knopf setzt immer genau diesen ein.
 
-G7_ANKER = ("oil painting in the style of 19th century history painting, "
-            "visible brush strokes, warm earth tones, deep chiaroscuro light, "
-            "period-accurate clothing, ships and architecture, "
-            "wide cinematic composition, muted sky, "
-            "no text, no letters, no numbers, no modern objects")
+# Stefans Avatare sind fotografierte Menschen. Ein gemalter
+# Hintergrund dahinter sieht zwangslaeufig falsch aus, egal wie gut
+# das Gemaelde ist. Der Anker muss also fotorealistisch sein - und er
+# gilt fuer das HINTERGRUNDBILD, in das Kling die Avatare setzt.
+# Darum: Vordergrund frei lassen, damit die Figuren Platz haben.
+G7_ANKER = ("photorealistic cinematic film still, shot on 35mm, natural daylight, "
+            "shallow depth of field, wide establishing shot, "
+            "open foreground with room for people to stand, "
+            "detailed landscape, soft haze in the distance, "
+            "no text, no letters, no numbers")
 
 
 def stil_vorschlag(key):
