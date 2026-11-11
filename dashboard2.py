@@ -2107,3 +2107,48 @@ def r5_clip_stand(k):
     except Exception as f:
         print("[Referenz] Modell nicht lesbar:", f)
     return raus
+
+
+# ---------- Nachtrag n2: Schluessel richtig suchen ----------
+#
+# slot_bereit() hat nur zwei Stellen gekannt: den Schluessel am
+# Eintrag selbst und die Serverdatei (schluessel("FAL") liest die
+# Umgebung). Den haeufigsten Fall kannte es nicht: ein Eintrag ohne
+# eigenen Schluessel, dessen Anbieter schon bei einem anderen Eintrag
+# desselben Kanals hinterlegt ist - im Dashboard steht dann
+# "Schluessel mitbenutzt". Genau so laeuft Kling Referenz ueber den
+# fal.ai-Schluessel von Flux Pro. Der Bau hat es gekonnt
+# (schluessel.fuer), die Kopfzeile nicht - und meldete ein Modell als
+# fehlend, das laengst da war.
+
+def slot_bereit(key, slot, *teile):
+    try:
+        kanal = einstellungen.laden().get(key) or {}
+        eintraege = (kanal.get("apis") or {}).get(slot) or []
+    except Exception:
+        return False, ""
+    eintraege = [e for e in eintraege
+                 if isinstance(e, dict) and (e.get("url") or "").strip()]
+    if not eintraege:
+        return False, ""
+    nimm = None
+    for e in eintraege:
+        if e.get("aktiv"):
+            nimm = e
+            break
+    if nimm is None:
+        nimm = eintraege[0]
+    name = (nimm.get("name") or "").strip()
+
+    if (nimm.get("key") or "").strip():
+        return True, name
+    try:
+        import schluessel as _n2_sm
+        if _n2_sm.fuer(kanal, nimm):
+            return True, name
+    except Exception as e:
+        print("[Dashboard] Schluessel nicht pruefbar:", e)
+    for teil in teile:
+        if schluessel(teil):
+            return True, name
+    return False, ""
