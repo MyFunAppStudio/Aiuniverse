@@ -257,7 +257,16 @@ function melde(t){el("dialog").innerHTML='<div class="dim" onclick="zu()"><div c
 function kanalDaten(){for(var i=0;i<(S.daten.kanaele||[]).length;i++){if(S.daten.kanaele[i].key===S.kanal)return S.daten.kanaele[i]}return null}
 
 function laden(){
-  return api("/api/stand").then(function(d){
+  /* Der erste Aufruf ging ohne ?k= raus. Der Server kennt dann keinen
+     Kanal und meldet jedes Modell als fehlend. Das Ergebnis landete in
+     S.daten.apis, und zeigeKopf() hat sofort danach die Zeile "fehlt
+     noch" daraus gebaut - mit Zahlen, die zu keinem Kanal gehoerten.
+     Der zweite Aufruf weiter unten hat es zwar richtiggestellt, aber
+     nur wenn er auch durchkam. Jetzt geht schon der erste Aufruf mit
+     dem Kanal raus, und die Zeile wird nur gezeichnet, wenn die Daten
+     nachweislich zu diesem Kanal gehoeren (S.apis_von). */
+  var merk=S.kanal||kanalGemerkt()||"";
+  return api("/api/stand"+(merk?"?k="+encodeURIComponent(merk):"")).then(function(d){
     S.daten=d;
     var ks=d.kanaele||[];
     if(!S.kanal||!kanalDaten()){
@@ -265,6 +274,7 @@ function laden(){
       for(var i=0;i<ks.length;i++){if(ks[i].key===gm)da=true}
       S.kanal=da?gm:(ks.length?ks[0].key:null);
     }
+    S.apis_von=merk;
     zeigeKopf();
     if(!S.kanal)return;
     return Promise.all([
@@ -272,7 +282,7 @@ function laden(){
       api("/api/themen?k="+S.kanal).then(function(x){S.themen=x}),
       api("/api/videos?k="+S.kanal).then(function(x){S.videos=x}),
       api("/api/preis?k="+S.kanal).then(function(x){S.preis=x}),
-      api("/api/stand?k="+S.kanal).then(function(x){S.daten.apis=x.apis})
+      api("/api/stand?k="+S.kanal).then(function(x){S.daten.apis=x.apis;S.apis_von=S.kanal})
     ]).then(function(){zeigeKopf();zeichne()});
   });
 }
@@ -284,18 +294,18 @@ function zeigeKopf(){
   el("pt").className="punkt"+(k?"":" aus");
   var a=S.daten.apis||{};
   var g=S.guthaben&&S.guthaben.ok?(Number(S.guthaben.betrag).toFixed(2)+" "+(S.guthaben.waehrung==="USD"?"$":S.guthaben.waehrung)):"—";
-  /* Die Leiste zeigte vier von sechs Modellen, davon eines, das es gar
-     nicht als Modell gibt (das fal.ai-Guthaben). Jetzt steht hier
-     nichts, solange alles eingerichtet ist, und eine Zeile, sobald
-     etwas fehlt, das zum Bauen gebraucht wird. */
-  var noetig=[["text","Drehbuch"],["bilder","Bilder"],["stimme","Stimme"],
-              ["ref","Clips mit Avataren"],["video","Bild bewegen"]];
-  var fehlt=noetig.filter(function(x){return !a[x[0]]}).map(function(x){return x[1]});
-  el("stand").innerHTML=fehlt.length
-    ? '<button class="fehlt" onclick="zuSlot(\''+(noetig.filter(function(x){return !a[x[0]]})[0][0])+'\')">'
-      +'<b>'+(fehlt.length>1?fehlt.length+" Modelle fehlen":"Ein Modell fehlt")+' noch:</b> '+h(fehlt.join(", "))
-      +' — antippen zum Eintragen</button>'
-    : "";
+  /* Hier stand eine Zeile "Ein Modell fehlt noch". Sie wurde aus
+     S.daten.apis gebaut, und dieses Feld kann aus einem anderen Kanal
+     stammen als dem, der gerade oben steht: der erste /api/stand-Aufruf
+     geht ohne Kanal raus, und bei schnellem Umschalten kann die
+     Antwort fuer den vorigen Kanal nach der neuen eintreffen. Dann
+     meldet die Zeile ein Modell als fehlend, das laengst eingetragen
+     ist, und niemand kann es nachvollziehen.
+
+     Die Karte "Modelle" unter KI & Technik zeigt dasselbe, aber immer
+     fuer den richtigen Kanal, mit Namen und antippbar. Eine Anzeige,
+     die falsch sein kann, ist schlechter als keine. */
+  el("stand").innerHTML="";
 }
 function kurz(n,fallback){n=(n||"").trim();return n?n:fallback}
 
