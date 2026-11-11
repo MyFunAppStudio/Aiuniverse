@@ -606,3 +606,14 @@ def lade_prompt(kanal):
         except Exception:
             pass
     return text
+
+
+# ---------- Nachtrag t2: keine Serienteile mehr ----------
+#
+# Die Einstellung "Serie: Teile" ist aus dem Dashboard raus. In den
+# Kanaldateien steht serie_teile aber noch drin, und solange der
+# Generator das liest, schreibt Claude weiter zwei Folgen und der
+# Text landet geteilt im Feld. Ein Video ist ein Video.
+
+def _p36_teile(kanal):
+    return 1

@@ -543,7 +543,9 @@ function setz(feld,wert,zahlFeld){
 function tStartKopf(){
   /* Nur noch, was du vor jedem einzelnen Video anfasst. Der Kanalname
      steht bei den Kanaelen, Masterprompt und Regeln in den
-     Einstellungen. */
+     Einstellungen. Baust du selbst, gibt es kein Thema zu vergeben -
+     dann schreibt ja niemand etwas daraus. */
+  if(modusJetzt()==="szenen")return '';
   return '<div class="karte">'
    +reihe("Thema von Hand",'<input type="text" id="thema" placeholder="leer = nächstes aus der Liste" style="width:160px;text-align:left">',"leer lassen nimmt das nächste Thema")
    +'</div>';
@@ -2155,7 +2157,6 @@ function tGeschichte(){
    +'<input type="text" id="gsthema" class="breit" placeholder="Thema — leer nimmt das nächste aus der Liste" value="'
    +h(S.einst.geschichte_thema||"")+'" onchange="setz(\'geschichte_thema\',this.value)">'
    +'<button class="knopf or" id="gsknopf" onclick="textSchreiben()">Schreiben</button></div>'
-   +serieLeiste()
    +'<textarea id="gstext" style="min-height:190px" placeholder="Hier den ganzen Text einfügen.&#10;&#10;(Satz oder Absatz in Klammern wird ein Bild.)&#10;(Die nächste Klammer das nächste.)"'
    +' onchange="setz(\'geschichte_text\',this.value)">'+h(S.einst.geschichte_text||"")+'</textarea>'
    +'<div class="hinw" style="margin-top:8px">'
@@ -2304,18 +2305,11 @@ function textSchreiben(){
     if(!r||!r.ok)return melde((r&&r.fehler)||"Die Text-KI hat nicht geantwortet");
     var d={geschichte_teil:0};
     if(r.thema&&r.thema_aus_liste)d.geschichte_thema=r.thema;
-    var teile=serieTeile(r.text);
-    if(teile.length>1){
-      d.geschichte_serie=r.text;
-      d.geschichte_text=teile[0];
-    } else {
-      d.geschichte_serie="";
-      d.geschichte_text=r.text;
-    }
+    d.geschichte_serie="";
+    d.geschichte_text=r.text;
     var f=el("gstext"); if(f)f.value=d.geschichte_text;
     setzViele(d).then(function(){
-      if(teile.length>1)melde((r.titel?r.titel+" · ":"")+teile.length+" Teile gespeichert. Teil 1 steht im Feld.");
-      else melde((r.titel?r.titel+" · ":"")+r.szenen+" Szenen geschrieben. Lies drüber, dann erzeugen.");
+      melde((r.titel?r.titel+" · ":"")+r.szenen+" Szenen geschrieben. Lies drüber, dann erzeugen.");
     });
   }).catch(function(){
     b.disabled=false; b.textContent="Schreiben";
@@ -2324,34 +2318,6 @@ function textSchreiben(){
 }
 
 
-/* ---------- Serien ---------- */
-function serieTeile(text){
-  var roh=(text||"").split(/^[ \t]*#{3,}[ \t]*$/m), raus=[];
-  for(var i=0;i<roh.length;i++){var s=roh[i].trim(); if(s)raus.push(s)}
-  return raus;
-}
-function serieLeiste(){
-  var n=Number(S.einst.serie_teile||1);
-  var teile=serieTeile(S.einst.geschichte_serie||"");
-  if(n<2 && teile.length<2) return '';
-  if(!teile.length) return '<div class="hinw" style="padding-top:0">Serie mit '+n+' Teilen eingestellt. '
-    +'Drück auf Schreiben, dann wird der ganze Fall am Stück geschrieben und hier in Teile zerlegt.</div>';
-  var jetzt=Number(S.einst.geschichte_teil||0);
-  var o='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">';
-  for(var i=0;i<teile.length;i++){
-    o+='<button class="knopf'+(i===jetzt?' or':'')+'" style="flex:1 1 auto;min-width:74px" '
-      +'onclick="teilWaehlen('+i+')">Teil '+(i+1)+'</button>';
-  }
-  o+='</div><div class="hinw" style="padding-top:0">'+teile.length+' Teile. '
-   +'Der gewählte steht unten im Feld — erzeugen, dann den nächsten wählen.</div>';
-  return o;
-}
-function teilWaehlen(i){
-  var teile=serieTeile(S.einst.geschichte_serie||"");
-  if(!teile[i])return;
-  var f=el("gstext"); if(f)f.value=teile[i];
-  setzViele({geschichte_teil:i, geschichte_text:teile[i]});
-}
 
 /* ---------- Start ---------- */
 try{var _t=(location.search.match(/[?&]tab=([a-z]+)/)||[])[1];if(_t)S.tab=_t}catch(e){}
