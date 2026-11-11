@@ -852,3 +852,87 @@ def fuer_anzeige(kanal):
     for s in d["szenen"]:
         s["bild"] = (roh.get(s["id"]) or {}).get("bild", "")
     return d
+
+
+# ---------- Nachtrag r13: Klammern in die eigenen Felder ----------
+#
+# Von Claude geschriebene Szenen haben alles in einem Satz stehen:
+# gesprochener Text, [BILD: ...] und [BEWEGUNG: ...]. Seit es drei
+# Felder gibt, gehoert jedes an seinen Platz - sonst steht im
+# Sprechtext Englisch mitten im Satz, und Bildbeschreibung und
+# Animationsanweisung bleiben leer.
+#
+# Aufgeteilt wird nur, was noch nicht aufgeteilt ist: Felder, in denen
+# schon etwas steht, bleiben unberuehrt.
+
+import re as _r13_re
+
+R13_GANZ = _r13_re.compile(r"\[([^\[\]]{1,400})\]", _r13_re.S)
+R13_OFFEN = _r13_re.compile(r"\[([^\[\]]{1,400})$", _r13_re.S)
+R13_BILD = _r13_re.compile(r"^BILD\s*[:\-]\s*", _r13_re.I)
+R13_BEWEG = _r13_re.compile(r"^BEWEGUNG\s*[:\-]\s*", _r13_re.I)
+
+
+def r13_trennen(satz):
+    """(gesprochen, bild, bewegung) aus einem Satz mit Klammern."""
+    ganz = satz or ""
+    roh = [" ".join(x.split()) for x in R13_GANZ.findall(ganz) if x and x.strip()]
+    rest = R13_GANZ.sub(" ", ganz)
+    offen = R13_OFFEN.search(rest)
+    if offen:
+        if offen.group(1).strip():
+            roh.append(" ".join(offen.group(1).split()))
+        rest = rest[:offen.start()]
+    rest = " ".join(rest.replace("[", " ").replace("]", " ").split())
+
+    bild, beweg, ohne = [], [], []
+    for x in roh:
+        if R13_BILD.match(x):
+            w = R13_BILD.sub("", x).strip()
+            if w:
+                bild.append(w)
+        elif R13_BEWEG.match(x):
+            w = R13_BEWEG.sub("", x).strip()
+            if w:
+                beweg.append(w)
+        else:
+            ohne.append(x)
+    return (rest,
+            ", ".join(bild) or ", ".join(ohne),
+            ", ".join(beweg) or ", ".join(ohne))
+
+
+def r13_aufteilen(kanal):
+    """Fuellt leere Felder aus den Klammern. Gibt die Anzahl zurueck."""
+    d = _r13_laden_alt(kanal)
+    n = 0
+    for s in d["szenen"]:
+        satz = s.get("text") or ""
+        if "[" not in satz:
+            continue
+        rest, bild, beweg = r13_trennen(satz)
+        if not rest.strip():
+            continue
+        s["text"] = rest
+        if bild and not (s.get("bild") or "").strip():
+            s["bild"] = bild[:600]
+        if beweg and not (s.get("regie") or "").strip():
+            s["regie"] = beweg[:600]
+        n += 1
+    if n:
+        speichern(kanal, d)
+    return n
+
+
+_r13_laden_alt = laden
+
+
+def laden(kanal):
+    d = _r13_laden_alt(kanal)
+    if any("[" in (s.get("text") or "") for s in d["szenen"]):
+        try:
+            if r13_aufteilen(kanal):
+                d = _r13_laden_alt(kanal)
+        except Exception as e:
+            print("[Szenen] Klammern nicht aufteilbar:", e)
+    return d
