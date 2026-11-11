@@ -559,7 +559,7 @@ function tMusik(){
   var d=S.szenen;
   if(!d){ladeSzenen();return '<div class="karte p"><div class="leer">lade…</div></div>'}
   var o='';
-  o+='<div class="karte p"><h2 class="kt">Musik</h2>'
+  o+='<div class="karte p">'
    +reihe("Musik an",schalter("musik_an",!!S.einst.musik_an));
   if(!S.einst.musik_an)return o+'<div class="hinw">Das Video bekommt keine '
    +'Hintergrundmusik. Der Abspann behält seinen eigenen Ton.</div></div>';
@@ -909,7 +909,7 @@ function tTexte(){
      ein bis zwei Woerter, eine Groesse, weiss, dicker schwarzer Rand,
      gemischte Schreibweise, mittig im sicheren Streifen. */
   var an=S.einst.untertitel_an!==false;
-  var o='<div class="karte p"><h2 class="kt">Untertitel</h2>'
+  var o='<div class="karte p">'
    +'<div class="hinw" style="padding:0;margin-bottom:10px">'
    +'Ein bis zwei Wörter, groß, weiß mit dickem schwarzem Rand, '
    +'gemischte Schreibweise. Nichts wird grau, nichts springt in der Größe. '
