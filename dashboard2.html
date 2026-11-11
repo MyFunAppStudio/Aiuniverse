@@ -15,8 +15,9 @@ h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
 .punkt.aus{background:#454F6B;box-shadow:none}
 .kname{font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .unter{font-size:11px;color:#76849E;margin-top:1px}
-.knopf{background:#191D29;border:1px solid #272E42;color:#9EA9BF;border-radius:9px;padding:8px 11px;font:inherit;font-size:13px;cursor:pointer}
-.knopf:active{background:#212738}
+.knopf{background:#1E2434;border:1px solid #39435C;color:#D2DAE8;border-radius:10px;padding:11px 14px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;min-height:44px}
+.knopf:active{background:#2A3245;border-color:#4C5873}
+.knopf:disabled{opacity:.45}
 .or{background:#24D3E8;border:none;color:#04161B;font-weight:700;font-family:"Space Grotesk",sans-serif;letter-spacing:.03em}
 .rot{color:#FF7A7A}
 .stand:not(:empty){margin-top:12px}
@@ -92,9 +93,10 @@ textarea{width:100%;text-align:left;resize:vertical;min-height:92px;line-height:
 .log{font:11px/1.6 ui-monospace,monospace;color:#919DB4;white-space:pre-wrap;word-break:break-word;max-height:170px;overflow:auto}
 .hinw{font-size:10.5px;color:#66748E;padding:4px 0 10px}
 .kind{padding-left:16px}
-.szn{background:#12151E;border:1px solid #212738;border-radius:12px;padding:10px;margin-bottom:9px}
+.szn{background:#12151E;border:2px solid #2E3850;border-radius:14px;padding:12px;margin-bottom:18px;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.szn+.szn{margin-top:0}
 .szn .kopf{display:flex;align-items:center;gap:8px;margin-bottom:8px;position:static;top:auto;z-index:auto;padding:0;background:none;border-bottom:0}
-.szn .nr{font-size:10px;color:#6C7A94;letter-spacing:.08em;flex:1}
+.szn .nr{font-size:11px;color:#9FB0C8;letter-spacing:.08em;flex:1;font-weight:600}
 .szn .bildchen{width:100%;height:132px;object-fit:cover;border-radius:9px;background:#0A0C12;display:block}
 .szn textarea{width:100%;min-height:58px;margin-top:8px}
 .szz{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
@@ -1668,7 +1670,7 @@ function tSzenen(){
     if(mehr){
       var mk="mehr_"+s.id;
       o+='<details class="mehr" data-falt="'+mk+'" ontoggle="faltMerk(this)"'
-       +(faltOffen(mk,false)?' open':'')+'><summary>mehr einstellen</summary>'
+       +(faltOffen(mk,true)?' open':'')+'><summary>mehr einstellen</summary>'
        +mehr+'</details>';
     }
     o+='</div>';
