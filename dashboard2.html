@@ -1457,10 +1457,9 @@ function clipZeile(s){
   var st=clipStand(s.id)||{}, clip=st.clip||s.clip||"", stand=st.stand||s.clip_stand||"";
   var txt=st.text||s.clip_text||"", hier=clipLaeuftHier(s.id);
   var laeuft=(R6.stand||{}).laeuft;
-  var o='<div class="szz" style="display:block"><span class="szh">Was passiert in der Szene</span>'
-   +'<textarea class="breit" rows="2" style="margin-top:4px"'
-   +' placeholder="z.B. Mara zeigt nach oben, Jonas folgt ihrem Blick. Kamera steht fest."'
-   +' onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>';
+  /* Die Regie steht oben im Feld "Animationsanweisung". Frueher stand
+     sie hier ein zweites Mal - zwei Felder fuer denselben Wert. */
+  var o='';
   if(s.clip_veraltet)
     o+='<div class="szz" style="display:block;color:#FFB454"><b>Der Clip ist noch vom alten Bild.</b>'
      +'<div class="szh">Du hast das Bild danach ausgetauscht. Erzeuge den Clip neu, '
