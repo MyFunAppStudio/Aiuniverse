@@ -452,7 +452,7 @@ function setz(feld,wert,zahlFeld){
   if(feld==="sprachen_eins"){d.sprachen=[wert];S.einst.sprachen=[wert];}
   else{d[feld]=wert;S.einst[feld]=wert;}
   api("/api/kanal?k="+S.kanal,d).then(function(){
-    if(["laenge","bilder_pro_minute","stimme_an","modus","vorlage","format"].indexOf(feld)>=0){
+    if(["laenge","stimme_an","modus","vorlage","format"].indexOf(feld)>=0){
       api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})}
     else zeichne();
   });
@@ -562,7 +562,8 @@ function falte(titel,inhalt,offen){
 
 function tEinst(){
   var o=falte("Überblick",standKarte(),false)
-   +falte("Länge & Abspann",tAblauf()+tAbspannBib(),false)
+   +falte("Abspann",tAbspannBib(),false)
+   +falte("Länge & Tempo",tAblauf(),false)
    +falte("Video & Ton",tVideo(),false)
    +falte("Musik",tMusik(),false)
    +falte("Untertitel & Einblendung",tTexte(),false)
@@ -629,10 +630,10 @@ function tVideo(){
   var o=tArten();
   o+='<div class="karte p"><h2 class="kt">Format</h2>'
    +knoepfe("format",S.einst.format||"9:16",[["9:16","9:16 TikTok"],["4:5","4:5 Insta"],["1:1","1:1"],["16:9","16:9 YouTube"]])+'</div>';
-  var bpm=S.einst.bilder_pro_minute||24, sek=S.einst.laenge||20;
+  /* "Bilder pro Minute" und "Serie: Teile" sind raus: die Zahl der Szenen
+     ergibt sich aus Laenge und Satzlaenge, und Serien schneidet das
+     Drehbuch selbst. */
   o+='<div class="karte">'
-   +reihe("Bilder pro Minute",zahl("bilder_pro_minute",bpm,1),"bei "+sek+" Sek sind das "+Math.max(3,Math.round(sek/60*bpm))+" Bilder")
-   +reihe("Serie: Teile",knoepfe("serie_teile",Number(S.einst.serie_teile||1),[[1,"aus"],[2,"2"],[3,"3"],[4,"4"],[5,"5"]]),"ein Fall, mehrere Videos — je Teil mindestens 70 Sek")
    +reihe("Bewegung im Bild",schalter("bewegung_an",S.einst.bewegung_an!==false),"aus = Standbilder stehen still, nur echte Clips bewegen sich")
    +reihe("Stärke",knoepfe("bewegung_staerke",S.einst.bewegung_staerke||"sanft",[["sanft","sanft"],["mittel","mittel"],["stark","stark"]]),"sanft reicht fast immer")
    +'</div>';
@@ -938,7 +939,6 @@ function standKarte(){
   var vn=(S.vorlagen[e.vorlage]||{}).name||e.vorlage||"—";
   var z=[["Vorlage",h(vn)],["Wie",modus],["Format",h(e.format||"9:16")],
          ["Sprache",h(sprachName((e.sprachen||["de"])[0]))],["Länge",(e.laenge||20)+" Sek."],
-         ["Bilder pro Minute",String(e.bilder_pro_minute||24)],
          ["Automatik",jn(e.automatik_an)],["Stimme",jn(e.stimme_an!==false)],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
          ["Geräusche",jn(e.ambience_an)],["Telegram",jn(e.telegram_token&&e.telegram_chat)],
@@ -1847,13 +1847,10 @@ function tAbspannBib(){
   li.forEach(function(e){
     var dran=(wahl===e.id);
     o+='<div class="szz" style="display:flex;align-items:center;gap:8px;margin-top:10px">'
-     +(e.art==="video"
-        ? '<video src="/abspann/'+encodeURIComponent(e.datei)+'?k='+S.kanal+'" muted preload="metadata" '
-          +'style="width:46px;height:62px;object-fit:cover;border-radius:6px;background:#0A0C12;flex:0 0 46px'
-          +(dran?';outline:2px solid #24D3E8;outline-offset:-2px':'')+'"></video>'
-        : '<img alt="" src="/abspann/'+encodeURIComponent(e.datei)+'?k='+S.kanal+'" '
-          +'style="width:46px;height:62px;object-fit:cover;border-radius:6px;background:#0A0C12;flex:0 0 46px'
-          +(dran?';outline:2px solid #24D3E8;outline-offset:-2px':'')+'">')
+     /* Immer nur ein Standbild laden - nie das ganze Video. */
+     +'<img alt="" loading="lazy" src="/abspann_bild/'+encodeURIComponent(e.datei)+'?k='+S.kanal+'" '
+      +'style="width:46px;height:62px;object-fit:cover;border-radius:6px;background:#0A0C12;flex:0 0 46px'
+      +(dran?';outline:2px solid #24D3E8;outline-offset:-2px':'')+'">'
      +'<div style="flex:1;min-width:0">'
      +'<input type="text" class="breit" value="'+h(e.name)+'" '
      +'onchange="abSetz({aktion:\'name\',id:\''+h(e.id)+'\',wert:this.value})">'
@@ -2047,7 +2044,6 @@ var SUCHE=[
  ["Wörter pro Zeile","einst","untertitel woerter zeile umbruch"],
  ["Großbuchstaben","einst","untertitel caps grossschrift"],
  ["Format","einst","9:16 4:5 1:1 16:9 hochkant quer tiktok instagram youtube seitenverhaeltnis"],
- ["Bilder pro Minute","einst","bilder anzahl takt dichte"],
  ["Bewegung im Bild","einst","ken burns zoom schwenk bewegung"],
  ["Stärke","einst","bewegung staerke sanft stark"],
  ["Anteil bewegter Szenen","einst","kling animation ki bewegt prozent anteil video"],

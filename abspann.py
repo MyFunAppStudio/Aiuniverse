@@ -261,3 +261,40 @@ def fuer_anzeige(kanal):
     d["zufall"] = ZUFALL
     d["anzahl"] = len(d["eintraege"])
     return d
+
+# ---------- Vorschaubild ----------
+# Die Liste hat bisher fuer jede Vorschau das ganze Video geladen. Bei drei
+# Abspaennen a 20 MB zieht das Handy 60 MB, nur um drei Bildchen zu zeigen.
+# Darum wird einmal ein Standbild daraus gemacht und nur das ausgeliefert.
+
+VORSCHAU_BREITE = 180
+
+
+def vorschau_pfad(kanal, datei):
+    stamm = os.path.splitext(os.path.basename(datei or ""))[0]
+    return os.path.join(ordner(kanal), ".v_%s.jpg" % stamm)
+
+
+def vorschau(kanal, datei):
+    """Pfad zum Standbild. Wird einmal erzeugt und dann wiederverwendet."""
+    quelle = datei_pfad(kanal, datei)
+    if not os.path.exists(quelle):
+        return None
+    if art(datei) == "bild":
+        return quelle
+    ziel = vorschau_pfad(kanal, datei)
+    if os.path.exists(ziel) and os.path.getmtime(ziel) >= os.path.getmtime(quelle):
+        return ziel
+    r = subprocess.run(
+        ["ffmpeg", "-y", "-v", "error", "-ss", "0.5", "-i", str(quelle),
+         "-frames:v", "1", "-vf", "scale=%d:-2" % VORSCHAU_BREITE,
+         "-q:v", "5", str(ziel)],
+        capture_output=True, text=True)
+    if r.returncode or not os.path.exists(ziel):
+        # Manche Clips sind kuerzer als eine halbe Sekunde
+        r = subprocess.run(
+            ["ffmpeg", "-y", "-v", "error", "-i", str(quelle),
+             "-frames:v", "1", "-vf", "scale=%d:-2" % VORSCHAU_BREITE,
+             "-q:v", "5", str(ziel)],
+            capture_output=True, text=True)
+    return ziel if os.path.exists(ziel) else None

@@ -778,6 +778,11 @@ class Griff(BaseHTTPRequestHandler):
         if w.startswith("/darsteller/"):
             return self.datei(darsteller.datei_pfad(k, unquote(w[12:])))
 
+        if w.startswith("/abspann_bild/"):
+            # Nur das Standbild, nicht das ganze Video
+            p = abspann.vorschau(k, unquote(w[14:]))
+            return self.datei(p) if p else self.sende({"ok": False}, code=404)
+
         if w.startswith("/abspann/"):
             return self.datei(abspann.datei_pfad(k, unquote(w[9:])))
 
