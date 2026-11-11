@@ -1499,6 +1499,16 @@ function clipKarte(){
   var d=R6.stand;
   if(!d){ladeClips();return ''}
   var o='<div class="karte p"><h2 class="kt">Clips</h2>';
+  if(d.ref_url&&d.ref_passt===false)
+    o+='<div class="fehlt" style="margin-bottom:10px;cursor:default">'
+     +'<b>Das ist das falsche Kling-Modell.</b><br>'
+     +'Eingetragen: '+h(d.ref_url)+'<br>'
+     +'Gebraucht wird eines mit <b>reference-to-video</b> in der Adresse. '
+     +'Das andere macht nur Lippenbewegung zu einem fertigen Bild und kennt '
+     +'deine Avatare nicht.</div>';
+  else if(d.ref_url)
+    o+='<div class="hinw" style="padding:0;margin-bottom:9px">Benutzt: <b>'
+     +h(d.ref_name||"ohne Namen")+'</b> · '+h(d.ref_url)+'</div>';
   if(!d.bereit){
     o+='<div class="hinw" style="padding:0;color:#24D3E8">'+h(d.grund||"noch nicht eingerichtet")+'</div>';
     o+='<div class="hinw" style="padding:0;margin-top:9px">Das Referenzmodell trägst du unter '

@@ -2079,3 +2079,31 @@ def stil_vorschlag(key):
     if not text or len(text) > 600:
         return {"ok": True, "text": G5_NOTNAGEL, "woher": "notnagel"}
     return {"ok": True, "text": text, "woher": "ki"}
+
+
+# ---------- Nachtrag g6: zeigen, welches Modell benutzt wird ----------
+#
+# Bei Kling gibt es zwei Modelle mit aehnlichem Namen:
+# .../ai-avatar/v2/standard macht Lippensync zu einem fertigen Bild,
+# .../o3/standard/reference-to-video baut den Clip aus Hintergrund
+# und Avatarbildern. Nur das zweite kann, was wir brauchen. Wer das
+# falsche eintraegt, kommt durch die Pruefung und scheitert erst bei
+# fal.ai. Deshalb steht die Adresse jetzt in der Clips-Karte.
+
+G6_RICHTIG = "reference-to-video"
+
+_g6_stand_alt = r5_clip_stand
+
+
+def r5_clip_stand(k):
+    raus = _g6_stand_alt(k)
+    try:
+        import animation
+        e = animation.ref_slot(_r5_kanal(k)) or {}
+        url = (e.get("url") or "").strip()
+        raus["ref_name"] = (e.get("name") or "").strip()
+        raus["ref_url"] = url
+        raus["ref_passt"] = (G6_RICHTIG in url.lower()) if url else None
+    except Exception as f:
+        print("[Referenz] Modell nicht lesbar:", f)
+    return raus
