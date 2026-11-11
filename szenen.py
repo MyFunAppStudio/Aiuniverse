@@ -897,9 +897,12 @@ def r13_trennen(satz):
                 beweg.append(w)
         else:
             ohne.append(x)
+    # Eine Klammer ohne Namen beschreibt ein Bild, keine Bewegung.
+    # Sie landet deshalb nur in der Bildbeschreibung; die Animation
+    # bleibt leer und wird zur ruhigen Fahrt.
     return (rest,
             ", ".join(bild) or ", ".join(ohne),
-            ", ".join(beweg) or ", ".join(ohne))
+            ", ".join(beweg))
 
 
 def r13_aufteilen(kanal):
@@ -935,4 +938,42 @@ def laden(kanal):
                 d = _r13_laden_alt(kanal)
         except Exception as e:
             print("[Szenen] Klammern nicht aufteilbar:", e)
+    return d
+
+
+# ---------- Nachtrag r14: doppelte Regie aufraeumen ----------
+#
+# r13 hat eine namenlose Klammer zuerst in beide Felder geschrieben.
+# Dann steht in der Animationsanweisung eine Bildbeschreibung, und der
+# Clip bekommt als Bewegungsbefehl "wide shot silhouette of three
+# ships" - also gar keine Bewegung. Wo beide Felder gleich sind, wird
+# die Regie geleert; dann gilt wieder die ruhige Fahrt.
+
+def r14_doppelte_regie_weg(kanal):
+    d = _r13_laden_alt(kanal)
+    n = 0
+    for s in d["szenen"]:
+        b = (s.get("bild") or "").strip()
+        r = (s.get("regie") or "").strip()
+        if b and r and b == r:
+            s["regie"] = ""
+            n += 1
+    if n:
+        speichern(kanal, d)
+    return n
+
+
+_r14_laden_alt = laden
+
+
+def laden(kanal):
+    d = _r14_laden_alt(kanal)
+    if any((s.get("bild") or "").strip()
+           and (s.get("bild") or "").strip() == (s.get("regie") or "").strip()
+           for s in d["szenen"]):
+        try:
+            if r14_doppelte_regie_weg(kanal):
+                d = _r14_laden_alt(kanal)
+        except Exception as e:
+            print("[Szenen] Regie nicht aufraeumbar:", e)
     return d

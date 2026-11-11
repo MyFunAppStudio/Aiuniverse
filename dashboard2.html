@@ -1338,6 +1338,15 @@ function szeneNeu(id,hatClip){
         zu();
         if(!r||!r.ok)return melde((r&&r.fehler)||"Das hat nicht geklappt");
         ladeSzenen();
+      }).catch(function(){
+        /* Das Bildmodell braucht bis zu einer Minute. Am Handy reisst
+           die Verbindung in der Zeit gern ab - der Server malt aber
+           weiter. Also nicht "ging nicht" melden, sondern nachsehen. */
+        zu();
+        melde("Die Verbindung ist abgerissen, während das Bild entstand. "
+             +"Der Server malt weiter. In etwa einer Minute unten auf "
+             +"<b>Neu laden</b> tippen, dann ist es da.");
+        setTimeout(ladeSzenen,45000);
       });
     });
 }
@@ -1601,7 +1610,9 @@ function tSzenen(){
 
   o+='<div class="karte p">'+kartenKopf("Szenen · "+li.length+" · etwa "+Math.round(szenenDauer())+" Sek.","szenentext");
   if(!li.length)o+='<div class="leer">noch nichts — lade dein erstes Bild hoch</div>';
-  else o+='<div style="margin:-2px 0 10px"><button class="knopf" onclick="fragAlleSzenenWeg('+li.length+')">Alle Szenen löschen</button></div>';
+  else o+='<div style="display:flex;gap:7px;margin:-2px 0 10px">'
+   +'<button class="knopf" onclick="ladeSzenen()">Neu laden</button>'
+   +'<button class="knopf" onclick="fragAlleSzenenWeg('+li.length+')">Alle Szenen löschen</button></div>';
   li.forEach(function(s,i){
     var vor=(s.typ==="clip")
       ? '<video class="bildchen" controls preload="metadata" playsinline src="/eigen/'+encodeURIComponent(s.datei)+'?k='+S.kanal+'"></video>'
