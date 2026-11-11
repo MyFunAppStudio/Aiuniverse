@@ -260,8 +260,8 @@ function zeigeKopf(){
   var k=kanalDaten();
   el("knam").textContent=k?k.name:"Kein Kanal";
   var vn=(S.vorlagen[k&&k.vorlage]||{}).name||(k?k.vorlage:"");
-  el("kunt").textContent=k?(vn+" · "+(k.sprachen||["de"])[0]+" · "+(S.einst.format||"9:16")):"";
-  el("pt").className="punkt"+(k&&k.aktiv?"":" aus");
+  el("kunt").textContent=k?(vn+" · "+sprachName((k.sprachen||["de"])[0])+" · "+(S.einst.format||"9:16")):"";
+  el("pt").className="punkt"+(k?"":" aus");
   var a=S.daten.apis||{};
   var g=S.guthaben&&S.guthaben.ok?(Number(S.guthaben.betrag).toFixed(2)+" "+(S.guthaben.waehrung==="USD"?"$":S.guthaben.waehrung)):"—";
   el("stand").innerHTML=
@@ -937,9 +937,9 @@ function tKanaele(){
   ks.forEach(function(k){
     var vn=(S.vorlagen[k.vorlage]||{}).name||k.vorlage;
     o+='<div class="e'+(k.eltern?" kind":"")+'">'
-     +'<span class="punkt'+(k.aktiv?"":" aus")+'"></span>'
-     +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+(k.key===S.kanal?' <span style="color:#6BE4F2">•</span>':'')+'</div>'
-     +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(vn)+' · '+h((k.sprachen||["de"])[0])+' · '+k.videos+' Videos</div></div>'
+     +'<span class="punkt'+(k.key===S.kanal?"":" aus")+'"></span>'
+     +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+'</div>'
+     +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(vn)+' · '+h(sprachName((k.sprachen||["de"])[0]))+' · '+(k.videos||0)+' Videos</div></div>'
      +(k.eltern?'<button class="ik" title="lösen" onclick="fragLoesen(\''+k.key+'\')">⛓</button>':'')
      +'<button class="ik rot" onclick="fragKanalWeg(\''+k.key+'\',\''+h(k.name).replace(/'/g,"")+'\')">✕</button></div>';
   });
