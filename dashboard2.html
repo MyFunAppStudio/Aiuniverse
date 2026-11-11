@@ -1027,7 +1027,9 @@ function schluesselSpeichern(slot){
 
 
 /* ---------- Modelle (Patch M1) ---------- */
-var SLOTNAME={ref:"Referenzclip",text:"Text",bilder:"Bild",stimme:"Stimme",video:"Animation",musik:"Musik",sound:"Geraeusche",avatar:"Avatar"};
+var SLOTNAME={ref:"Clips mit Avataren",text:"Drehbuch",bilder:"Bilder",stimme:"Stimme",video:"Bild bewegen",musik:"Musik",sound:"Geräusche",avatar:"Avatar"}
+/* Was das Modell TUT, nicht wie es heisst. */
+var SLOTWOZU={ref:"baut aus Bild und Figuren den Clip",text:"schreibt Text, Titel und Beschreibungen",bilder:"malt das Bild zu jeder Szene",stimme:"spricht den Text",video:"animiert ein Bild ohne Figuren",musik:"nur wenn du kein eigenes Lied hochlädst",sound:"Geräusche",avatar:"Lippensync, wird nicht mehr gebraucht"};
 var EINHEIT={ref:"je Sekunde",text:"je Video",bilder:"je Bild",stimme:"je Sekunde",video:"je Sekunde",musik:"je Stueck",sound:"je Stueck",avatar:"je Sekunde"};
 var BEISPIEL={text:"0.02",bilder:"0.04",stimme:"0.008",video:"0.09",musik:"0.01",sound:"0.01",avatar:"0.05"};
 var ADRESSE={bilder:"fal-ai/flux-pro/v1.1",
@@ -1036,11 +1038,45 @@ var ADRESSE={bilder:"fal-ai/flux-pro/v1.1",
 
 function ladeModelle(){return api("/api/modelle?k="+S.kanal).then(function(m){S.modelle=m;zeichne()})}
 
+/* Die Anleitung stand bisher ganz unten, sechs Karten unter der Karte,
+   die sie meint ("oben bei Referenzclip..."). Jetzt steht sie drin. */
+function refAnleitung(wieviele){
+  if(wieviele)return '';
+  return '<div class="hinw" style="padding:0;margin:0 0 10px">'
+   +'<b>Noch nichts eingetragen.</b> Tipp unten auf <b>+ Eigenes Modell</b> und trag ein:<br><br>'
+   +'Name <b>Kling Referenz</b><br>'
+   +'Adresse <b>fal-ai/kling-video/o3/standard/reference-to-video</b><br>'
+   +'Preis <b>0.112</b> je Sekunde<br>'
+   +'Schlüssel leer lassen — der von fal.ai wird mitbenutzt.<br><br>'
+   +'Ohne das bleibt der Knopf <b>Clip</b> bei jeder Szene grau.</div>';
+}
+
+/* Eine Zeile, die auf einen Blick zeigt, was eingerichtet ist und was fehlt. */
+function modellUeberblick(m){
+  var reihe=["text","bilder","ref","stimme","video","musik"];
+  var o='<div class="karte p"><h2 class="kt">Modelle</h2>'
+   +'<div class="szh" style="margin:-4px 0 10px">Was fehlt, ist grau. Antippen springt hin.</div>'
+   +'<div style="display:flex;flex-wrap:wrap;gap:7px">';
+  reihe.forEach(function(s){
+    if(!((m.slots||[]).indexOf(s)>=0))return;
+    var da=((m.apis||{})[s]||[]).some(function(e){return e.url});
+    o+='<button class="wn'+(da?" an":"")+'" onclick="zuSlot(\''+s+'\')">'
+     +(da?"":"\u2022 ")+h(SLOTNAME[s]||s)+'</button>';
+  });
+  return o+'</div></div>';
+}
+
+function zuSlot(s){
+  var z=document.getElementById("slot_"+s);
+  if(z)z.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
 function tTechnik(){
   var m=S.modelle;
   if(!m){ladeModelle();return '<div class="karte p"><div class="leer">lade…</div></div>'}
   var p=S.preis||{};
-  var o='<div class="karte p"><h2 class="kt">Was ein Video kostet</h2>';
+  var o=modellUeberblick(m)
+   +'<div class="karte p"><h2 class="kt">Was ein Video kostet</h2>';
   if(p.modus==="szenen"){
     o+='<div class="r" style="padding-top:0"><div><div class="lb">'+(p.szenen||0)+' eigene Szenen</div>'
       +'<div class="hint">deine Bilder und Texte kosten nichts</div></div><div class="zahl">0.00 €</div></div>'
@@ -1065,11 +1101,17 @@ function tTechnik(){
    +(S.guthaben?(S.guthaben.ok?Number(S.guthaben.betrag).toFixed(2)+" "+S.guthaben.waehrung:h(S.guthaben.text)):"—")
    +'</span><button class="knopf" onclick="holGuthaben()">abrufen</button></div></div></div>';
 
+  /* avatar kann keinen Hintergrund und wird nicht gebraucht, Geraeusche
+     sind raus. "video" (Bild bewegen) MUSS sichtbar sein - ohne das
+     Modell geht die Schalterstellung "Nur Bild, bewegt" nicht. */
   (m.slots||[]).filter(function(s){
-    return S.alt||(s!=="avatar"&&s!=="video");
+    return S.alt||(s!=="avatar"&&s!=="sound");
   }).forEach(function(s){
     var liste=(m.apis||{})[s]||[];
-    o+='<div class="karte p"><h2 class="kt">'+h(SLOTNAME[s]||s)+'</h2><div class="liste">';
+    o+='<div class="karte p" id="slot_'+s+'"><h2 class="kt">'+h(SLOTNAME[s]||s)+'</h2>'
+     +(SLOTWOZU[s]?'<div class="szh" style="margin:-4px 0 9px">'+h(SLOTWOZU[s])+'</div>':'')
+     +(s==="ref"?refAnleitung(liste.length):'')
+     +'<div class="liste">';
     if(!liste.length)o+='<div class="leer">nichts eingetragen</div>';
     liste.forEach(function(e,i){
       o+='<div class="e"><button class="ik" style="'+(e.aktiv?"background:#24D3E8;border-color:#24D3E8;color:#04161B":"")+'" '
@@ -1082,14 +1124,6 @@ function tTechnik(){
     o+='</div><button class="knopf" style="width:100%;margin-top:9px" onclick="modellNeu(\''+s+'\')">+ Eigenes Modell</button></div>';
   });
   o+=tgKarte();
-  if(!S.alt)o+='<div class="karte p"><h2 class="kt">Referenzclip einrichten</h2>'
-   +'<div class="hinw" style="padding:0">Oben bei <b>Referenzclip</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
-   +'Name <b>Kling Referenz</b><br>'
-   +'Adresse <b>fal-ai/kling-video/o3/standard/reference-to-video</b><br>'
-   +'Preis <b>0.112</b> je Sekunde<br>'
-   +'Schl\u00fcssel leer lassen \u2014 der von fal.ai wird mitbenutzt.<br><br>'
-   +'Das ist das Modell, das aus Hintergrundbild und den beiden Darstellern '
-   +'den Clip einer Szene macht. Ohne das bleibt der Knopf <b>Clip</b> grau.</div></div>';
   if(S.alt)o+='<div class="karte p"><h2 class="kt">Avatar einrichten</h2>'
    +'<div class="hinw" style="padding:0">Oben bei <b>Avatar</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
    +'Name <b>Kling Avatar</b><br>'
