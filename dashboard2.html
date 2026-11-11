@@ -35,7 +35,15 @@ h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
 .kt{font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:#8593AC;margin:0 0 9px}
 .r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #202636}
 .r:last-child{border-bottom:none}
+.rw{border-bottom:1px solid #202636}
+.rw:last-child{border-bottom:none}
+.rw>.r{border-bottom:none}
+.frag{flex:0 0 auto;width:18px;height:18px;line-height:16px;padding:0;border-radius:50%;background:#1B1F2C;border:1px solid #2A3147;color:#8593AC;font:inherit;font-size:11px;cursor:pointer;vertical-align:middle}
+.frag.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;font-weight:600}
+.erk{font-size:11.5px;line-height:1.55;color:#A3B3CA;background:#131824;border-left:2px solid #24D3E8;border-radius:0 7px 7px 0;padding:9px 11px;margin:0 0 11px}
+.erk b{color:#D7E0EE}.erk i{color:#C7D2E2;font-style:normal;font-weight:600}
 .r label,.r .lb{font-size:12.5px;color:#C0C9DA}
+.r .lb{display:flex;align-items:center;gap:6px}
 .r .hint{font-size:10.5px;color:#76849E;margin-top:2px}
 input[type=text],input[type=number],select,textarea{background:#0D1017;border:1px solid #2A3147;border-radius:9px;color:#ECF1F8;padding:8px 9px;font:inherit;font-size:12.5px}
 input[type=text],input[type=number]{text-align:right;width:92px}
@@ -202,7 +210,7 @@ details.mehr[open]>summary{color:#24D3E8}
 <div id="dialog"></div>
 
 <script>
-var S={offen:{},kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
+var S={offen:{},erk:{},kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
@@ -302,8 +310,85 @@ function zeichne(){
 }
 
 /* ---------- Bausteine ---------- */
-function reihe(label,rechts,hint){
-  return '<div class="r"><div><div class="lb">'+h(label)+'</div>'+(hint?'<div class="hint">'+h(hint)+'</div>':'')+'</div>'+rechts+'</div>'
+/* ---- Erklaerungen: was jede Einstellung wirklich bewirkt ----
+   Schluessel ist der Feldname. Das Fragezeichen baut reihe() selbst
+   ein, sobald hier ein Eintrag steht. */
+var ERK={
+videoart:"Ein Startpunkt, kein Korsett. Tippst du eine Videoart an, stellen sich Tempo, Bildstimmung, Musik und Untertitel auf Werte, die für diese Sorte Video erfahrungsgemäß passen. Danach kannst du jeden Schalter einzeln weiter ändern — die Videoart merkt sich das nicht und redet dir nicht mehr rein.",
+
+format:"Das Seitenverhältnis des fertigen Videos. <i>9:16</i> ist Hochkant für TikTok, Reels und Shorts — das ist deins. <i>4:5</i> ist der Instagram-Feed, <i>1:1</i> quadratisch, <i>16:9</i> das normale Querformat für YouTube. Das Format bestimmt auch, in welcher Form die Bilder gemalt werden — nachträglich umstellen heißt, die Bilder passen nicht mehr.",
+
+laenge:"Wie lang das fertige Video wird, ohne Abspann. Daraus rechnet Claude zwei Dinge aus: wie viele Szenen es gibt und wie viele Wörter der Text haben darf. Bei 20 Sekunden und normalem Sprechtempo sind das rund 50 Wörter, verteilt auf etwa 3 bis 4 Szenen. Der Abspann kommt danach obendrauf, der zählt hier nicht mit.",
+
+woerter_pro_sekunde:"Wie schnell gesprochen wird — 2,2 / 2,5 / 2,8 Wörter je Sekunde. Das ändert <b>nicht</b> die Stimme, sondern die Textmenge: bei <i>flott</i> schreibt Claude mehr Wörter in dieselbe Zeit, bei <i>ruhig</i> weniger. Für Erzählendes nimm ruhig, für Fakten und Listen flott. Stimmt der Wert nicht zum Text, wird die Szene am Ende länger oder kürzer als geplant.",
+
+bewegung_an:"Betrifft nur Standbilder. Ist er an, bekommt jedes Standbild eine langsame Fahrt oder einen Zoom, damit das Bild nicht tot wirkt. Aus heißt: das Bild steht wirklich still. Echte Clips aus Kling bewegen sich sowieso, die ändert der Schalter nicht.",
+
+bewegung_staerke:"Wie weit das Standbild dabei zoomt oder fährt. <i>sanft</i> ist kaum zu merken und sieht nach Kamera aus, <i>stark</i> fährt deutlich sichtbar ins Bild. Bei stark gehen die Bildränder verloren, weil hineingezoomt wird — steht am Rand etwas Wichtiges, ist es weg. sanft reicht fast immer.",
+
+bildstimmung:"Eine Farbkorrektur, die über jedes Bild im Video gelegt wird. Sie macht aus einzeln gemalten KI-Bildern einen Film, der zusammenpasst: ohne sie ist das eine Bild bläulicher, das nächste gelber, und man sieht bei jedem Schnitt, dass sie aus verschiedenen Durchläufen stammen. Außerdem werden die Ränder leicht abgedunkelt, das zieht am Handy den Blick zur Mitte. Körnung und Tiefen stellen sich passend mit ein.",
+
+stimme_energie:"Wie energisch der Sprecher klingt. Gilt überall da, wo bei der Szene selbst nichts anderes eingetragen ist. <i>ruhig</i> und <i>sachlich</i> sind für Erklärendes, <i>dramatisch</i> für Spannung. Zu viel Energie über ein ganzes Video wirkt schnell anstrengend — eine einzelne Szene darf dramatisch sein, ein ganzes Video selten.",
+
+kling_anteil:"Wie viel Prozent der Szenen als bewegter Clip statt als Standbild gebaut werden. Das kostet Geld: jede bewegte Szene geht durch ein Videomodell. Bei 0 bleibt alles Standbild. Gehört zur alten Bauweise — mit dem Szenenschalter („Avatare im Bild“ / „Nur Bild, bewegt“ / „Nur Bild, still“) entscheidest du das inzwischen je Szene selbst.",
+
+nachlauf:"Wie viele Sekunden nach dem letzten gesprochenen Wort noch stehenbleiben, bevor der Abspann kommt. Ohne das reißt das Video mitten im letzten Wort ab und wirkt abgehackt. 0,9 Sekunden sind ein guter Wert. Mehr als 2 wirkt wie eine Panne.",
+
+tempo:"Die Höchstlänge einer Einstellung: <i>ruhig</i> teilt gar nicht, <i>normal</i> bei 6,5 Sekunden, <i>schnell</i> bei 3,2, <i>sehr schnell</i> bei 2,3. Ist eine Szene länger, wird dasselbe Bild in mehrere Einstellungen zerlegt, bei denen Zoom und Fahrt wechseln. Gilt nur für Szenen auf „Nur Bild, still“ — Clips liefert Kling schon in der richtigen Länge und bleiben am Stück.",
+
+musik_an:"Hintergrundmusik unter dem ganzen Video. Hast du ein eigenes Lied hochgeladen, wird das genommen, sonst sucht der Code selbst eines. Die Musik endet mit der letzten Szene — der Abspann behält seinen eigenen Ton.",
+
+musik_leise:"Wie laut die Musik ist, solange jemand spricht — in Prozent. Zu laut und man versteht den Sprecher nicht mehr, besonders am Handylautsprecher. 10 bis 15 ist der übliche Bereich.",
+
+musik_laut:"Wie laut die Musik wird, wenn gerade niemand spricht — in Prozent. Füllt die Pausen, damit es nicht still wird. 70 bis 80 ist normal.",
+
+musik_anheben:"Ob die Musik in Sprechpausen überhaupt lauter wird. An heißt: ab etwa 2,5 Sekunden Stille zieht sie auf den lauten Wert hoch und geht beim nächsten Wort wieder runter. Aus heißt: sie bleibt durchgehend leise. Bei Videos, in denen fast durchgehend gesprochen wird, ist aus ruhiger — sonst pumpt die Musik ständig.",
+
+musik_ein:"Wie viele Sekunden die Musik am Anfang von still auf volle Lautstärke hochkommt. Ohne das setzt sie hart mit dem ersten Bild ein, was billig klingt. 1 Sekunde reicht.",
+
+musik_aus:"Wie viele Sekunden die Musik am Ende ausblendet. Das passiert am Ende der letzten Szene, nicht am Ende des Abspanns. 1,5 Sekunden sind ein weicher Schluss.",
+
+untertitel_an:"Blendet den gesprochenen Text als Untertitel ein, Wort für Wort mitlaufend. Auf TikTok und Reels wird der größte Teil ohne Ton geschaut — ohne Untertitel ist das Video für die meisten stumm. Die Zeiten kommen vom Sprachmodell selbst, deshalb sitzen sie genau auf dem Wort.",
+
+untertitel_groesse:"Wie groß die Schrift ist. <i>normal</i> passt für die meisten Videos. <i>groß</i> nur, wenn wenig Text pro Szene kommt — sonst nimmt der Untertitel das halbe Bild ein und verdeckt das Motiv.",
+
+untertitel_hoehe:"Wie weit über dem unteren Bildrand der Untertitel sitzt. <i>normal</i> ist mit Absicht so gewählt, dass er über dem Bereich liegt, in dem TikTok seinen eigenen Text, den Kanalnamen und die Musikzeile einblendet. Verschieb das nur, wenn das Motiv der Szene genau dort sitzt — zu tief und TikTok schreibt darüber, zu hoch und es wirkt wie ein Fehler.",
+
+cta_anfang:"Blendet einen Aufruf am Anfang ein („folgen“, „liken“ und so weiter). Am Anfang stört er am meisten, weil in den ersten zwei Sekunden entschieden wird, ob weitergeschaut wird.",
+cta_mitte:"Blendet den Aufruf in der Mitte ein, wenn der Zuschauer schon drin ist. Von den drei Stellen ist das die unauffälligste.",
+cta_ende:"Blendet den Aufruf am Ende ein. Die übliche Stelle — da ist das Video ohnehin vorbei.",
+cta_gesprochen:"Der Aufruf wird zusätzlich gesprochen, nicht nur eingeblendet. Kostet Sprechzeit, die vom Inhalt abgeht.",
+
+eb_art:"Welches Symbol eingeblendet wird — Herz, Daumen, Pfeil und so weiter.",
+eb_text:"Text neben dem Symbol. Leer lassen heißt: nur das Symbol, ohne Wort.",
+eb_platz:"Wo im Bild die Einblendung sitzt. Rechts ist auf TikTok schlecht, da liegen die Knöpfe der App darüber. Unten liegt der Untertitel.",
+eb_groesse:"Wie groß die Einblendung ist, in Prozent der Bildhöhe.",
+eb_dauer:"Wie lange die Einblendung stehenbleibt, in Sekunden.",
+
+eb_farbe:"Die Farbe der eingeblendeten Grafik. Nimm eine, die sich vom Bild abhebt — auf dunklen Szenen eine helle, sonst sieht man sie nicht.",
+
+modus:"Wer den Text schreibt. <i>Claude schreibt es</i> — du gibst nur Thema und Länge, alles andere kommt von selbst. <i>Text ansehen und ändern</i> — dasselbe, aber du liest das Drehbuch vorher und kannst eingreifen. <i>Ich baue es selbst</i> — du legst jede Szene von Hand an, mit eigenen Bildern und eigenem Text.",
+
+sprachen_eins:"In welcher Sprache gesprochen und untertitelt wird. Die Stimme muss dazu passen — eine deutsche Stimm-ID liest englischen Text mit Akzent vor.",
+
+alt:"Zeigt Einstellungen aus der alten Bauweise wieder an: aufgeklebte Figuren, der Avatar mit Lippensync und das alte Animationsmodell. Für die jetzige Bauweise mit Kling brauchst du davon nichts. Lass es aus, dann ist das Dashboard kürzer."
+};
+
+function feldAus(s){var m=/setz\('([a-zA-Z0-9_]+)'/.exec(s||"");return m?m[1]:""}
+function erkUm(f){if(!S.erk)S.erk={};if(S.erk[f])delete S.erk[f];else S.erk[f]=1;zeichne()}
+function kartenKopf(titel,f){
+  var e=ERK[f], auf=!!(e&&S.erk&&S.erk[f]);
+  return '<h2 class="kt">'+h(titel)
+   +(e?'<button class="frag'+(auf?' an':'')+'" onclick="erkUm(\''+f+'\')" title="Was bewirkt das?">?</button>':'')
+   +'</h2>'+(auf?'<div class="erk">'+e+'</div>':'');
+}
+function reihe(label,rechts,hint,schluessel){
+  var f=schluessel||feldAus(rechts), e=f&&ERK[f], auf=!!(e&&S.erk&&S.erk[f]);
+  var z='<div class="r"><div><div class="lb">'+h(label)
+   +(e?'<button class="frag'+(auf?' an':'')+'" onclick="erkUm(\''+f+'\')" title="Was bewirkt das?">?</button>':'')
+   +'</div>'+(hint?'<div class="hint">'+h(hint)+'</div>':'')+'</div>'+rechts+'</div>';
+  if(!e)return z;
+  return '<div class="rw">'+z+(auf?'<div class="erk">'+e+'</div>':'')+'</div>';
 }
 function zahl(feld,wert,breit){
   return '<input type="number" value="'+h(wert)+'" onchange="setz(\''+feld+'\',this.value,1)">'
@@ -485,9 +570,8 @@ function tMusik(){
   o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="hochladen(\'musik\')">+ Lied hochladen</button>'
    +reihe("Leise unter der Stimme",zahl("musik_leise",(S.einst.musik_leise==null?12:S.einst.musik_leise)),"in Prozent")
    +reihe("Laut ohne Stimme",zahl("musik_laut",(S.einst.musik_laut==null?75:S.einst.musik_laut)),"in Prozent")
-   +'<div class="r"><div><div class="lb">Ohne Stimme lauter</div><div class="hint">'
-   +(S.einst.musik_anheben===false?"aus — bleibt durchgehend leise":"ab etwa 2,5 Sekunden Stille")+'</div></div>'
-   +schalter("musik_anheben",S.einst.musik_anheben!==false)+'</div>'
+   +reihe("Ohne Stimme lauter",schalter("musik_anheben",S.einst.musik_anheben!==false),
+      (S.einst.musik_anheben===false?"aus — bleibt durchgehend leise":"ab etwa 2,5 Sekunden Stille"))
    +reihe("Einblenden",zahl("musik_ein",(S.einst.musik_ein==null?1:S.einst.musik_ein)),"Sekunden am Anfang")
    +reihe("Ausblenden",zahl("musik_aus",(S.einst.musik_aus==null?1.5:S.einst.musik_aus)),"Sekunden am Ende")
    +'</div>';
@@ -498,8 +582,6 @@ function tAblauf(){
   return '<div class="karte">'
    +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
    +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde")
-   +'<div class="hinw">Aus Länge mal Sprechtempo rechnet Claude die Wortzahl '
-   +'für das Drehbuch aus. 20 Sek. bei normal sind rund 50 Wörter.</div>'
    +'</div>';
 }
 
@@ -573,9 +655,11 @@ function tEinst(){
    +falte("Untertitel & Einblendung",tTexte(),false)
    +falte("KI & Technik",tTechnik(),false)
    +falte("Kanäle",tKanaele(),false);
-  o+='<div class="karte"><div class="r"><div><div class="lb">Alte Funktionen</div>'
-   +'<div class="hint">aufgeklebte Figuren, Avatar, altes Animationsmodell</div></div>'
-   +'<button class="sch'+(S.alt?" an":"")+'" onclick="altUm()"><i></i></button></div></div>';
+  o+='<div class="karte">'
+   +reihe("Alte Funktionen",
+      '<button class="sch'+(S.alt?" an":"")+'" onclick="altUm()"><i></i></button>',
+      "aufgeklebte Figuren, Avatar, altes Animationsmodell","alt")
+   +'</div>';
   return o;
 }
 
@@ -646,7 +730,7 @@ function stimmungJetzt(){
 
 function tVideo(){
   var o=tArten();
-  o+='<div class="karte p"><h2 class="kt">Format</h2>'
+  o+='<div class="karte p">'+kartenKopf("Format","format")
    +knoepfe("format",S.einst.format||"9:16",[["9:16","9:16 TikTok"],["4:5","4:5 Insta"],["1:1","1:1"],["16:9","16:9 YouTube"]])+'</div>';
   /* "Bilder pro Minute" und "Serie: Teile" sind raus: die Zahl der Szenen
      ergibt sich aus Laenge und Satzlaenge, und Serien schneidet das
@@ -659,9 +743,6 @@ function tVideo(){
    +reihe("Stimmung",knoepfe("bildstimmung",stimmungJetzt(),
      [["aus","aus"],["kalt","kalt"],["warm","warm"],["hart","hart"]]),
      STIMMUNG_WOZU[stimmungJetzt()])
-   +'<div class="hinw">Eine Farbkorrektur über alle Bilder, damit sie wie ein Film '
-   +'zusammenpassen und nicht wie einzelne KI-Bilder. Körnung und Tiefen stellen '
-   +'sich passend mit ein.</div>'
    +'</div>';
   o+=stimmenKarte();
   if(!S.modelle)ladeModelle();
@@ -2266,7 +2347,7 @@ function ladeArten(){return api("/api/arten?k="+S.kanal).then(function(d){S.arte
 function tArten(){
   var a=S.arten;
   if(!a){ladeArten();return ''}
-  var o='<div class="karte p"><h2 class="kt">Videoart</h2>'
+  var o='<div class="karte p"'+'>'+kartenKopf("Videoart","videoart")
    +'<div class="pills">'
    +(a.arten||[]).map(function(x){
       return '<button class="'+(a.jetzt===x[0]?"an":"")+'" onclick="artSetzen(\''+x[0]+'\')">'+h(x[1])+'</button>'}).join("")
