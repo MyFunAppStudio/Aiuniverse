@@ -165,7 +165,11 @@ def preis(key):
         pass
     p_bild = modell_preis(key, "bilder", p_bild)
     text = modell_preis(key, "text", 0.02)
-    stimme = 0.0 if not d.get("stimme_an", True) else round(sek * modell_preis(key, "stimme", 0.008), 3)
+    # Frueher hing das an d["stimme_an"]. Den Schalter gibt es nicht mehr,
+    # gelesen hat ihn ausser dieser Zeile ohnehin nie jemand - gesprochen
+    # wurde immer. Alte Kanaldateien mit stimme_an=False haben deshalb
+    # 0,00 EUR fuer die Stimme angezeigt, obwohl sie Geld gekostet hat.
+    stimme = round(sek * modell_preis(key, "stimme", 0.008), 3)
     gesamt = round(bilder * p_bild + text + stimme, 3)
     return {"bilder": bilder, "je_bild": p_bild, "text": text,
             "stimme": stimme, "gesamt": gesamt, "modus": "auto",
@@ -512,7 +516,7 @@ VOREINSTELLUNGEN = [
     ["build", "Build und Prozess", {
         "bildstimmung": "kalt",
         "tempo": "schnell",
-        "stimme_an": False, "untertitel_an": True, "untertitel_woerter": 3,
+        "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 60, "musik_laut": 85}],
     ["firma", "Firmenvideo", {
         "bildstimmung": "warm",
