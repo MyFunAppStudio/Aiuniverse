@@ -1879,3 +1879,60 @@ def api_stand(key=None):
         raus[name] = ok
         raus[name + "_name"] = wie
     return raus
+
+
+# ---------- Nachtrag g3: Drehbuch je Szene ansehen ----------
+#
+# Bisher stand die ganze Geschichte in einem Feld und man musste sich
+# selbst zusammenreimen, was davon gesprochen wird, was der Avatar
+# sagt, was Flux malt und was den Clip bewegt. Hier wird derselbe
+# Zerleger benutzt, den auch der Bau spaeter nimmt - was hier steht,
+# wird also wirklich so gebaut.
+
+G3_MAX = 60
+
+
+def _g3_zitate(text):
+    try:
+        import szenen_video as _sv
+        return _sv._nach_anfuehrung(text or "")
+    except Exception:
+        return [(False, text or "")]
+
+
+def drehbuch_lesen(key):
+    d = einstellungen.laden().get(key) or {}
+    try:
+        import geschichte
+        roh = geschichte.zerlege(d.get("geschichte_text") or "")
+    except Exception as e:
+        return {"ok": False, "fehler": str(e)[:120], "szenen": []}
+    raus = []
+    for s in roh[:G3_MAX]:
+        try:
+            rest, bild, beweg, ohne = geschichte._p84_klammern(s)
+        except Exception:
+            rest, bild, beweg, ohne = s, [], [], []
+        stuecke = _g3_zitate(rest)
+        raus.append({
+            "erzaehler": " ".join(x for ist, x in stuecke if not ist).strip(),
+            "avatar": " ".join(x for ist, x in stuecke if ist).strip(),
+            "bild": ", ".join(bild) or ", ".join(ohne),
+            "bewegung": ", ".join(beweg) or ", ".join(ohne),
+        })
+    return {"ok": True, "szenen": raus, "mehr": max(0, len(roh) - G3_MAX)}
+
+
+_g3_stand_alt = geschichte_stand
+
+
+def geschichte_stand(key):
+    raus = _g3_stand_alt(key)
+    try:
+        _g3 = drehbuch_lesen(key)
+        raus["drehbuch"] = _g3.get("szenen") or []
+        raus["drehbuch_mehr"] = _g3.get("mehr") or 0
+    except Exception as e:
+        raus["drehbuch"] = []
+        print("[Dashboard] Drehbuch nicht lesbar:", e)
+    return raus
