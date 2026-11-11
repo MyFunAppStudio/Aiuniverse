@@ -617,3 +617,51 @@ def lade_prompt(kanal):
 
 def _p36_teile(kanal):
     return 1
+
+
+# ---------- Nachtrag t3: JSON aus der Antwort herausschaelen ----------
+#
+# "JSON auch nach dem Flicken unlesbar: line 1 column 1 (char 0)"
+# heisst: schon das erste Zeichen passt nicht. Das passiert, wenn das
+# Modell seine Antwort in einen Markdown-Block packt (```json ... ```)
+# oder einen Satz davorstellt - trotz der Bitte, nur JSON zu
+# schicken. Vorher ist der ganze Lauf daran gescheitert.
+#
+# Also: Zaun wegnehmen, und notfalls von der ersten geschweiften
+# Klammer bis zur letzten schneiden.
+
+_t3_json_alt = _p40_json
+
+
+def _t3_schaelen(text):
+    s = (text or "").strip()
+    if s.startswith("```"):
+        z = s.split("\n")
+        if z and z[0].startswith("```"):
+            z = z[1:]
+        while z and not z[-1].strip().startswith("```"):
+            if z[-1].strip():
+                break
+            z = z[:-1]
+        if z and z[-1].strip().startswith("```"):
+            z = z[:-1]
+        s = "\n".join(z).strip()
+    a, b = s.find("{"), s.rfind("}")
+    if a > 0 or (a == 0 and b < len(s) - 1):
+        if a >= 0 and b > a:
+            s = s[a:b + 1]
+    return s
+
+
+def _p40_json(antwort):
+    try:
+        return _t3_json_alt(antwort)
+    except Exception:
+        pass
+    geschaelt = _t3_schaelen(antwort)
+    if geschaelt and geschaelt != (antwort or "").strip():
+        print("[Text] Antwort war verpackt - JSON herausgeschaelt")
+        return _t3_json_alt(geschaelt)
+    raise _p40_json_modul.JSONDecodeError(
+        "Die Text-KI hat kein JSON geschickt. Anfang der Antwort: %r"
+        % ((antwort or "")[:120],), antwort or "", 0)
