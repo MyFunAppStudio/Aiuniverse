@@ -2268,7 +2268,7 @@ function tGeschichte(){
    +'<textarea id="anker" style="min-height:74px" placeholder="gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung"'
    +' onchange="p86Feld(\'stil_zusatz\',\'Stil-Anker\',\'anker\',this.value)">'+h(S.einst.stil_zusatz||"")+'</textarea>'
    +'<div style="display:flex;gap:8px;margin-top:8px">'
-   +'<button class="knopf" onclick="ankerVorschlag()">Vorschlag einsetzen</button></div>'
+   +'<button class="knopf" id="ankbtn" onclick="ankerVorschlag()">Vorschlag einsetzen</button></div>'
    +'<div class="hinw">Geht an jedes einzelne Bild mit. Damit sieht Szene 9 aus wie Szene 1.</div>'
    +'</div>'
    +'</div>';
@@ -2366,9 +2366,22 @@ function p86Vorschlag(feld,titel,id,wert,warnung){
 }
 
 function ankerVorschlag(){
-  p86Vorschlag("stil_zusatz","Stil-Anker","anker",
-    "gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung",
-    "Dieser Vorschlag ist f\u00fcr Kan\u00e4le mit einer festen Figur gedacht. Bei einem Kanal ohne Figur passt er nicht.");
+  /* Der alte feste Vorschlag war fuer die aufgeklebten Figuren
+     geschrieben, die es nicht mehr gibt. Jetzt kommt er passend zum
+     Masterprompt des Kanals. */
+  var b=el("ankbtn");
+  if(b){b.disabled=true;b.textContent="fragt nach…"}
+  api("/api/stil_vorschlag?k="+S.kanal,{}).then(function(r){
+    if(b){b.disabled=false;b.textContent="Vorschlag einsetzen"}
+    if(!r||!r.ok||!r.text)return melde((r&&r.fehler)||"Kein Vorschlag bekommen");
+    p86Vorschlag("stil_zusatz","Stil-Anker","anker",r.text,
+      r.woher==="notnagel"
+        ? "Die Text-KI war nicht erreichbar — das hier ist ein guter Standard für Geschichte."
+        : "");
+  }).catch(function(e){
+    if(b){b.disabled=false;b.textContent="Vorschlag einsetzen"}
+    melde("Die Anfrage kam nicht durch: "+(e&&e.message?e.message:"unbekannt"));
+  });
 }
 
 

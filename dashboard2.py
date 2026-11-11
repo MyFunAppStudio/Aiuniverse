@@ -1046,6 +1046,14 @@ class Griff(BaseHTTPRequestHandler):
             f = kanaele.loeschen(b.get("k"), bool(b.get("mit_videos")))
             return self.sende({"ok": f is None, "fehler": f})
 
+        if w == "/api/stil_vorschlag":
+            try:
+                return self.sende(stil_vorschlag(k))
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return self.sende({"ok": False, "fehler": str(e)[:200]})
+
         if w == "/api/themen_vorschlag":
             # Faellt hier etwas um, muss trotzdem JSON zurueckkommen -
             # sonst sieht der Browser nur eine abgebrochene Verbindung
@@ -2022,3 +2030,52 @@ def themen_vorschlagen(key, wieviel=G4_WIEVIEL):
     for x in dazu:
         themen.hinzufuegen(key, x)
     return {"ok": True, "dazu": len(dazu), "themen": themen.laden(key)}
+
+
+# ---------- Nachtrag g5: Stil-Anker vorschlagen ----------
+#
+# Der alte Vorschlag war fuer die festen, aufgeklebten Figuren
+# geschrieben - die gibt es nicht mehr. Jetzt laesst der Knopf die
+# Text-KI einen Anker passend zum Masterprompt des Kanals schreiben.
+# Der Anker haengt an jedem einzelnen Bild, muss also englisch sein
+# und darf nichts ueber den Inhalt einer Szene sagen.
+
+G5_NOTNAGEL = ("painterly historical illustration, warm natural light, "
+               "rich earth tones, deep shadows, visible brushwork, "
+               "period-accurate clothing and architecture, cinematic "
+               "composition, shallow depth of field, no text, no letters, "
+               "no numbers, no modern objects")
+
+
+def stil_vorschlag(key):
+    import text_generator
+    d = einstellungen.laden().get(key) or {}
+    eigen = (d.get("prompt") or "").strip()
+    if not eigen:
+        return {"ok": True, "text": G5_NOTNAGEL, "woher": "notnagel"}
+
+    prompt = (
+        "Schreibe einen Stil-Anker fuer einen Kurzvideo-Kanal.\n\n"
+        "SO BESCHREIBT SICH DER KANAL:\n%s\n\n"
+        "Der Stil-Anker wird an die Bildbeschreibung JEDER Szene angehaengt, "
+        "damit alle Bilder eines Videos wie aus einem Guss aussehen.\n\n"
+        "Regeln fuer deine Antwort:\n"
+        "- Englisch, weil das Bildmodell englisch versteht\n"
+        "- Nur durch Komma getrennte Eigenschaften, kein ganzer Satz\n"
+        "- Nur wie es aussieht: Maltechnik, Licht, Farben, Kameranaehe, "
+        "Bildaufbau. Nichts ueber den Inhalt einer Szene, keine Orte, "
+        "keine Personen, keine Handlung\n"
+        "- Hoechstens 30 Woerter\n"
+        "- Am Ende immer: no text, no letters, no numbers\n\n"
+        "Antworte NUR mit dem Stil-Anker, ohne Anfuehrungszeichen, ohne "
+        "Erklaerung." % eigen
+    )
+    try:
+        antwort = text_generator._claude_anfrage(prompt, max_tokens=400, kanal=d)
+    except Exception as e:
+        return {"ok": True, "text": G5_NOTNAGEL, "woher": "notnagel",
+                "hinweis": str(e)[:140]}
+    text = " ".join(str(antwort or "").split()).strip().strip('"').strip()
+    if not text or len(text) > 600:
+        return {"ok": True, "text": G5_NOTNAGEL, "woher": "notnagel"}
+    return {"ok": True, "text": text, "woher": "ki"}
