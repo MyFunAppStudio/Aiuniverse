@@ -716,7 +716,11 @@ function tThemen(){
   });
   o+='</div><div style="display:flex;gap:7px;margin-top:10px">'
    +'<input type="text" id="neuthema" class="breit" placeholder="Neues Thema">'
-   +'<button class="knopf or" onclick="themaNeu()">+</button></div>';
+   +'<button class="knopf or" onclick="themaNeu()">+</button></div>'
+   +'<button class="knopf" style="width:100%;margin-top:8px" id="thvor" onclick="themenVorschlag()">'
+   +'Themen vorschlagen lassen</button>'
+   +'<div class="hinw" style="padding-top:6px">Die Text-KI schlägt zwölf neue vor, passend zu '
+   +'Masterprompt und Regeln. Schon vergebene und erledigte kommen nicht noch einmal.</div>';
   var erl=(S.themen.erledigt||[]).slice(-6).reverse();
   o+='<div class="hinw" style="margin-top:12px">Erledigt: '+(S.themen.erledigt||[]).length
    +(erl.length?' · zuletzt '+h(erl.map(function(x){return x.thema}).join(", ")):'')+'</div>';
@@ -1064,6 +1068,20 @@ function fragAlleSzenenWeg(n){
     function(){api("/api/szenen?k="+S.kanal,{aktion:"alle_weg"}).then(function(r){
       if(!r||!r.ok)return melde("Ging nicht");
       S.szenen=null;ladeSzenen();melde((r.weg||0)+" Szenen gelöscht.")})},true);
+}
+function themenVorschlag(){
+  var b=el("thvor"); if(!b)return;
+  b.disabled=true; b.textContent="fragt nach…";
+  api("/api/themen_vorschlag?k="+S.kanal,{wieviel:12}).then(function(r){
+    b.disabled=false; b.textContent="Themen vorschlagen lassen";
+    if(!r||!r.ok)return melde((r&&r.fehler)||"Die Text-KI hat nicht geantwortet");
+    if(r.themen)S.themen=r.themen;
+    zeichne();
+    melde(r.dazu?(r.dazu+" Themen dazugekommen."):"Keine neuen dabei — alle waren schon in der Liste.");
+  }).catch(function(){
+    b.disabled=false; b.textContent="Themen vorschlagen lassen";
+    melde("Verbindung abgebrochen. Das Nachdenken dauert ein paar Sekunden.");
+  });
 }
 function themaWaehlen(t){
   var f=el("thema"); if(f)f.value=t;

@@ -1046,6 +1046,9 @@ class Griff(BaseHTTPRequestHandler):
             f = kanaele.loeschen(b.get("k"), bool(b.get("mit_videos")))
             return self.sende({"ok": f is None, "fehler": f})
 
+        if w == "/api/themen_vorschlag":
+            return self.sende(themen_vorschlagen(k, (b or {}).get("wieviel")))
+
         if w == "/api/themen":
             if b.get("hinzu"):
                 themen.hinzufuegen(k, b["hinzu"])
@@ -1939,3 +1942,75 @@ def geschichte_stand(key):
         raus["drehbuch"] = []
         print("[Dashboard] Drehbuch nicht lesbar:", e)
     return raus
+
+
+# ---------- Nachtrag g4: Themen vorschlagen lassen ----------
+#
+# Zwanzig Themen am Handy eintippen will niemand. Der Knopf laesst
+# die Text-KI welche vorschlagen, passend zum Masterprompt und zu den
+# Regeln des Kanals. Was schon offen oder erledigt ist, kommt nicht
+# noch einmal.
+
+G4_WIEVIEL = 12
+
+
+def themen_vorschlagen(key, wieviel=G4_WIEVIEL):
+    import text_generator, themen, json as _j, re as _re
+    d = einstellungen.laden().get(key) or {}
+    if not d:
+        return {"ok": False, "fehler": "Kanal unbekannt"}
+    try:
+        wieviel = max(3, min(30, int(wieviel or G4_WIEVIEL)))
+    except Exception:
+        wieviel = G4_WIEVIEL
+
+    liste = themen.laden(key)
+    schon = list(liste.get("offen") or [])
+    schon += [(x.get("thema") or "") for x in (liste.get("erledigt") or [])]
+    schon = [x for x in schon if x][-80:]
+
+    prompt = (
+        "Du planst die Themenliste fuer einen Kurzvideo-Kanal.\n\n"
+        "SO BESCHREIBT SICH DER KANAL:\n%s\n\n"
+        "REGELN DES KANALS:\n%s\n\n"
+        "Schlage genau %d Themen vor, die zu diesem Kanal passen.\n"
+        "Jedes Thema ist eine Zeile und steht fuer sich: konkret genug, dass man "
+        "sofort weiss, worum es geht, aber kurz. Keine Nummerierung, keine "
+        "Erklaerung, kein Doppelpunkt-Geschwafel.\n"
+        "%s\n"
+        "Antworte NUR mit einer JSON-Liste von Zeichenketten, sonst nichts."
+        % ((d.get("prompt") or "").strip() or "(noch nichts eingetragen)",
+           (d.get("regeln") or "").strip() or "(keine)",
+           wieviel,
+           ("Diese sind schon vergeben, nimm andere:\n- " + "\n- ".join(schon))
+           if schon else "")
+    )
+    try:
+        antwort = text_generator._claude_anfrage(prompt, max_tokens=2000, kanal=d)
+    except Exception as e:
+        return {"ok": False, "fehler": "Die Text-KI hat nicht geantwortet: %s" % str(e)[:120]}
+    if not antwort:
+        return {"ok": False, "fehler": "Die Text-KI hat nichts geliefert"}
+
+    roh = str(antwort)
+    m = _re.search(r"\[.*\]", roh, _re.S)
+    neu = []
+    if m:
+        try:
+            neu = [str(x).strip() for x in _j.loads(m.group(0)) if str(x).strip()]
+        except Exception:
+            neu = []
+    if not neu:
+        neu = [_re.sub(r"^\s*[-*\d.)\s]+", "", z).strip().strip('",')
+               for z in roh.splitlines()]
+        neu = [z for z in neu if 8 < len(z) < 160]
+
+    kleine = set(x.strip().lower() for x in schon)
+    dazu = []
+    for x in neu:
+        if x.lower() not in kleine:
+            kleine.add(x.lower())
+            dazu.append(x)
+    for x in dazu:
+        themen.hinzufuegen(key, x)
+    return {"ok": True, "dazu": len(dazu), "themen": themen.laden(key)}
