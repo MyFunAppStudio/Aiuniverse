@@ -534,7 +534,7 @@ function setzViele(d){
   return api("/api/kanal?k="+S.kanal,d).then(function(){zeichne()});
 }
 function setz(feld,wert,zahlFeld){
-  if(feld==="geschichte_text"||feld==="geschichte_stil"||feld==="geschichte_figur")setTimeout(function(){S.gs=null;ladeGeschichte()},260);
+  if(feld==="geschichte_text"||feld==="geschichte_stil")setTimeout(function(){S.gs=null;ladeGeschichte()},260);
   if(wert==="true")wert=true;else if(wert==="false")wert=false;
   else if(zahlFeld)wert=Number(wert)||0;
   var d={};
@@ -2224,10 +2224,6 @@ function tGeschichte(){
   o+='<div class="karte p"><h2 class="kt">Wie es aussehen soll</h2>'
    +reihe("Stil",wahl("geschichte_stil",S.einst.geschichte_stil||"",
       (g.stile||[["","ohne Vorgabe"]])))
-   +reihe("Figur",'<select onchange="setz(\'geschichte_figur\',this.value)">'
-      +'<option value="">keine</option>'
-      +(g.figuren||[]).map(function(n){return '<option value="'+h(n)+'"'+((S.einst.geschichte_figur||"")===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
-      +'</select>',"dieselbe Figur in jeder Szene")
    +'<div style="padding:11px 0 4px;border-top:1px solid #202636">'
    +'<div class="lb" style="margin-bottom:6px">Stil-Anker</div>'
    +'<textarea id="anker" style="min-height:74px" placeholder="gleiche Figur wie auf der Vorlage, gleiche Koerperform und Kopfgroesse, ganzer Koerper im Bild, weiches Studiolicht, keine Schrift auf der Kleidung"'
@@ -2237,14 +2233,6 @@ function tGeschichte(){
    +'<div class="hinw">Geht an jedes einzelne Bild mit. Damit sieht Szene 9 aus wie Szene 1.</div>'
    +'</div>'
    +'</div>';
-
-  if(S.einst.geschichte_figur && g.figur_bild===false)
-    o+='<div class="karte p"><div class="spaeter">Die Figur <b>'+h(S.einst.geschichte_figur)+'</b> hat noch kein Bild. '
-     +'Unter Charaktere ein Bild als Pose hinzufügen, sonst entstehen die Szenen ohne sie.</div></div>';
-
-  if(S.einst.geschichte_figur && !g.kann_figur)
-    o+='<div class="karte p"><div class="spaeter">Dein Bildmodell nimmt keine Vorlage an — die Figur wird dann in jeder Szene anders aussehen. '
-     +'Für gleiche Figur unter KI &amp; Technik beim Slot „Bild" ein Modell wie <b>fal-ai/instant-character</b> eintragen.</div></div>';
 
   if(!g.bereit)
     o+='<div class="karte p"><div class="spaeter">'+h(g.grund||"Bildmodell fehlt")+' — unter KI &amp; Technik beim Slot „Bild" eintragen.</div></div>';

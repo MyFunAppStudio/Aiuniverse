@@ -652,3 +652,26 @@ if not any((x[0] if isinstance(x, (list, tuple)) else x) == "ref"
         if (_x[0] if isinstance(_x, (list, tuple)) else _x) == "video":
             _r5_neu.append(("ref", "Referenzclip"))
     API_SLOTS = _r5_neu
+
+
+# ---------- Nachtrag e3: alte Figur aus den Kanaelen nehmen ----------
+#
+# "Figur" war die alte, aufgeklebte Figur. Die Auswahl ist aus dem
+# Dashboard raus, in den Kanaldateien steht der Name aber noch drin -
+# und acht Stellen im Code lesen ihn weiter und holen sich eine
+# Referenz aus dem alten Figurenordner. Was die Figur frueher konnte,
+# machen jetzt die Avatare. Deshalb wird das Feld beim Laden
+# weggeraeumt und verschwindet beim naechsten Speichern von selbst.
+
+_e3_laden_alt = laden
+
+
+def laden():
+    d = _e3_laden_alt()
+    try:
+        for v in d.values():
+            if isinstance(v, dict):
+                v.pop("geschichte_figur", None)
+    except Exception:
+        pass
+    return d
