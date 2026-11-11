@@ -41,6 +41,9 @@ h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
 .frag{flex:0 0 auto;width:18px;height:18px;line-height:16px;padding:0;border-radius:50%;background:#1B1F2C;border:1px solid #2A3147;color:#8593AC;font:inherit;font-size:11px;cursor:pointer;vertical-align:middle}
 .frag.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;font-weight:600}
 .erk{font-size:11.5px;line-height:1.55;color:#A3B3CA;background:#131824;border-left:2px solid #24D3E8;border-radius:0 7px 7px 0;padding:9px 11px;margin:0 0 11px}
+.szf{margin:9px 0}
+.szf .szh{display:block;margin-bottom:4px}
+.szf textarea{min-height:52px}
 .dz{border-top:1px solid #202636;padding:10px 0}
 .dz:first-of-type{border-top:none}
 .dznr{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#6C7A94;margin-bottom:5px}
@@ -1559,7 +1562,12 @@ function tSzenen(){
      +'<button class="ik rot" onclick="szeneWeg(\''+s.id+'\',\''+h(s.datei).replace(/'/g,"")+'\')">✕</button></div>'
      +vor
      +versionen(s,"bild")
-     +'<textarea placeholder="Gesprochener Text. &quot;…&quot; spricht die Figur. [eckige Klammern sind Regie und werden nicht gesprochen]" onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea>'
+     +'<div class="szf"><span class="szh">Sprechtext</span>'
+     +'<textarea placeholder="Was gesagt wird. In Anführungszeichen spricht der Avatar." onchange="szeneSetz(\''+s.id+'\',\'text\',this.value)">'+h(s.text||"")+'</textarea></div>'
+     +'<div class="szf"><span class="szh">Bildbeschreibung</span>'
+     +'<textarea placeholder="Was auf dem Bild zu sehen ist. Leer = aus dem Sprechtext." onchange="szeneSetz(\''+s.id+'\',\'bild\',this.value)">'+h(s.bild||"")+'</textarea></div>'
+     +'<div class="szf"><span class="szh">Animationsanweisung</span>'
+     +'<textarea placeholder="Wie sich das Bild bewegen soll. Leer = ruhige Fahrt." onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>'
      ;
     o+=schalterZeile(s,d)+werZeile(s);
     var mehr='<div class="szz"><span class="szh">Wer spricht</span>'

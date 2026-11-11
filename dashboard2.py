@@ -1554,7 +1554,10 @@ def _p90_neu(k, sid):
     figur = (kanal.get("geschichte_figur") or "").strip()
     referenz = bilder.figur_referenz(kanal, figur) if figur else None
 
-    prompt = geschichte.bildprompt(text, stil, figur, zusatz)
+    # Nachtrag r11: steht im Feld "Bildbeschreibung" etwas, wird danach
+    # gemalt. Sonst wie bisher aus dem Satz und seinen Klammern.
+    eigen = (s.get("bild") or "").strip()
+    prompt = geschichte.bildprompt(eigen or text, stil, figur, zusatz)
     name = "gs_%s_s%s.png" % (_p90_time.strftime("%H%M%S"), re.sub(r"\W", "", str(sid))[:6])
     ziel = os.path.join(szenen.ordner(kanal), name)
 

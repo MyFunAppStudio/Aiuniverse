@@ -2930,3 +2930,31 @@ def _p56_look(kanal):
 
 def _einblendung_filter(kanal, gesamt, b, h, quelle):
     return None, []
+
+
+# ---------- Nachtrag r12: die drei Felder der Szene benutzen ----------
+#
+# Die Regie kam bisher nur aus den eckigen Klammern im Textfeld. Das
+# Feld "regie" am Szenenobjekt gab es zwar, gelesen hat es beim Bauen
+# niemand. Jetzt gilt: steht im Feld etwas, schlaegt es die Klammern.
+# Die Klammern bleiben als zweiter Weg erhalten, damit von Claude
+# geschriebene Texte weiter funktionieren.
+
+_r12_plan_alt = plan_bauen
+
+
+def plan_bauen(kanal, ordner):
+    plan, daten = _r12_plan_alt(kanal, ordner)
+    try:
+        roh = szenen.laden(kanal)["szenen"]
+    except Exception:
+        return plan, daten
+    for e in plan:
+        try:
+            s = roh[e["nr"]]
+        except Exception:
+            continue
+        eigen = (s.get("regie") or "").strip()
+        if eigen:
+            e["regie"] = eigen
+    return plan, daten

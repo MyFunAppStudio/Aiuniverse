@@ -810,3 +810,45 @@ def r10_alle_weg(kanal):
     d["szenen"] = []
     speichern(kanal, d)
     return {"ok": True, "weg": n}
+
+
+# ---------- Nachtrag r11: eigenes Feld fuer die Bildbeschreibung ----------
+#
+# Bisher stand alles in einem Textfeld: gesprochener Satz, Avatartext
+# in Anfuehrungszeichen und die Regie in eckigen Klammern. Jetzt gibt
+# es drei Felder. "regie" gab es schon, es hatte nur nie eine
+# Bedienung; "bild" kommt neu dazu.
+
+if "bild" not in FELDER:
+    FELDER.append("bild")
+
+_r11_laden_alt = laden
+_r11_aendern_alt = aendern
+_r11_anzeige_alt = fuer_anzeige
+
+
+def laden(kanal):
+    d = _r11_laden_alt(kanal)
+    for s in d["szenen"]:
+        s.setdefault("bild", "")
+    return d
+
+
+def aendern(kanal, sid, feld, wert):
+    if feld != "bild":
+        return _r11_aendern_alt(kanal, sid, feld, wert)
+    d = laden(kanal)
+    i = _index(d, sid)
+    if i < 0:
+        return {"ok": False, "fehler": "Szene unbekannt"}
+    d["szenen"][i]["bild"] = " ".join(str(wert or "").split())[:600]
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+def fuer_anzeige(kanal):
+    d = _r11_anzeige_alt(kanal)
+    roh = {s["id"]: s for s in laden(kanal)["szenen"]}
+    for s in d["szenen"]:
+        s["bild"] = (roh.get(s["id"]) or {}).get("bild", "")
+    return d
