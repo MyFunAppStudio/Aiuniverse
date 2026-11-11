@@ -2152,3 +2152,23 @@ def slot_bereit(key, slot, *teile):
         if schluessel(teil):
             return True, name
     return False, ""
+
+
+# ---------- Nachtrag g7: fester Stil-Anker ----------
+#
+# g5 hat den Anker von der Text-KI schreiben lassen. Das heisst: bei
+# jedem Druck kommt etwas anderes heraus, und Stefan hat jedes Mal
+# einen anderen Stil bekommen als besprochen. Ein Anker ist eine
+# Festlegung, keine Idee. Darum steht er jetzt fest im Code - gemalt
+# wie ein Historienbild, so wie er es ausgesucht hat. Aendern kann er
+# ihn im Feld jederzeit; der Knopf setzt immer genau diesen ein.
+
+G7_ANKER = ("oil painting in the style of 19th century history painting, "
+            "visible brush strokes, warm earth tones, deep chiaroscuro light, "
+            "period-accurate clothing, ships and architecture, "
+            "wide cinematic composition, muted sky, "
+            "no text, no letters, no numbers, no modern objects")
+
+
+def stil_vorschlag(key):
+    return {"ok": True, "text": G7_ANKER, "woher": "fest"}

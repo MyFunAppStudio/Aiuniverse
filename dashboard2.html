@@ -2393,10 +2393,7 @@ function ankerVorschlag(){
   api("/api/stil_vorschlag?k="+S.kanal,{}).then(function(r){
     if(b){b.disabled=false;b.textContent="Vorschlag einsetzen"}
     if(!r||!r.ok||!r.text)return melde((r&&r.fehler)||"Kein Vorschlag bekommen");
-    p86Vorschlag("stil_zusatz","Stil-Anker","anker",r.text,
-      r.woher==="notnagel"
-        ? "Die Text-KI war nicht erreichbar — das hier ist ein guter Standard für Geschichte."
-        : "");
+    p86Vorschlag("stil_zusatz","Stil-Anker","anker",r.text,"");
   }).catch(function(e){
     if(b){b.disabled=false;b.textContent="Vorschlag einsetzen"}
     melde("Die Anfrage kam nicht durch: "+(e&&e.message?e.message:"unbekannt"));
