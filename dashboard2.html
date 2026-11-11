@@ -228,7 +228,19 @@ var TABS=[
 ];
 
 function h(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function api(w,d){return fetch(w,d?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}:undefined).then(function(r){return r.headers.get("content-type").indexOf("json")>=0?r.json():r.text()})}
+/* Ohne Content-Type-Kopf lief hier frueher .indexOf auf null und warf.
+   Das hat jeden Serverfehler als "Verbindung abgebrochen" aussehen lassen. */
+function api(w,d){
+  return fetch(w,d?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)}:undefined)
+   .then(function(r){
+     var ct=r.headers.get("content-type")||"";
+     if(ct.indexOf("json")>=0)return r.json();
+     return r.text().then(function(x){
+       if(r.ok)return x;
+       return {ok:false,fehler:"Der Server hat Fehler "+r.status+" gemeldet"+(x?": "+String(x).slice(0,160):".")};
+     });
+   });
+}
 function el(id){return document.getElementById(id)}
 
 function frage(titel,text,knopf,fn,gefahr){
@@ -1078,9 +1090,10 @@ function themenVorschlag(){
     if(r.themen)S.themen=r.themen;
     zeichne();
     melde(r.dazu?(r.dazu+" Themen dazugekommen."):"Keine neuen dabei — alle waren schon in der Liste.");
-  }).catch(function(){
+  }).catch(function(e){
     b.disabled=false; b.textContent="Themen vorschlagen lassen";
-    melde("Verbindung abgebrochen. Das Nachdenken dauert ein paar Sekunden.");
+    melde("Die Anfrage kam nicht durch: "+(e&&e.message?e.message:"Verbindung abgebrochen")
+      +". Im Reiter Einstellungen unter KI & Technik prüfen, ob beim Drehbuch ein Schlüssel steht.");
   });
 }
 function themaWaehlen(t){

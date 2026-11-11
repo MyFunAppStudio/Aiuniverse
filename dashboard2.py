@@ -1047,7 +1047,15 @@ class Griff(BaseHTTPRequestHandler):
             return self.sende({"ok": f is None, "fehler": f})
 
         if w == "/api/themen_vorschlag":
-            return self.sende(themen_vorschlagen(k, (b or {}).get("wieviel")))
+            # Faellt hier etwas um, muss trotzdem JSON zurueckkommen -
+            # sonst sieht der Browser nur eine abgebrochene Verbindung
+            # und meldet etwas Falsches.
+            try:
+                return self.sende(themen_vorschlagen(k, (b or {}).get("wieviel")))
+            except Exception as e:
+                import traceback
+                traceback.print_exc()
+                return self.sende({"ok": False, "fehler": str(e)[:200]})
 
         if w == "/api/themen":
             if b.get("hinzu"):
