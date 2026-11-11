@@ -183,3 +183,136 @@ def _bild_brauchbar(ziel):
         return (float(m.group(1)) if m else 128.0) >= 22.0
     except Exception:
         return True
+
+
+# ---------- Nachtrag r8: Wortzeiten statt Schaetzung ----------
+#
+# Bisher hat der Untertitel geraten, wann welches Wort gesprochen wird -
+# nach Buchstabenzahl. Das geht bei zwei, drei Woertern gerade so, aber
+# Pausen an Kommas zaehlt es nicht mit, und ein langes deutsches Wort wird
+# nicht proportional laenger gesprochen.
+#
+# fal liefert auf Wunsch Zeitstempel je Wort mit. Das kostet nichts extra,
+# es ist ein Feld mehr in der Anfrage. Die Zeiten landen als Beidatei neben
+# der Tonspur, damit sich an erzeuge_stimme() nichts aendert und nichts
+# kaputtgehen kann: sind Zeiten da, werden sie benutzt; kommen keine,
+# bleibt es bei der Schaetzung wie bisher.
+
+import json as _r8_json
+
+_r8_stimme_alt = erzeuge_stimme
+
+
+def worte_datei(ton):
+    """Wo die Wortzeiten zu einer Tonspur liegen."""
+    return Path(str(ton) + ".worte.json")
+
+
+def _r8_zeiten_auslesen(roh):
+    """Macht aus fals Antwort eine Liste [(wort, start, ende), ...].
+
+    fal hat die Form schon zweimal geaendert, darum werden mehrere
+    Schreibweisen angenommen statt einer einzigen erwartet.
+    """
+    if not roh:
+        return []
+    if isinstance(roh, dict):
+        for schl in ("words", "word_timestamps", "timestamps", "alignment",
+                     "characters"):
+            if schl in roh:
+                return _r8_zeiten_auslesen(roh[schl])
+        return []
+    if not isinstance(roh, list):
+        return []
+    raus = []
+    for e in roh:
+        if not isinstance(e, dict):
+            continue
+        wort = e.get("word") or e.get("text") or e.get("character") or ""
+        # Vorsicht: das erste Wort faengt bei 0.0 an, und 0.0 gilt in Python
+        # als leer. Mit "or" verkettet faellt es durch und das erste Wort
+        # fehlt. Darum ausdruecklich auf None pruefen.
+        anf = end = None
+        for schl in ("start", "start_time", "start_time_seconds", "start_s"):
+            if e.get(schl) is not None:
+                anf = e[schl]
+                break
+        for schl in ("end", "end_time", "end_time_seconds", "end_s"):
+            if e.get(schl) is not None:
+                end = e[schl]
+                break
+        if anf is None or end is None:
+            continue
+        try:
+            anf, end = float(anf), float(end)
+        except Exception:
+            continue
+        if not str(wort).strip():
+            continue        # Leerzeichen zwischen den Woertern
+        raus.append((str(wort), anf, end))
+    return raus
+
+
+def erzeuge_stimme(kanal, text, ziel, stimme_id=None):
+    """Wie bisher, aber mit Zeitstempeln je Wort, wenn der Anbieter sie gibt."""
+    ziel = Path(ziel)
+    if config.TESTMODUS:
+        return _r8_stimme_alt(kanal, text, ziel, stimme_id)
+
+    api = einstellungen.aktive_api(kanal, "stimme") or {}
+    print("[Stimme] %s (%s): erzeuge Audio..." % (kanal["name"], api.get("name", "?")))
+    daten = {"text": text, "timestamps": True}
+    sid = stimme_id or kanal.get("stimme_id") or ""
+    if sid:
+        daten["voice"] = sid
+    energie = float(kanal.get("stimme_energie", 0.6))
+    daten["stability"] = max(0.0, min(1.0, 1.0 - energie))
+    daten["similarity_boost"] = 0.75
+    daten["style"] = max(0.0, min(1.0, energie))
+
+    try:
+        ergebnis = _fal_anfrage(api.get("url") or FAL_STIMME, daten, api.get("key"))
+    except Exception as e:
+        # Mag der Anbieter das Feld nicht, dann eben ohne - lieber eine
+        # geschaetzte Zeit als gar keine Stimme.
+        print("[Stimme] Zeitstempel abgelehnt (%s), versuche es ohne"
+              % str(e)[:90])
+        return _r8_stimme_alt(kanal, text, ziel, stimme_id)
+
+    ziel.parent.mkdir(parents=True, exist_ok=True)
+    _lade_datei(ergebnis["audio"]["url"], ziel)
+
+    zeiten = []
+    for schl in ("timestamps", "word_timestamps", "alignment", "words"):
+        if schl in (ergebnis or {}):
+            zeiten = _r8_zeiten_auslesen(ergebnis[schl])
+            if zeiten:
+                break
+    bei = worte_datei(ziel)
+    if zeiten:
+        try:
+            with open(bei, "w", encoding="utf-8") as f:
+                _r8_json.dump([{"w": w, "a": a, "e": e} for w, a, e in zeiten],
+                              f, ensure_ascii=False)
+            print("[Stimme] %d Wortzeiten gemessen" % len(zeiten))
+        except Exception as e:
+            print("[Stimme] Wortzeiten nicht ablegbar: %s" % str(e)[:90])
+    else:
+        try:
+            if bei.exists():
+                bei.unlink()       # alte Zeiten einer frueheren Fassung weg
+        except Exception:
+            pass
+        print("[Stimme] keine Wortzeiten geliefert - Untertitel werden geschaetzt")
+    return ziel
+
+
+def worte_lesen(ton):
+    """Die Wortzeiten zu einer Tonspur, oder eine leere Liste."""
+    try:
+        with open(worte_datei(ton), encoding="utf-8") as f:
+            d = _r8_json.load(f)
+        return [(x["w"], float(x["a"]), float(x["e"])) for x in d
+                if str(x.get("w") or "").strip()]
+    except Exception:
+        return []

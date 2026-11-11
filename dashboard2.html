@@ -810,26 +810,25 @@ function p70Karte(){
    +'</div></div></div>';
 }
 function tTexte(){
-  var o=p70Karte()+'<div class="karte">'
-   +reihe("Stil",knoepfe("untertitel_stil",S.einst.untertitel_stil||"klassisch",[["klassisch","klassisch"],["kino","Kino"],["fett","fett"],["wortweise","Wort fuer Wort"],["knall","Knall"],["karaoke","Karaoke"]]),"Knall = gesprochenes Wort in Signalfarbe. Karaoke = der Satz faerbt sich mit.")
-   +reihe("Gesprochenes Wort",farbregler("untertitel_farbe_aktiv",S.einst.untertitel_farbe_aktiv,farbStandard("aktiv")),"bei Wort fuer Wort, Knall und Karaoke")
-   +reihe("Nicht gesprochen",farbregler("untertitel_farbe_ruhe",S.einst.untertitel_farbe_ruhe,farbStandard("ruhe")),"die uebrigen Woerter in der Zeile")
-   +reihe("Höhe im Bild",regler("untertitel_hoehe",S.einst.untertitel_hoehe,utStandard("hoehe"),3,92,"%"),"Abstand von unten — 50 ist Bildmitte")
-   +reihe("Seitlich",regler("untertitel_seitlich",S.einst.untertitel_seitlich,0,-45,45,"%"),"0 ist mittig, minus nach links, plus nach rechts")
-   +reihe("Winkel",regler("untertitel_winkel",S.einst.untertitel_winkel,0,-30,30,"°"),"schräg gestellt — plus hebt das Zeilenende an")
-   +reihe("Rand",regler("untertitel_rand",S.einst.untertitel_rand,utStandard("rand"),0,30),"die harte Kante um die Buchstaben")
-   +reihe("Schatten",regler("untertitel_schatten",S.einst.untertitel_schatten,utStandard("schatten"),0,40),"wie weit er versetzt ist")
-   +reihe("Schattenrichtung",regler("untertitel_schattenwinkel",S.einst.untertitel_schattenwinkel,45,0,359,"°"),"45 ist rechts unten, 225 links oben — wirkt nur mit Schatten")
-   +reihe("Leuchten",regler("untertitel_leuchten",S.einst.untertitel_leuchten,0,0,40),"Schein um die übrigen Wörter, in deren Farbe")
-   +reihe("Leuchten gesprochen",regler("untertitel_leuchten_aktiv",S.einst.untertitel_leuchten_aktiv,(S.einst.untertitel_leuchten||0),0,40),"Schein um das Wort, das gerade gesprochen wird")
-   +reihe("Randfarbe",farbregler("untertitel_randfarbe",S.einst.untertitel_randfarbe,"#000000"),"nur die harte Kante — das Leuchten nimmt die Farbe des Wortes")
-   +reihe("An der Stimme ausrichten",schalter("untertitel_takt",S.einst.untertitel_takt!==false),"misst die Sprechpausen, damit der Text nicht vorauslaeuft")
-   +reihe("Schriftart",schriftWahl(),schriftHinweis())
-   +reihe("Größe",zahl("untertitel_groesse",S.einst.untertitel_groesse||48,1),"48 ist normal, höher = größer")
-   +reihe("Buchstabenabstand",regler("untertitel_abstand",S.einst.untertitel_abstand,0,0,30),"zieht die Buchstaben auseinander")
-   +reihe("Wörter gleichzeitig",knoepfe("untertitel_woerter",S.einst.untertitel_woerter||3,[[2,"2"],[3,"3"],[4,"4"],[5,"5"],[6,"6"]]))
-   +reihe("GROSSBUCHSTABEN",schalter("untertitel_caps",S.einst.untertitel_caps!==false))
-   +'</div>';
+  /* Ein fester Stil, der sitzt. Statt sechzehn Feldern bleiben zwei -
+     Groesse und Hoehe, je drei Stufen. Alles andere ist festgelegt:
+     ein bis zwei Woerter, eine Groesse, weiss, dicker schwarzer Rand,
+     gemischte Schreibweise, mittig im sicheren Streifen. */
+  var an=S.einst.untertitel_an!==false;
+  var o='<div class="karte p"><h2 class="kt">Untertitel</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:10px">'
+   +'Ein bis zwei Wörter, groß, weiß mit dickem schwarzem Rand, '
+   +'gemischte Schreibweise. Nichts wird grau, nichts springt in der Größe. '
+   +'Die Höhe hält sich von TikToks eigenen Knöpfen fern.</div>'
+   +reihe("Untertitel",schalter("untertitel_an",an));
+  if(an){
+    o+=reihe("Größe",knoepfe("untertitel_groesse",S.einst.untertitel_groesse||"normal",
+         [["klein","klein"],["normal","normal"],["gross","groß"]]))
+     +reihe("Höhe",knoepfe("untertitel_hoehe",S.einst.untertitel_hoehe||"normal",
+         [["tief","tief"],["normal","normal"],["hoch","hoch"]]),
+         "nur verschieben, wenn das Motiv der Szene genau dort sitzt");
+  }
+  o+='</div>';
   var ebAn=!!(S.einst.cta_anfang||S.einst.cta_mitte||S.einst.cta_ende!==false);
   o+='<div class="karte p"><h2 class="kt">Einblendung</h2>'
    +reihe("Am Anfang",schalter("cta_anfang",!!S.einst.cta_anfang))

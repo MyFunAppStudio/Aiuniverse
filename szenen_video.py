@@ -2730,3 +2730,153 @@ def _bewegungs_text(kanal, szene):
     leer = dict(szene)
     leer["regie"] = ""
     return _p84_bewegung_alt(kanal, leer)
+
+
+# ---------- Nachtrag r9: ein Untertitelstil, und er sitzt ----------
+#
+# Zwei Dinge auf einmal, weil sie dasselbe Ergebnis betreffen:
+#
+# 1. Ein fester Stil statt sechzehn Feldern. Ein bis zwei Woerter, EINE
+#    Groesse, weiss, dicker schwarzer Rand, gemischte Schreibweise, mittig.
+#    Keine grauen Reste von schon Gesagtem, keine Groessenspruenge in der
+#    Zeile - genau das war das Problem: eine Zeile, die bei jedem Wort die
+#    Hoehe wechselt, zwingt das Auge jedesmal neu scharfzustellen.
+#
+# 2. Die Zeiten werden gemessen statt geschaetzt. medien.py fordert bei
+#    fal Zeitstempel je Wort an und legt sie neben die Tonspur. Hier werden
+#    sie eingesammelt. Kommen keine, bleibt es bei der alten Schaetzung.
+
+_r9_plan_alt = plan_bauen
+_r9_ass_alt = _ass
+
+R9_WOERTER = 2          # hoechstens so viele Woerter gleichzeitig im Bild
+R9_ZEICHEN = 16         # und hoechstens so viele Zeichen
+R9_WEISS = "&H00FFFFFF"
+R9_MINDEST = 0.40       # kuerzer als das steht keine Einblendung
+
+
+def _r9_worte_einsammeln(eintrag, ordner):
+    """Die gemessenen Wortzeiten einer Szene, relativ zu ihrem Anfang.
+
+    Eine Szene kann aus mehreren Tonstuecken bestehen (Erzaehler und Figur
+    im Wechsel). Dann werden die Zeiten der Stuecke aneinandergehaengt und
+    um die Laenge der vorherigen verschoben.
+    """
+    try:
+        import medien
+    except Exception:
+        return []
+    if not hasattr(medien, "worte_lesen"):
+        return []
+    stuecke = eintrag.get("stuecke") or []
+    if stuecke:
+        raus, versatz = [], 0.0
+        for _figur, pfad, dauer in stuecke:
+            for w, a, e in medien.worte_lesen(pfad):
+                raus.append((w, a + versatz, e + versatz))
+            versatz += float(dauer or 0)
+        return raus
+    if eintrag.get("ton"):
+        return medien.worte_lesen(eintrag["ton"])
+    return []
+
+
+def plan_bauen(kanal, ordner):
+    """Wie bisher, haengt aber die gemessenen Wortzeiten an jede Szene."""
+    plan, daten = _r9_plan_alt(kanal, ordner)
+    gemessen = 0
+    for e in plan:
+        e["worte"] = _r9_worte_einsammeln(e, ordner)
+        if e["worte"]:
+            gemessen += 1
+    if plan:
+        print("[Untertitel] %d von %d Szenen mit gemessenen Wortzeiten%s"
+              % (gemessen, len(plan),
+                 "" if gemessen else " - es wird geschaetzt"))
+    return plan, daten
+
+
+def _r9_gruppen(worte_zeiten, max_w=R9_WOERTER, max_z=R9_ZEICHEN):
+    """Teilt gemessene Woerter in Haeppchen und gibt (Text, Anfang, Ende).
+
+    Getrennt wird an Satzzeichen und wenn es zu lang wird - und zusaetzlich
+    an einer echten Sprechpause: steht zwischen zwei Woertern mehr als eine
+    Drittelsekunde Stille, war dort ein Komma oder ein Atemzug, und die
+    Einblendung soll dort auch wechseln.
+    """
+    gruppen, akt = [], []
+    for i, (w, a, e) in enumerate(worte_zeiten):
+        probe = akt + [(w, a, e)]
+        zu_viel = akt and (len(probe) > max_w
+                           or len(" ".join(x[0] for x in probe)) > max_z)
+        if zu_viel:
+            gruppen.append(akt)
+            akt = [(w, a, e)]
+        else:
+            akt = probe
+        pause = (i + 1 < len(worte_zeiten)
+                 and worte_zeiten[i + 1][1] - e > 0.33)
+        if akt and (w[-1:] in ".!?:;" or pause):
+            gruppen.append(akt)
+            akt = []
+    if akt:
+        gruppen.append(akt)
+    return [(" ".join(x[0] for x in g), g[0][1], g[-1][2]) for g in gruppen if g]
+
+
+def _ass(plan, ziel, b, h, kanal=None):
+    """Ein Stil, eine Groesse, gemessene Zeiten wo vorhanden."""
+    import video_bauen as vb
+    k = kanal or {}
+    if k.get("untertitel_an") is False:
+        with open(ziel, "w", encoding="utf-8") as f:
+            f.write("")
+        return ziel
+
+    # Nur noch zwei Stellschrauben: Groesse und Hoehe, je drei Stufen.
+    stufen = {"klein": 0.85, "normal": 1.0, "gross": 1.18}
+    gr = stufen.get(str(k.get("untertitel_groesse") or "normal"), 1.0)
+    hoehen = {"tief": 0.13, "normal": 0.19, "hoch": 0.27}
+    hv = hoehen.get(str(k.get("untertitel_hoehe") or "normal"), 0.19)
+
+    schrift = vb._tt_schrift()
+    fs = max(26, int(h * 0.052 * gr))
+    rand = max(5, int(fs * 0.16))      # dicker Rand statt Schatten: haelt
+    schatten = 0                       # auf jedem Hintergrund stand
+    ml = int(b * 0.085)
+    mv = int(h * hv)
+
+    # vorn und hinten gleich: nichts wird grau, nichts springt
+    zeilen = [_ass_kopf(fs, rand, schatten, ml, mv, schrift,
+                        R9_WEISS, R9_WEISS, b, h)]
+
+    for s in plan:
+        if not s.get("untertitel") or not (s.get("text") or "").strip():
+            continue
+        gemessen = s.get("worte") or []
+        if gemessen:
+            gruppen = [(t, s["start"] + a, s["start"] + e)
+                       for t, a, e in _r9_gruppen(gemessen)]
+        else:
+            # Kein Zeitstempel bekommen - wie bisher nach Laenge schaetzen
+            stuecke = vb._tt_stuecke(_ohne_anfuehrung(s["text"]),
+                                     max_w=R9_WOERTER, max_z=R9_ZEICHEN)
+            if not stuecke:
+                continue
+            zeichen = [max(1, len(" ".join(x))) for x in stuecke]
+            summe = float(sum(zeichen))
+            t, gruppen = s["start"], []
+            for st, z in zip(stuecke, zeichen):
+                d = max(R9_MINDEST, s["dauer"] * z / summe)
+                gruppen.append((" ".join(st), t, min(t + d, s["start"] + s["dauer"])))
+                t += d
+        for text, anf, ende in gruppen:
+            if ende - anf < R9_MINDEST:
+                ende = anf + R9_MINDEST
+            text = text.replace("{", "(").replace("}", ")")
+            zeilen.append("Dialogue: 0,%s,%s,TT,,0,0,0,,{\\fad(70,70)}%s\n"
+                          % (vb._tt_zeit(anf), vb._tt_zeit(ende), text))
+
+    with open(ziel, "w", encoding="utf-8") as f:
+        f.write("".join(zeilen))
+    return ziel
