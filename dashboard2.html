@@ -626,6 +626,20 @@ function tFigurenAlt(){
    +'der Motor dafür muss zuerst gebaut werden.</p></div>';
 }
 
+/* Bildstimmung: ein Feld statt vier. Alte Kanaele werden mitgenommen. */
+var STIMMUNG_WOZU={
+ aus:"Die Bilder bleiben so, wie Flux sie gemalt hat.",
+ kalt:"Kühl und ernst, dunkle Ränder. Für Krimi, Mystery, ungeklärte Fälle.",
+ warm:"Abendsonne. Für Geschichte, Natur, Reise, alles Erzählende.",
+ hart:"Fast ohne Farbe, harter Kontrast. Für Krieg, Krisen, Doku."};
+function stimmungJetzt(){
+  var w=(S.einst.bildstimmung||"").toLowerCase();
+  if(STIMMUNG_WOZU[w])return w;
+  if(S.einst.look_an===false)return "aus";
+  w=(S.einst.look_stil||"kalt").toLowerCase();
+  return STIMMUNG_WOZU[w]?w:"kalt";
+}
+
 function tVideo(){
   var o=tArten();
   o+='<div class="karte p"><h2 class="kt">Format</h2>'
@@ -637,12 +651,13 @@ function tVideo(){
    +reihe("Bewegung im Bild",schalter("bewegung_an",S.einst.bewegung_an!==false),"aus = Standbilder stehen still, nur echte Clips bewegen sich")
    +reihe("Stärke",knoepfe("bewegung_staerke",S.einst.bewegung_staerke||"sanft",[["sanft","sanft"],["mittel","mittel"],["stark","stark"]]),"sanft reicht fast immer")
    +'</div>';
-  o+='<div class="karte p"><h2 class="kt">Look</h2>'
-   +reihe("Look an",schalter("look_an",S.einst.look_an!==false),"eine Farbkorrektur ueber alles, damit es wie ein Film wirkt")
-   +(S.einst.look_an===false?'':(
-      reihe("Stil",knoepfe("look_stil",S.einst.look_stil||"kalt",[["kalt","kalt"],["warm","warm"],["hart","hart"]]),"kalt = True Crime. hart = fast ohne Farbe.")
-     +reihe("Tiefen anheben",zahl("look_schatten",(S.einst.look_schatten==null?4:S.einst.look_schatten),1),"0 bis 20. Holt Zeichnung in dunkle Bilder. 0 = aus.")
-     +reihe("Filmkorn",zahl("look_korn",(S.einst.look_korn==null?7:S.einst.look_korn),1),"0 bis 30, 7 ist gut. 0 = kein Korn.")))
+  o+='<div class="karte p"><h2 class="kt">Bildstimmung</h2>'
+   +reihe("Stimmung",knoepfe("bildstimmung",stimmungJetzt(),
+     [["aus","aus"],["kalt","kalt"],["warm","warm"],["hart","hart"]]),
+     STIMMUNG_WOZU[stimmungJetzt()])
+   +'<div class="hinw">Eine Farbkorrektur über alle Bilder, damit sie wie ein Film '
+   +'zusammenpassen und nicht wie einzelne KI-Bilder. Körnung und Tiefen stellen '
+   +'sich passend mit ein.</div>'
    +'</div>';
   o+=stimmenKarte();
   o+='<div class="karte">'
@@ -940,7 +955,8 @@ function standKarte(){
          ["Automatik",jn(e.automatik_an)],["Stimme",jn(e.stimme_an!==false)],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
          ["Geräusche",jn(e.ambience_an)],["Telegram",jn(e.telegram_token&&e.telegram_chat)],
-         ["Tempo",h((e.tempo||"normal").replace("_"," "))]];
+         ["Tempo",h((e.tempo||"normal").replace("_"," "))],
+         ["Bildstimmung",h(stimmungJetzt())]];
   var o='<div class="karte p"><h2 class="kt">Eingestellt</h2><div class="raster">';
   z.forEach(function(x){o+='<div class="zl"><div class="zt">'+x[0]+'</div><div class="zw '
     +(x[1]==="aus"?"grau":"")+'">'+x[1]+'</div></div>'});
@@ -2082,6 +2098,7 @@ var SUCHE=[
  ["Abbrechen","machen","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
  ["Videoart","einst","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
  ["Tempo","einst","schnitt schnelligkeit einstellungen teilen erklaervideo"],
+ ["Bildstimmung","einst","look farbe korn filmkorn kalt warm hart farbkorrektur vignette tiefen"],
  ["Stimme an","einst","sprecher tts elevenlabs stimme"],
  ["Musik an","einst","musik lied hintergrund"],
  ["Geräusche","einst","ambience umgebung atmosphaere"],

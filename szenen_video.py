@@ -1159,7 +1159,7 @@ def _fertig(kanal, plan, daten, stumm, stimme, arbeit, ziel_pfad, gesamt, b, h,
     if _lk:
         filter_teile.append("%s%s[lk]" % (v, _lk))
         v = "[lk]"
-        print("[Szenen] Look: %s" % (kanal.get("look_stil") or "kalt"))
+        print("[Szenen] Bildstimmung: %s" % bildstimmung(kanal))
     if hat_ut:
         filter_teile.append("%sass='%s'" % (v, str(ass).replace("\\", "/").replace(":", "\\:")) + "[vid]")
         v = "[vid]"
@@ -2874,3 +2874,47 @@ def _ass(plan, ziel, b, h, kanal=None):
     with open(ziel, "w", encoding="utf-8") as f:
         f.write("".join(zeilen))
     return ziel
+
+
+# ---------- Nachtrag p62: eine Bildstimmung statt vier Feldern ----------
+#
+# Frueher: look_an (Schalter) + look_stil + look_schatten + look_korn.
+# Vier Felder, von denen drei niemand einstellen will. Jetzt ein Feld
+# "bildstimmung" mit vier Stellungen; Tiefen und Korn haengen fest dran.
+# Alte Kanaldateien ohne das neue Feld werden umgerechnet.
+
+P62_STIMMUNGEN = [
+    ["aus",  "aus",  None],
+    ["kalt", "kalt", {"look_korn": 7, "look_schatten": 4}],
+    ["warm", "warm", {"look_korn": 6, "look_schatten": 5}],
+    ["hart", "hart", {"look_korn": 9, "look_schatten": 3}],
+]
+P62_FEST = {a[0]: a[2] for a in P62_STIMMUNGEN}
+
+
+def bildstimmung(kanal):
+    """Welche Stimmung gilt. Nimmt alte Kanaele mit."""
+    k = kanal or {}
+    w = str(k.get("bildstimmung") or "").strip().lower()
+    if w in P62_FEST:
+        return w
+    if k.get("look_an") is False:
+        return "aus"
+    w = str(k.get("look_stil") or "kalt").strip().lower()
+    return w if w in P62_FEST else "kalt"
+
+
+_p62_look_alt = _p56_look
+
+
+def _p56_look(kanal):
+    """Filterkette aus der einen Stimmung."""
+    w = bildstimmung(kanal)
+    fest = P62_FEST.get(w)
+    if not fest:
+        return ""
+    k = dict(kanal or {})
+    k["look_an"] = True
+    k["look_stil"] = w
+    k.update(fest)
+    return _p62_look_alt(k)
