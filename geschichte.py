@@ -374,3 +374,43 @@ def vorschlag(kanal, thema=""):
         except Exception as e:
             print("[Geschichte] Thema nicht abgehakt:", e)
     return antwort
+
+
+# ---------- Nachtrag g8: Bewegung je Szene mitschreiben ----------
+#
+# Die Text-KI lieferte je Szene nur Satz und Bild. Die
+# Animationsanweisung blieb leer, und Stefan haette sie bei jeder
+# einzelnen Szene selbst eintippen muessen. Jetzt wird auch sie
+# abgefragt und als eigene, benannte Klammer in den Text geschrieben -
+# szenen.r13_trennen() sortiert sie danach ins richtige Feld.
+
+_g8_aus_paket_alt = aus_paket
+
+
+def aus_paket(paket):
+    p = paket or {}
+    szenen_ = p.get("szenen") or []
+    hat_bewegung = any(isinstance(s, dict) and (s.get("bewegung") or "").strip()
+                       for s in szenen_)
+    if not hat_bewegung:
+        return _g8_aus_paket_alt(paket)
+
+    zeilen = []
+    for s in szenen_:
+        if not isinstance(s, dict):
+            continue
+        satz = _sauber(s.get("text") or "")
+        if not satz:
+            continue
+        if ist_trenner(satz):
+            zeilen.append("###")
+            continue
+        bild = _sauber(s.get("bild") or "")
+        beweg = _sauber(s.get("bewegung") or "")
+        teile = [satz]
+        if bild:
+            teile.append("[BILD: %s]" % bild)
+        if beweg:
+            teile.append("[BEWEGUNG: %s]" % beweg)
+        zeilen.append("(%s)" % " ".join(teile))
+    return "\n\n".join(zeilen)
