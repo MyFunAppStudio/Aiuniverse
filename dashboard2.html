@@ -328,7 +328,6 @@ bildstimmung:"Eine Farbkorrektur, die über jedes Bild im Video gelegt wird. Sie
 
 stimme_energie:"Wie energisch der Sprecher klingt. Gilt überall da, wo bei der Szene selbst nichts anderes eingetragen ist. <i>ruhig</i> und <i>sachlich</i> sind für Erklärendes, <i>dramatisch</i> für Spannung. Zu viel Energie über ein ganzes Video wirkt schnell anstrengend — eine einzelne Szene darf dramatisch sein, ein ganzes Video selten.",
 
-kling_anteil:"Wie viel Prozent der Szenen als bewegter Clip statt als Standbild gebaut werden. Das kostet Geld: jede bewegte Szene geht durch ein Videomodell. Bei 0 bleibt alles Standbild. Gehört zur alten Bauweise — mit dem Szenenschalter („Avatare im Bild“ / „Nur Bild, bewegt“ / „Nur Bild, still“) entscheidest du das inzwischen je Szene selbst.",
 
 nachlauf:"Wie viele Sekunden nach dem letzten gesprochenen Wort noch stehenbleiben, bevor der Abspann kommt. Ohne das reißt das Video mitten im letzten Wort ab und wirkt abgehackt. 0,9 Sekunden sind ein guter Wert. Mehr als 2 wirkt wie eine Panne.",
 
@@ -357,7 +356,6 @@ modus:"Wer den Text schreibt. <i>Claude schreibt es</i> — du gibst nur Thema u
 
 sprachen_eins:"In welcher Sprache gesprochen und untertitelt wird. Die Stimme muss dazu passen — eine deutsche Stimm-ID liest englischen Text mit Akzent vor.",
 
-alt:"Zeigt Einstellungen aus der alten Bauweise wieder an: aufgeklebte Figuren, der Avatar mit Lippensync und das alte Animationsmodell. Für die jetzige Bauweise mit Kling brauchst du davon nichts. Lass es aus, dann ist das Dashboard kürzer."
 };
 
 function feldAus(s){var m=/setz\('([a-zA-Z0-9_]+)'/.exec(s||"");return m?m[1]:""}
@@ -604,7 +602,6 @@ function tMachen(){
 
 function tDarstellerSeite(){
   var o=tDarsteller();
-  if(S.alt)o+=tFigurenNurAlt();
   return o;
 }
 
@@ -640,19 +637,9 @@ function tEinst(){
    +falte("Musik",tMusik(),false)
    +falte("KI & Technik",tTechnik(),false)
    +falte("Kanäle",tKanaele(),false);
-  o+='<div class="karte">'
-   +reihe("Alte Funktionen",
-      '<button class="sch'+(S.alt?" an":"")+'" onclick="altUm()"><i></i></button>',
-      "aufgeklebte Figuren, Avatar, altes Animationsmodell","alt")
-   +'</div>';
   return o;
 }
 
-function altUm(){
-  S.alt=!S.alt;
-  try{localStorage.setItem("aiu_alt",S.alt?"1":"0")}catch(e){}
-  zeichne();
-}
 
 function tPrompt(){
   var modus=(S.einst.modus==="szenen")?"szenen":((S.einst.modus==="geschichte")?"geschichte":"auto");
@@ -731,23 +718,6 @@ function tVideo(){
    +'</div>';
   o+=stimmenKarte();
   o+=tTexte();
-  if(!S.modelle)ladeModelle();
-  var kl=(S.modelle&&((S.modelle.apis||{}).video||[]).filter(function(e){return e.url&&e.key})[0])||null;
-  if(S.alt)o+='<div class="karte p"><h2 class="kt">KI-Animation</h2>'
-   +(kl?reihe("Anteil bewegter Szenen",zahl("kling_anteil",(S.einst.kling_anteil==null?0:S.einst.kling_anteil)),
-       "Prozent, nur für Szenen ohne Anführungszeichen. Wo die Figur redet, gibt es immer einen Sprechclip.")
-      +'<div style="padding:11px 0 4px">'
-       +'<div class="lb" style="margin-bottom:6px">Was sich bewegen soll</div>'
-       +'<textarea id="bewegfeld" style="min-height:62px" placeholder="die Figur bewegt sich lebendig: Gewicht verlagert sich, Haare und Kleidung schwingen mit, kleine Gesten mit den Haenden, Kopf dreht sich leicht, Blick zur Kamera, Kamera bleibt ruhig"'
-       +' onchange="p86Feld(\'kling_prompt\',\'Bewegung im Bild\',\'bewegfeld\',this.value)">'+h(S.einst.kling_prompt||"")+'</textarea>'
-       +'<div style="margin-top:8px"><button class="knopf" onclick="bewegVorschlag()">Vorschlag einsetzen</button></div>'
-       +'<div class="hinw">Wo in Anführungszeichen geredet wird, kommt die Szene als erste dran, wenn der Prozentsatz nicht für alle reicht. Gemeint ist die Figur, nicht die Kamera. Der Satz der Szene geht automatisch mit, '
-       +'damit jede Szene eine andere Bewegung bekommt.</div></div>'
-      +'<div class="hinw" style="margin:6px 0 10px">Kostet je animierter Szene. Modell und Preis stehen unter KI &amp; Technik beim Slot „Animation". '
-       +'Was es für dieses Video macht, siehst du dort unter „Was ein Video kostet".</div>'
-     :'<div class="spaeter">Noch kein Animationsmodell mit Schlüssel eingetragen. '
-      +'Unter KI &amp; Technik beim Slot „Animation" ein Modell anlegen, dann erscheint hier der Regler.</div>')
-   +'</div>';
   o+='<div class="karte p"><h2 class="kt">Schluss</h2>'
    +reihe("Nachlauf",zahl("nachlauf",(S.einst.nachlauf===undefined?0.9:S.einst.nachlauf),1),
           "Sekunden, die nach dem letzten Wort noch stehenbleiben")
@@ -907,8 +877,6 @@ function tTechnik(){
    +zeileDienst("Bild · Flux Pro",a.bilder,(p.bilder||0)+" Bilder · "+(p.je_bild||0).toFixed(2)+" € je Bild",(((p.bilder||0)*(p.je_bild||0))||0).toFixed(2)+" €")
    +zeileDienst("Stimme",a.stimme,"über fal.ai",(p.stimme||0).toFixed(2)+" €")
    +zeileDienst("Referenzclip · Kling",a.ref,"noch nicht eingerichtet","—")
-   +(S.alt?zeileDienst("Animation · Kling",a.animation,"noch nicht eingerichtet","—")
-          +zeileDienst("Avatar · Sprechclips",a.avatar,"nicht eingerichtet","—"):"")
    +'</div>';
   o+='<div class="karte p"><h2 class="kt">Guthaben</h2>'
    +'<div class="r" style="padding-top:0"><div><div class="lb">fal.ai</div><div class="hint">Bilder und Stimme</div></div>'
@@ -1143,7 +1111,7 @@ function tTechnik(){
      sind raus. "video" (Bild bewegen) MUSS sichtbar sein - ohne das
      Modell geht die Schalterstellung "Nur Bild, bewegt" nicht. */
   (m.slots||[]).filter(function(s){
-    return S.alt||(s!=="avatar"&&s!=="sound");
+    return s!=="avatar"&&s!=="sound";
   }).forEach(function(s){
     var liste=(m.apis||{})[s]||[];
     o+='<div class="karte p" id="slot_'+s+'"><h2 class="kt">'+h(SLOTNAME[s]||s)+'</h2>'
@@ -1162,15 +1130,6 @@ function tTechnik(){
     o+='</div><button class="knopf" style="width:100%;margin-top:9px" onclick="modellNeu(\''+s+'\')">+ Eigenes Modell</button></div>';
   });
   o+=tgKarte();
-  if(S.alt)o+='<div class="karte p"><h2 class="kt">Avatar einrichten</h2>'
-   +'<div class="hinw" style="padding:0">Oben bei <b>Avatar</b> auf <b>+ Eigenes Modell</b> tippen:<br><br>'
-   +'Name <b>Kling Avatar</b><br>'
-   +'Adresse <b>fal-ai/kling-video/ai-avatar/v2/standard</b><br>'
-   +'Preis <b>0.05</b> je Sekunde<br>'
-   +'Schlüssel leer lassen — der von Kling wird mitbenutzt.<br><br>'
-   +'Danach bekommt jede Szene, in der die Figur in Anführungszeichen redet, '
-   +'einen Clip mit passendem Mund. Szenen ohne Anführungszeichen laufen wie bisher '
-   +'über die Animation.</div></div>';
   o+='<div class="karte p"><div class="hinw" style="padding:0">Der orange Punkt links ist das Modell, das benutzt wird. '
    +'Auf den Namen tippen zum Ändern. Schlüssel werden gespeichert, aber nie wieder angezeigt.</div></div>';
   return o;
@@ -1554,31 +1513,6 @@ function tSzenen(){
     mehr+='<div class="szz"><span class="szh">Stimmung</span><select onchange="szeneSetz(\''+s.id+'\',\'stimmung\',this.value)">'
       +(d.stimmungen||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.stimmung===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
       +'</select></div>';
-    if(S.alt){
-    if(!S.fig)ladeFiguren();
-    var fn=figurNamen();
-    mehr+='<div class="szz"><span class="szh">Figur</span><select onchange="szeneSetz(\''+s.id+'\',\'figur\',this.value)">'
-      +'<option value="">keine</option>'
-      +fn.map(function(n){return '<option value="'+h(n)+'"'+(s.figur===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
-      +'</select></div>';
-    if(s.figur){
-      var po=posenVon(s.figur);
-      mehr+='<div class="szz"><span class="szh">Pose</span><select onchange="szeneSetz(\''+s.id+'\',\'pose\',this.value)">'
-        +'<option value="">erste</option>'
-        +po.map(function(n){return '<option value="'+h(n)+'"'+(s.pose===n?" selected":"")+'>'+h(n)+'</option>'}).join("")
-        +'</select></div>';
-      mehr+='<div class="szz"><span class="szh">Platz</span><select onchange="szeneSetz(\''+s.id+'\',\'platz\',this.value)">'
-        +(((S.fig||{}).plaetze)||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.platz===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
-        +'</select><span class="szh">Größe</span><input type="text" style="width:54px" value="'+h(String(s.figur_groesse||55))
-        +'" onchange="szeneSetz(\''+s.id+'\',\'figur_groesse\',this.value)"><span class="szh">%</span></div>';
-      mehr+='<div class="szz"><span class="szh">Bewegung</span><select onchange="szeneSetz(\''+s.id+'\',\'figur_bewegung\',this.value)">'
-        +(((S.szenen||{}).figur_bewegungen)||[["","wie bei der Figur"]]).map(function(x){
-          return '<option value="'+x[0]+'"'+((s.figur_bewegung||"")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
-        +'</select></div>';
-    }
-    }
-    if(S.alt)mehr+='<div class="szz p89"><label class="hak"><input type="checkbox"'+(s.ki_animation?" checked":"")
-      +' onchange="szeneSetz(\''+s.id+'\',\'ki_animation\',this.checked)">Diese Szene per KI animieren</label></div>';
     o+='<div class="szz p90" style="gap:7px;flex-wrap:wrap">'
       +'<button class="knopf" onclick="szeneNeu(\''+s.id+'\','+(s.clip?"true":"false")+')">Bild neu</button>'
       +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\',\'bild\')">Eigenes Bild</button>'
@@ -2021,50 +1955,6 @@ function tDarsteller(){
   return o;
 }
 
-function tFigurenNurAlt(){
-  var d=S.fig;
-  if(!d){ladeFiguren();return '<div class="karte p"><div class="leer">lade…</div></div>'}
-  var o='';
-  if(!(d.figuren||[]).length)
-    o+='<div class="karte p"><div class="leer">noch keine Figur angelegt</div></div>';
-  (d.figuren||[]).forEach(function(f){
-    o+='<div class="karte p"><div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'
-     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+'</h2>'
-     +'<button class="ik rot" onclick="figWeg(\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>';
-    o+='<div class="szz"><span class="szh">Stimme</span><select onchange="figSetz(\''+h(f.name).replace(/'/g,"")+'\',\'stimme\',this.value)">'
-     +'<option value="">Kanalstimme</option>'
-     +(d.stimmen||[]).map(function(s){return '<option value="'+h(s[1])+'"'+(f.stimme===s[1]?" selected":"")+'>'+h(s[0])+'</option>'}).join("")
-     +'</select></div>';
-    o+='<div class="szz" style="margin-top:7px"><span class="szh">Bewegung</span>'
-     +'<select onchange="figBewegung(\''+h(f.name).replace(/'/g,"")+'\',this.value)">'
-     +((d.bewegungen||[["statisch","steht still"],["bewegt","atmet und wippt"],["animiert","Animationsschleife"]]))
-       .map(function(x){return '<option value="'+x[0]+'"'+((f.bewegung||"bewegt")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")
-     +'</select>'+(((f.bewegung||"bewegt")==="animiert"&&!f.hat_schleife)
-       ?'<span class="szh" style="color:#24D3E8">keine Schleife da — läuft als „bewegt"</span>':'')+'</div>';
-    o+='<div class="liste" style="margin-top:9px">';
-    if(!f.posen.length)o+='<div class="leer">keine Pose — lade ein Bild hoch</div>';
-    f.posen.forEach(function(p){
-      var sch=(p.art==="clip")?'':'<button class="ik" title="Hintergrund entfernen" onclick="poseFrei(\''+h(f.name).replace(/'/g,"")+'\',\''+h(p.datei).replace(/'/g,"")+'\')">✂</button>';
-      o+='<div class="e"><img src="/figur/'+encodeURIComponent(p.vorschau||p.datei)+'?k='+S.kanal+'" '
-       +'style="width:44px;height:58px;object-fit:contain;background:#0A0C12;border-radius:7px">'
-       +'<div class="tx"><div class="ti">'+h(p.name)+(p.art==="clip"?' · bewegt':'')+'</div><div class="me'+(p.frei?"":" warn")+'">'
-       +(p.frei?(p.art==="clip"?"Animationsschleife, läuft durch":"freigestellt"):"mit Hintergrund — wirkt im Video aufgeklebt")+'</div></div>'
-       +sch
-       +'<button class="ik rot" onclick="poseWeg(\''+h(f.name).replace(/'/g,"")+'\',\''+h(p.datei).replace(/'/g,"")+'\')">✕</button></div>';
-    });
-    o+='</div><div class="zw" style="margin-top:9px">'
-     +'<button class="knopf" style="flex:1" onclick="poseHoch(\''+h(f.name).replace(/'/g,"")+'\')">+ Pose (Bild)</button>'
-     +'<button class="knopf" style="flex:1" onclick="poseHochBewegt(\''+h(f.name).replace(/'/g,"")+'\')">+ Bewegte Figur</button>'
-     +'</div></div>';
-  });
-  o+='<button class="knopf or" style="width:100%;margin-bottom:10px" onclick="figNeu()">+ Neue Figur</button>';
-  o+='<div class="karte p"><div class="hinw" style="padding:0">Eine Figur ist ein Satz freigestellter Bilder — dieselbe Figur in verschiedenen Posen. '
-   +'Mit der Schere entfernst du einen einfarbigen Hintergrund. Im Szenen-Editor wählst du pro Szene Figur, Pose, Platz und Größe; '
-   +'die hier zugeordnete Stimme spricht dann diese Szene. '
-   +'„Bewegt" belebt dein vorhandenes Bild per Rechnung und kostet nichts. „Animationsschleife" braucht eine '
-   +'hochgeladene bewegte Figur mit durchsichtigem Hintergrund (MOV oder GIF).</div></div>';
-  return o;
-}
 function figBewegung(name,wert){
   return api("/api/figuren?k="+S.kanal,{aktion:"bewegung",name:name,wert:wert}).then(function(r){
     if(!r.ok)return melde(r.fehler||"ging nicht");ladeFiguren()});
@@ -2089,11 +1979,6 @@ function poseHochBewegt(n){
     x.send(f);
   };
   i.click();
-}
-function figurNamen(){return ((S.fig||{}).figuren||[]).map(function(f){return f.name})}
-function posenVon(n){
-  var f=((S.fig||{}).figuren||[]).filter(function(x){return x.name===n})[0];
-  return f?f.posen.map(function(p){return p.name}):[];
 }
 
 
@@ -2151,9 +2036,7 @@ var SUCHE=[
  ["Was passiert in der Szene","machen","regie bewegung anweisung szene clip"],
  ["Abspann","einst","schlusstafel ende teil 2 folgt folgen liken kommentieren"],
  ["Abspann-Bibliothek","einst","abspann hochladen standbild video mehrere zufall auswahl"],
- ["Sprechtempo","einst","woerter pro sekunde ruhig normal flott"],
- ["Alte Funktionen","einst","alt aufgeklebte figuren avatar animationsmodell schalter"],
- ["Animation","einst","kling video animation bewegte szene"]
+ ["Sprechtempo","einst","woerter pro sekunde ruhig normal flott"]
 ];
 var SUCHZIEL=null;
 
@@ -2349,11 +2232,6 @@ function ankerVorschlag(){
 }
 
 
-function bewegVorschlag(){
-  p86Vorschlag("kling_prompt","Bewegung im Bild","bewegfeld",
-    "die Figur bewegt sich lebendig: Gewicht verlagert sich, Haare und Kleidung schwingen mit, kleine Gesten mit den Haenden, Kopf dreht sich leicht, Blick zur Kamera, Kamera bleibt ruhig",
-    "Dieser Vorschlag setzt voraus, dass eine Figur im Bild steht.");
-}
 
 
 function textSchreiben(){
@@ -2416,7 +2294,6 @@ function teilWaehlen(i){
 
 /* ---------- Start ---------- */
 try{var _t=(location.search.match(/[?&]tab=([a-z]+)/)||[])[1];if(_t)S.tab=_t}catch(e){}
-try{S.alt=(localStorage.getItem("aiu_alt")==="1")}catch(e){S.alt=false}
 api("/api/schluessel")
  .then(function(s){S.schluessel=s;return laden()})
  .then(function(){setInterval(function(){if((S.daten.lauf||{}).laeuft)laden()},4000)});
