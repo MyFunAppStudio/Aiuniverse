@@ -452,7 +452,7 @@ function setz(feld,wert,zahlFeld){
   if(feld==="sprachen_eins"){d.sprachen=[wert];S.einst.sprachen=[wert];}
   else{d[feld]=wert;S.einst[feld]=wert;}
   api("/api/kanal?k="+S.kanal,d).then(function(){
-    if(["laenge","stimme_an","modus","vorlage","format"].indexOf(feld)>=0){
+    if(["laenge","modus","vorlage","format"].indexOf(feld)>=0){
       api("/api/preis?k="+S.kanal).then(function(x){S.preis=x;zeichne()})}
     else zeichne();
   });
@@ -661,9 +661,9 @@ function tVideo(){
    +'</div>';
   o+=stimmenKarte();
   o+='<div class="karte">'
-   +reihe("Stimme an",schalter("stimme_an",S.einst.stimme_an!==false),"aus für Build-Videos")
    +reihe("Musik an",schalter("musik_an",!!S.einst.musik_an))
-   +reihe("Geräusche",schalter("ambience_an",!!S.einst.ambience_an),"Umgebung passend zur Szene")
+   +'<div class="hinw">Ob gesprochen wird, stellst du je Szene ein '
+   +'(„Sprecher aus dem Off“ / „Die Avatare reden“ / „Niemand“).</div>'
    +'</div>';
   if(!S.modelle)ladeModelle();
   var kl=(S.modelle&&((S.modelle.apis||{}).video||[]).filter(function(e){return e.url&&e.key})[0])||null;
@@ -952,9 +952,9 @@ function standKarte(){
   var vn=(S.vorlagen[e.vorlage]||{}).name||e.vorlage||"—";
   var z=[["Vorlage",h(vn)],["Wie",modus],["Format",h(e.format||"9:16")],
          ["Sprache",h(sprachName((e.sprachen||["de"])[0]))],["Länge",(e.laenge||20)+" Sek."],
-         ["Automatik",jn(e.automatik_an)],["Stimme",jn(e.stimme_an!==false)],
+         ["Automatik",jn(e.automatik_an)],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
-         ["Geräusche",jn(e.ambience_an)],["Telegram",jn(e.telegram_token&&e.telegram_chat)],
+         ["Telegram",jn(e.telegram_token&&e.telegram_chat)],
          ["Tempo",h((e.tempo||"normal").replace("_"," "))],
          ["Bildstimmung",h(stimmungJetzt())]];
   var o='<div class="karte p"><h2 class="kt">Eingestellt</h2><div class="raster">';
@@ -2099,9 +2099,7 @@ var SUCHE=[
  ["Videoart","einst","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
  ["Tempo","einst","schnitt schnelligkeit einstellungen teilen erklaervideo"],
  ["Bildstimmung","einst","look farbe korn filmkorn kalt warm hart farbkorrektur vignette tiefen"],
- ["Stimme an","einst","sprecher tts elevenlabs stimme"],
  ["Musik an","einst","musik lied hintergrund"],
- ["Geräusche","einst","ambience umgebung atmosphaere"],
  ["Stimmen","einst","stimme id elevenlabs figur sprecher liste"],
  ["Grundstimmung","einst","stimmung ruhig lebendig dramatisch energie"],
  ["Stil-Anker","machen","stil anker gleich aussehen figur konsistent look"],
