@@ -565,16 +565,10 @@ def _schnitte(dauer, hoechst):
 
 
 def _knackspur(kanal, arbeit, gesamt, schnitte):
-    """Tonspur mit einem Geraeusch je Schnitt. None heisst: keine."""
-    art = (kanal.get("schnitt_ton") or "whoosh").strip().lower()
-    if art in ("", "aus") or not schnitte or gesamt <= 0.2:
-        return None
-    try:
-        import geraeusche
-        return geraeusche.spur(str(arbeit / "schnitte.wav"), gesamt, schnitte, art, 0.9)
-    except Exception as e:
-        print("[Szenen] Schnittgeraeusche aus:", e)
-        return None
+    """Frueher ein Geraeusch je Bildwechsel. Abgeschafft - am Fernseher
+    kommt beim Schnitt ja auch kein Ton. Bleibt als leere Huelle stehen,
+    damit alte Kanaleinstellungen mit schnitt_ton nichts kaputtmachen."""
+    return None
 
 
 NACHLAUF = 0.9      # Sekunden, die nach dem letzten Wort noch stehenbleiben

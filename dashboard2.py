@@ -490,36 +490,36 @@ def geschichte_stand(key):
 
 VOREINSTELLUNGEN = [
     ["erklaer", "Erklaervideo", {
-        "tempo": "schnell", "schnitt_ton": "whoosh", "schnitt_laut": 35,
+        "tempo": "schnell",
         "stimme_energie": 0.55, "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 10, "musik_laut": 70,
         "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
         "eb_art": "folgen", "eb_text": "FOLGEN", "eb_platz": "links_unten"}],
     ["fakten", "Fakten und Listen", {
-        "tempo": "sehr_schnell", "schnitt_ton": "pop", "schnitt_laut": 42,
+        "tempo": "sehr_schnell",
         "stimme_energie": 0.75, "untertitel_an": True, "untertitel_woerter": 2,
         "musik_an": True, "musik_leise": 14, "musik_laut": 85,
         "cta_anfang": True, "cta_mitte": False, "cta_ende": True,
         "eb_art": "folgen", "eb_text": "FOLGEN", "eb_platz": "links_unten"}],
     ["story", "Geschichte", {
-        "tempo": "normal", "schnitt_ton": "swoosh", "schnitt_laut": 26,
+        "tempo": "normal",
         "stimme_energie": 0.45, "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 11, "musik_laut": 62,
         "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
         "eb_art": "folgen", "eb_text": "MEHR?", "eb_platz": "links_unten"}],
     ["maerchen", "Maerchen", {
-        "tempo": "ruhig", "schnitt_ton": "aus", "schnitt_laut": 0,
+        "tempo": "ruhig",
         "stimme_energie": 0.15, "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 9, "musik_laut": 45,
         "cta_anfang": False, "cta_mitte": False, "cta_ende": False}],
     ["build", "Build und Prozess", {
-        "tempo": "schnell", "schnitt_ton": "klick", "schnitt_laut": 30,
+        "tempo": "schnell",
         "stimme_an": False, "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 60, "musik_laut": 85,
         "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
         "eb_art": "like", "eb_text": "LIKE", "eb_platz": "links_unten"}],
     ["firma", "Firmenvideo", {
-        "tempo": "schnell", "schnitt_ton": "swoosh", "schnitt_laut": 28,
+        "tempo": "schnell",
         "stimme_energie": 0.5, "untertitel_an": True, "untertitel_woerter": 3,
         "musik_an": True, "musik_leise": 12, "musik_laut": 68,
         "cta_anfang": False, "cta_mitte": False, "cta_ende": True,

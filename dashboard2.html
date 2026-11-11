@@ -674,10 +674,8 @@ function tVideo(){
   o+='<div class="karte p"><h2 class="kt">Schnitt</h2>'
    +reihe("Tempo",knoepfe("tempo",S.einst.tempo||"normal",
      [["ruhig","ruhig"],["normal","normal"],["schnell","schnell"],["sehr_schnell","sehr schnell"]]),
-     "Lange Bilder werden in mehrere Einstellungen geteilt")
-   +reihe("Geräusch beim Schnitt",knoepfe("schnitt_ton",S.einst.schnitt_ton||"whoosh",
-     [["aus","aus"],["whoosh","Whoosh"],["swoosh","Swoosh"],["pop","Pop"],["klick","Klick"]]))
-   +reihe("Lautstärke",zahl("schnitt_laut",(S.einst.schnitt_laut==null?35:S.einst.schnitt_laut)),"in Prozent")
+     "Gilt nur für Szenen auf „Nur Bild, still“. Lange Standbilder werden "
+     +"in mehrere Einstellungen geteilt. Clips bleiben immer am Stück.")
    +'</div>';
   return o;
 }
@@ -942,8 +940,7 @@ function standKarte(){
          ["Automatik",jn(e.automatik_an)],["Stimme",jn(e.stimme_an!==false)],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
          ["Geräusche",jn(e.ambience_an)],["Telegram",jn(e.telegram_token&&e.telegram_chat)],
-         ["Tempo",h((e.tempo||"normal").replace("_"," "))],
-         ["Schnittgeräusch",h(e.schnitt_ton||"whoosh")]];
+         ["Tempo",h((e.tempo||"normal").replace("_"," "))]];
   var o='<div class="karte p"><h2 class="kt">Eingestellt</h2><div class="raster">';
   z.forEach(function(x){o+='<div class="zl"><div class="zt">'+x[0]+'</div><div class="zw '
     +(x[1]==="aus"?"grau":"")+'">'+x[1]+'</div></div>'});
@@ -2085,8 +2082,6 @@ var SUCHE=[
  ["Abbrechen","machen","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
  ["Videoart","einst","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
  ["Tempo","einst","schnitt schnelligkeit einstellungen teilen erklaervideo"],
- ["Geräusch beim Schnitt","einst","whoosh swoosh pop klick schnittgeraeusch sound"],
- ["Lautstärke","einst","schnittgeraeusch pegel laut leise"],
  ["Stimme an","einst","sprecher tts elevenlabs stimme"],
  ["Musik an","einst","musik lied hintergrund"],
  ["Geräusche","einst","ambience umgebung atmosphaere"],
@@ -2262,7 +2257,7 @@ function tArten(){
    +(a.arten||[]).map(function(x){
       return '<button class="'+(a.jetzt===x[0]?"an":"")+'" onclick="artSetzen(\''+x[0]+'\')">'+h(x[1])+'</button>'}).join("")
    +'</div>'
-   +'<div class="hinw" style="margin-top:9px">Ein Tipp stellt Tempo, Geräusch, Stimmung, Musik und Einblendung passend ein. '
+   +'<div class="hinw" style="margin-top:9px">Ein Tipp stellt Tempo, Stimmung, Musik und Untertitel passend ein. '
    +'Danach kannst du jeden einzelnen Schalter weiter ändern — die Videoart ist nur ein Startpunkt.</div></div>';
   return o;
 }
