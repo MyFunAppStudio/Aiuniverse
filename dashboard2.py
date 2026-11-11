@@ -365,6 +365,8 @@ def szenen_schreiben(key, b):
         return szenen.entfernen(key, sid)
     if a == "musik_weg":
         return szenen.musik_setzen(key, "")
+    if a == "alle_weg":
+        return szenen.r10_alle_weg(key)
     return {"ok": False, "fehler": "Aktion unbekannt"}
 
 

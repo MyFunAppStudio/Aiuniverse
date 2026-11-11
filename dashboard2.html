@@ -694,8 +694,13 @@ function tSchreiben(){
 function tThemen(){
   var o='<div class="karte p"><h2 class="kt">Themenliste · '+(S.themen.offen||[]).length+' offen</h2><div class="liste">';
   if(!(S.themen.offen||[]).length)o+='<div class="leer">leer — dann denkt die Text-KI sich selbst etwas aus</div>';
+  var gew=(S.einst.geschichte_thema||"").trim().toLowerCase();
   (S.themen.offen||[]).forEach(function(t,i){
-    o+='<div class="e"><div class="tx"><div class="ti">'+(i+1)+'. '+h(t)+'</div></div>'
+    var an=(t.trim().toLowerCase()===gew);
+    o+='<div class="e"'+(an?' style="border-color:#24D3E8"':'')+'>'
+     +'<div class="tx" onclick="themaWaehlen(\''+h(t).replace(/'/g,"")+'\')">'
+     +'<div class="ti">'+(an?'▸ ':'')+(i+1)+'. '+h(t)+'</div>'
+     +'<div class="me">'+(an?'ist gewählt — Schreiben nimmt dieses':'antippen zum Auswählen')+'</div></div>'
      +'<button class="ik rot" onclick="themaWeg(\''+h(t).replace(/'/g,"")+'\')">✕</button></div>';
   });
   o+='</div><div style="display:flex;gap:7px;margin-top:10px">'
@@ -704,8 +709,9 @@ function tThemen(){
   var erl=(S.themen.erledigt||[]).slice(-6).reverse();
   o+='<div class="hinw" style="margin-top:12px">Erledigt: '+(S.themen.erledigt||[]).length
    +(erl.length?' · zuletzt '+h(erl.map(function(x){return x.thema}).join(", ")):'')+'</div>';
-  o+='<div class="hinw" style="padding-top:0">Das oberste Thema nimmt der Schreibknopf, '
-   +'wenn das Themenfeld leer ist.</div>'
+  o+='<div class="hinw" style="padding-top:0">Tipp ein Thema an, dann nimmt der Schreibknopf '
+   +'genau dieses. Ohne Auswahl nimmt er das oberste. Nach dem Schreiben wandert es zu '
+   +'<b>Erledigt</b> und ist beim nächsten Mal nicht mehr dran.</div>'
    +'<button class="knopf" style="width:100%" onclick="fragReset()">Gedächtnis leeren</button></div>';
   return o;
 }
@@ -1039,6 +1045,19 @@ function fragReset(){
 function themaNeu(){
   var v=(el("neuthema").value||"").trim();if(!v)return;
   api("/api/themen?k="+S.kanal,{hinzu:v}).then(function(x){S.themen=x;zeichne()});
+}
+function fragAlleSzenenWeg(n){
+  frage("Alle "+n+" Szenen löschen?",
+    "Die Liste wird leer. Die hochgeladenen Bilder und Clips bleiben im Ordner liegen — "
+    +"du kannst sie jederzeit wieder einfügen.","Alle löschen",
+    function(){api("/api/szenen?k="+S.kanal,{aktion:"alle_weg"}).then(function(r){
+      if(!r||!r.ok)return melde("Ging nicht");
+      S.szenen=null;ladeSzenen();melde((r.weg||0)+" Szenen gelöscht.")})},true);
+}
+function themaWaehlen(t){
+  var f=el("thema"); if(f)f.value=t;
+  var g=el("gsthema"); if(g)g.value=t;
+  setz("geschichte_thema",t);
 }
 function themaWeg(t){api("/api/themen?k="+S.kanal,{weg:t}).then(function(x){S.themen=x;zeichne()})}
 function kanalNeu(){
@@ -1521,6 +1540,7 @@ function tSzenen(){
 
   o+='<div class="karte p">'+kartenKopf("Szenen · "+li.length+" · etwa "+Math.round(szenenDauer())+" Sek.","szenentext");
   if(!li.length)o+='<div class="leer">noch nichts — lade dein erstes Bild hoch</div>';
+  else o+='<div style="margin:-2px 0 10px"><button class="knopf" onclick="fragAlleSzenenWeg('+li.length+')">Alle Szenen löschen</button></div>';
   li.forEach(function(s,i){
     var vor=(s.typ==="clip")
       ? '<video class="bildchen" controls preload="metadata" playsinline src="/eigen/'+encodeURIComponent(s.datei)+'?k='+S.kanal+'"></video>'

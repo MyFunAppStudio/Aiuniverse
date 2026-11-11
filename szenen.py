@@ -799,3 +799,14 @@ def fuer_anzeige(kanal):
     for s in d["szenen"]:
         s["wer"] = (roh.get(s["id"]) or {}).get("wer", [])
     return d
+
+
+# ---------- Nachtrag r10: alle Szenen auf einmal weg ----------
+
+def r10_alle_weg(kanal):
+    """Leert die Szenenliste. Die Dateien bleiben im Ordner liegen."""
+    d = laden(kanal)
+    n = len(d.get("szenen") or [])
+    d["szenen"] = []
+    speichern(kanal, d)
+    return {"ok": True, "weg": n}

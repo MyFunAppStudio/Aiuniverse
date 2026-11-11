@@ -351,3 +351,26 @@ def bildprompt(satz, stil="", figur_name="", zusatz=""):
         teile.append(zusatz.strip())
     teile.append(P84_SAUBER)
     return ", ".join(teile)
+
+
+# ---------- Nachtrag g2: Thema abhaken ----------
+#
+# naechstes() liefert immer das oberste offene Thema, aber erledigt()
+# wurde nirgends gerufen. Also stand nach dem Schreiben dasselbe Thema
+# wieder oben und der Schreibknopf nahm beim naechsten Mal dasselbe.
+# Jetzt wird ein Thema aus der Liste nach erfolgreichem Schreiben
+# abgehakt und wandert zu "erledigt".
+
+_g2_vorschlag_alt = vorschlag
+
+
+def vorschlag(kanal, thema=""):
+    antwort = _g2_vorschlag_alt(kanal, thema)
+    if (isinstance(antwort, dict) and antwort.get("ok")
+            and antwort.get("thema_aus_liste") and antwort.get("thema")):
+        try:
+            import themen
+            themen.erledigt(kanal, antwort["thema"])
+        except Exception as e:
+            print("[Geschichte] Thema nicht abgehakt:", e)
+    return antwort
