@@ -319,6 +319,10 @@ function zeichne(){
    Schluessel ist der Feldname. Das Fragezeichen baut reihe() selbst
    ein, sobald hier ein Eintrag steht. */
 var ERK={
+prompt:"Wer der Kanal ist und wie er klingt. Steht am Anfang jeder Anfrage an Claude: Rolle, Tonfall, Sprache, für wen das Video gemacht ist. Gilt für jedes Video dieses Kanals, egal welches Thema. Hier steht das <b>Wer und Wie</b>.",
+
+regeln:"Die harten Vorgaben, die bei jedem Schreiben zusätzlich mitgehen — eine Regel je Zeile. Hook in den ersten Sekunden, keine Begrüßung, keine Themenwiederholung, was nicht vorkommen darf. Hier steht das <b>Was darf und was nicht</b>. Claude bekommt Masterprompt und Regeln zusammen, dazu rechnet der Code Länge, Szenenzahl und Wortzahl selbst aus.",
+
 
 format:"Das Seitenverhältnis des fertigen Videos. <i>9:16</i> ist Hochkant für TikTok, Reels und Shorts — das ist deins. <i>4:5</i> ist der Instagram-Feed, <i>1:1</i> quadratisch, <i>16:9</i> das normale Querformat für YouTube. Das Format bestimmt auch, in welcher Form die Bilder gemalt werden — nachträglich umstellen heißt, die Bilder passen nicht mehr.",
 
@@ -637,6 +641,7 @@ function falte(titel,inhalt,offen){
 
 function tEinst(){
   var o=falte("Überblick",standKarte(),false)
+   +falte("Masterprompt & Regeln",tSchreiben(),false)
    +falte("Abspann",tAbspannBib(),false)
    +falte("Länge & Tempo",tAblauf(),false)
    +falte("Video & Ton",tVideo(),false)
@@ -657,10 +662,22 @@ function tPrompt(){
          "gilt für Text und Untertitel")+'</div>';
   if(modus==="szenen")return kopf+tSzenen();
   if(modus==="geschichte")return kopf+tThemen()+tGeschichte()+tSzenen();
-  var o=kopf+'<div class="karte p"><h2 class="kt">Masterprompt</h2>'
-   +'<textarea onchange="promptAendern(this.value)">'+h(S.einst.prompt||"")+'</textarea>'
-   +'<div class="hinw" style="margin-top:8px">Änderungen werden erst nach einer Abfrage gespeichert.</div></div>';
-  return o+tThemen();
+  return kopf+tThemen();
+}
+
+function tSchreiben(){
+  /* Masterprompt und Regeln aendern sich nicht je Video, sondern je
+     Kanal - deshalb stehen sie bei den Einstellungen und nicht da,
+     wo man ein Video startet. */
+  return '<div class="karte p">'+kartenKopf("Masterprompt","prompt")
+   +'<textarea onchange="promptAendern(this.value)" placeholder="DU BIST: ...">'
+   +h(S.einst.prompt||"")+'</textarea>'
+   +'<div class="hinw" style="margin-top:8px">Änderungen werden erst nach einer Abfrage gespeichert.</div></div>'
+   +'<div class="karte p">'+kartenKopf("Regeln","regeln")
+   +'<textarea onchange="regelnAendern(this.value)" placeholder="Eine Regel je Zeile">'
+   +h(S.einst.regeln||"")+'</textarea>'
+   +'<div class="hinw" style="margin-top:8px">Beides geht bei jedem Schreiben zusammen an Claude. '
+   +'Länge, Szenenzahl und Wortzahl rechnet der Code selbst aus — die musst du hier nicht hinschreiben.</div></div>';
 }
 
 function tThemen(){
@@ -1664,6 +1681,22 @@ function promptAendern(neu){
   el("pnein").onclick=function(){zu();zeichne()};
   el("pja").onclick=function(){zu();setz("prompt",neu)};
 }
+function regelnAendern(neu){
+  var alt=S.einst.regeln||"";
+  if(neu===alt)return;
+  var leer=!neu.trim();
+  var vorschau=leer?"<b>Die Regeln werden komplett geleert.</b>"
+    :"Neu:<br><br><i>"+h(neu.slice(0,180))+(neu.length>180?"…":"")+"</i>";
+  var text="Die Regeln gehen bei jedem Schreiben mit an Claude, zusätzlich zum Masterprompt.<br><br>"+vorschau;
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Regeln ändern?</h2>'
+   +'<p>'+text+'</p><div class="zw">'
+   +'<button class="knopf" id="rnein">Verwerfen</button>'
+   +'<button class="knopf '+(leer?"":"or")+'" id="rja"'
+   +(leer?' style="background:#9B2C3B;border-color:#9B2C3B;color:#fff;font-weight:700"':'')
+   +'>Speichern</button></div></div></div>';
+  el("rnein").onclick=function(){zu();zeichne()};
+  el("rja").onclick=function(){zu();setz("regeln",neu)};
+}
 
 
 /* ---------- Charaktere (Patch S10) ---------- */
@@ -2024,7 +2057,8 @@ var SUCHE=[
  ["Stil","machen","geschichte stil maerchen comic foto aquarell aussehen"],
  ["Figur","machen","geschichte figur held charakter gleich konsistent"],
  ["Wie das Video entsteht","machen","modus claude schreibt ich baue selbst szenen eigene bilder geschichte"],
- ["Masterprompt","machen","prompt anweisung thema stil text"],
+ ["Masterprompt","machen","prompt anweisung thema stil text rolle"],
+ ["Regeln","machen","regeln hook vorgaben verbote was nicht vorkommen darf"],
  ["Sprache","machen","sprache deutsch englisch uebersetzung"],
  ["Länge in Sekunden","einst","dauer laenge sekunden"],
  ["Thema","machen","themen liste naechstes video"],
