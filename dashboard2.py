@@ -1824,3 +1824,56 @@ if __name__ == "__main__":
     os.makedirs(REGELN, exist_ok=True)
     print("Dashboard 2 laeuft auf Port %d" % PORT)
     ThreadingHTTPServer(("0.0.0.0", PORT), Griff).serve_forever()
+
+
+# ---------- Nachtrag n1: strenge Pruefung fuer die Kopfzeile ----------
+#
+# _slot_stand sagt auch dann "eingerichtet", wenn gar kein Modell
+# eingetragen ist - es reicht, dass der fal.ai-Schluessel existiert.
+# Fuer die alte Kachelleiste war das egal. Fuer die neue Zeile "Das
+# fehlt noch" ist es falsch: "Clips mit Avataren" waere als fertig
+# gemeldet worden, obwohl kein Modell drinsteht und jede Szene mit
+# Avataren grau bleibt.
+#
+# Hier gilt ein Slot nur als bereit, wenn ein Eintrag existiert, der
+# eine Adresse hat und an einen Schluessel kommt.
+
+def slot_bereit(key, slot, *teile):
+    try:
+        eintraege = ((einstellungen.laden().get(key) or {}).get("apis") or {}).get(slot) or []
+    except Exception:
+        return False, ""
+    eintraege = [e for e in eintraege if isinstance(e, dict) and (e.get("url") or "").strip()]
+    if not eintraege:
+        return False, ""
+    nimm = None
+    for e in eintraege:
+        if e.get("aktiv"):
+            nimm = e
+            break
+    if nimm is None:
+        nimm = eintraege[0]
+    name = (nimm.get("name") or "").strip()
+    if (nimm.get("key") or "").strip():
+        return True, name
+    for teil in teile:
+        if schluessel(teil):
+            return True, name
+    return False, ""
+
+
+_n1_paare = [("text", "text", ("ANTHROPIC", "OPENAI")),
+             ("bilder", "bilder", ("FAL",)),
+             ("stimme", "stimme", ("FAL", "ELEVEN")),
+             ("ref", "ref", ("FAL", "KLING")),
+             ("video", "video", ("FAL", "KLING")),
+             ("musik", "musik", ("FAL",))]
+
+
+def api_stand(key=None):
+    raus = {}
+    for name, slot, teile in _n1_paare:
+        ok, wie = slot_bereit(key, slot, *teile)
+        raus[name] = ok
+        raus[name + "_name"] = wie
+    return raus

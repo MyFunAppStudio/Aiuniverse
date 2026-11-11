@@ -272,7 +272,7 @@ function zeigeKopf(){
   var fehlt=noetig.filter(function(x){return !a[x[0]]}).map(function(x){return x[1]});
   el("stand").innerHTML=fehlt.length
     ? '<button class="fehlt" onclick="zuSlot(\''+(noetig.filter(function(x){return !a[x[0]]})[0][0])+'\')">'
-      +'<b>'+fehlt.length+' Modell'+(fehlt.length>1?"e":"")+' fehlen noch:</b> '+h(fehlt.join(", "))
+      +'<b>'+(fehlt.length>1?fehlt.length+" Modelle fehlen":"Ein Modell fehlt")+' noch:</b> '+h(fehlt.join(", "))
       +' — antippen zum Eintragen</button>'
     : "";
 }
