@@ -658,3 +658,47 @@ def _ergebnis_holen(basis, key, start, letzter_stand, status_url, antwort_url):
 
 
 LETZTE_BEANSTANDUNG = ""
+
+
+# ---------- Nachtrag a3: jede Figur braucht beides ----------
+#
+# fal.ai antwortet mit 422 und sagt es woertlich:
+#   loc: body.elements[1]
+#   "Either frontal_image_url and reference_image_urls or video_url
+#    must be provided."
+#
+# Das Modell will je Figur BEIDES - ein Frontalbild UND mindestens ein
+# Referenzbild. ref_koerper hat reference_image_urls aber nur
+# geschrieben, wenn noch ein zweites Bild uebrig war. Bei zwei Figuren
+# und hoechstens vier Plaetzen bekommt die zweite genau ein Bild - und
+# ihr Element ging ohne Referenzliste raus. Darum ist jeder Clip mit
+# zwei Avataren gescheitert, einer mit einem allein waere
+# durchgelaufen.
+#
+# Jetzt gilt: ist kein weiteres Bild da, wird das Frontalbild selbst
+# als Referenz mitgeschickt. Doppelt kodiert wird es nicht.
+
+def ref_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16",
+                dauer_als_text=True):
+    dauer = int(max(3, min(15, round(float(sekunden or 5)))))
+    k = {"prompt": (prompt or "")[:2000],
+         "duration": str(dauer) if dauer_als_text else dauer,
+         "aspect_ratio": seite or "9:16"}
+    verteilt, hg = ref_verteilen(figuren, hintergrund)
+    elemente = []
+    for bilder in verteilt:
+        if not bilder:
+            continue
+        frontal = _daten_uri(bilder[0])
+        weitere = [_daten_uri(p) for p in bilder[1:]]
+        elemente.append({
+            "frontal_image_url": frontal,
+            # Kling verlangt eine nicht leere Liste. Ohne zweites Bild
+            # steht dort dasselbe noch einmal.
+            "reference_image_urls": weitere or [frontal],
+        })
+    if elemente:
+        k["elements"] = elemente
+    if hg:
+        k["image_urls"] = [_daten_uri(hg)]
+    return k
