@@ -574,9 +574,12 @@ def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,
         sag("Zeit abgelaufen nach %d Sekunden" % int(WARTE_MAX))
         return None
 
+    globals()["LETZTE_BEANSTANDUNG"] = ""
     fertig = _ergebnis_holen(basis, key, start, st, status_url, antwort_url)
     if not fertig:
-        sag("Ergebnis war unter keiner Adresse zu holen")
+        b = globals().get("LETZTE_BEANSTANDUNG") or ""
+        sag(("fal.ai lehnt die Anfrage ab - " + b) if b
+            else "Ergebnis war unter keiner Adresse zu holen")
         return None
     url = _video_url(fertig)
     if not url:
@@ -584,3 +587,74 @@ def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,
         return None
     sag("Clip wird geladen")
     return _laden(url, ziel)
+
+
+# ---------- Nachtrag a2: sagen, was fal.ai beanstandet ----------
+#
+# Beim Abholen des Ergebnisses kam "HTTP Error 422: Unprocessable
+# Entity" - und mehr nicht. Der Rumpf der Antwort enthaelt aber genau,
+# welches Feld fal.ai nicht passt. Der wurde weggeworfen, weil nur
+# str(f)[:70] gedruckt wurde. Status COMPLETED und trotzdem 422 heisst
+# bei fal: der Auftrag lief durch, das Ergebnis ist aber eine
+# Beanstandung unserer Anfrage.
+
+def _a2_fehlertext(f):
+    try:
+        roh = f.read().decode("utf-8", "replace")
+    except Exception:
+        roh = ""
+    roh = " ".join((roh or "").split())
+    code = getattr(f, "code", "")
+    return ("HTTP %s: %s" % (code, roh[:300])) if roh else ("HTTP %s" % code)
+
+
+_a2_ergebnis_alt = _ergebnis_holen
+
+
+def _ergebnis_holen(basis, key, start, letzter_stand, status_url, antwort_url):
+    rid = (start or {}).get("request_id") or (letzter_stand or {}).get("request_id") or ""
+    kandidaten = []
+
+    def dazu(u, woher):
+        if u and isinstance(u, str) and u.startswith("http") \
+                and u not in [k[0] for k in kandidaten]:
+            kandidaten.append((u, woher))
+
+    dazu((letzter_stand or {}).get("response_url"), "aus der Statusantwort")
+    dazu(antwort_url, "aus der Startantwort")
+    if status_url and status_url.endswith("/status"):
+        dazu(status_url[:-len("/status")], "Status ohne /status")
+    if rid:
+        teile = basis.rstrip("/").split("/")
+        if len(teile) >= 5:
+            dazu("/".join(teile[:5]) + "/requests/" + rid, "Grundadresse des Modells")
+        dazu(basis.rstrip("/") + "/requests/" + rid, "aus Adresse und Nummer")
+
+    if not kandidaten:
+        print("[Animation] Keine Ergebnisadresse bekommen")
+        return None
+
+    beanstandung = ""
+    for u, woher in kandidaten:
+        try:
+            antwort = _hole(u, key, zeit=90)
+        except urllib.error.HTTPError as f:
+            text = _a2_fehlertext(f)
+            print("[Animation] %s: %s" % (woher, text))
+            if getattr(f, "code", 0) == 422 and not beanstandung:
+                beanstandung = text
+            continue
+        except Exception as f:
+            print("[Animation] %s: %s" % (woher, str(f)[:70]))
+            continue
+        if _video_url(antwort):
+            print("[Animation] Ergebnis geholt (%s)" % woher)
+            return antwort
+        print("[Animation] %s: kein Video in der Antwort" % woher)
+    if beanstandung:
+        print("[Animation] fal.ai beanstandet die Anfrage: %s" % beanstandung)
+        globals()["LETZTE_BEANSTANDUNG"] = beanstandung
+    return None
+
+
+LETZTE_BEANSTANDUNG = ""
