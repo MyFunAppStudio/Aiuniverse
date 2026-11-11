@@ -1697,7 +1697,17 @@ def _r5_einen(k, sid):
                         "clip_%s_%s.mp4" % (re.sub(r"[^A-Za-z0-9]+", "", str(sid))[:12],
                                             time.strftime("%H%M%S")))
 
+    # animation.erzeuge_referenz sagt den echten Grund ueber melden()
+    # durch - "Zu viele Referenzen", die Antwort von fal.ai und so
+    # weiter. Der wurde danach von einer Standardmeldung
+    # ueberschrieben, und im Dashboard stand nur "Siehe Zeilen oben",
+    # wo gar nichts zu sehen war. Jetzt wird die letzte Durchsage
+    # aufgehoben und als Fehlertext benutzt.
+    letzte = {"text": ""}
+
     def melden(t):
+        if t:
+            letzte["text"] = str(t)
         szenen.r3_stand_setzen(k, sid, "laeuft", t)
         with _R5_SPERRE:
             if k in _R5_LAEUFT:
@@ -1708,10 +1718,11 @@ def _r5_einen(k, sid):
                                       dauer, ziel,
                                       kanal.get("format") or "9:16", melden)
     if not pfad or not os.path.exists(ziel):
-        szenen.r3_stand_setzen(k, sid, "fehler",
-                               "Das Modell hat keinen Clip geliefert. "
-                               "Siehe Zeilen oben.")
-        return False, "kein Clip"
+        grund = (letzte["text"] or "").strip()
+        if grund in ("", "wird geschickt"):
+            grund = "Das Modell hat keinen Clip geliefert."
+        szenen.r3_stand_setzen(k, sid, "fehler", grund[:400])
+        return False, grund[:200]
     r = szenen.r3_clip_setzen(k, sid, os.path.basename(ziel))
     if not r.get("ok"):
         szenen.r3_stand_setzen(k, sid, "fehler", r.get("fehler") or "nicht angenommen")
