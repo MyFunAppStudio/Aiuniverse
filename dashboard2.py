@@ -433,11 +433,14 @@ def telegram_test(key):
 
 
 def api_stand(key=None):
+    # Die Slots avatar und sound sind raus. ref ("Clips mit Avataren")
+    # fehlte hier, obwohl ohne ihn keine Szene mit Avataren gebaut wird.
     paare = [("text", "text", ("ANTHROPIC", "OPENAI")),
              ("bilder", "bilder", ("FAL",)),
              ("stimme", "stimme", ("FAL", "ELEVEN")),
-             ("avatar", "avatar", ("HEDRA",)),
-             ("animation", "video", ("KLING",))]
+             ("ref", "ref", ("FAL", "KLING")),
+             ("video", "video", ("FAL", "KLING")),
+             ("musik", "musik", ("FAL",))]
     raus = {}
     for name, slot, teile in paare:
         ok, wie = _slot_stand(key, slot, *teile)
