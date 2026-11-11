@@ -156,3 +156,32 @@ def loeschen(key, mit_videos=False):
         except Exception:
             pass
     return None
+
+
+# ---------- Nachtrag k2: Kanal ohne Vorlage anlegen ----------
+#
+# Die Vorlagen sind raus. Sie haben einmalig fuenf Werte in den neuen
+# Kanal kopiert, von denen drei inzwischen tot sind (stimme_an,
+# automatik, bilder_pro_minute). Uebrig waren Schreibanweisung und
+# Laenge - und die Schreibanweisung steht sowieso im Masterprompt des
+# Kanals, den man im Dashboard bearbeitet. Ein neuer Kanal faengt
+# jetzt leer an. vorlagen.py bleibt liegen, wird nicht mehr gerufen.
+
+_k2_anlegen_alt = anlegen
+
+
+def anlegen(name, vorlage=None, sprache="de"):
+    d = _daten()
+    key = neuer_key()
+    d[key] = {
+        "id": key,
+        "emoji": "\U0001F3AC",
+        "name": str(name or "Neuer Kanal").strip(),
+        "sprachen": [sprache or "de"],
+        "prompt": "",
+        "laenge": 20,
+        "untertitel_an": True,
+        "format": "9:16",
+    }
+    einstellungen.speichern(d)
+    return key

@@ -1022,8 +1022,7 @@ class Griff(BaseHTTPRequestHandler):
             return self.sende({"ok": True})
 
         if w == "/api/kanal_neu":
-            key = kanaele.anlegen(b.get("name"), b.get("vorlage") or "erklaer",
-                                  b.get("sprache") or "de")
+            key = kanaele.anlegen(b.get("name"), None, b.get("sprache") or "de")
             return self.sende({"ok": True, "key": key})
 
         if w == "/api/kanal_klon":

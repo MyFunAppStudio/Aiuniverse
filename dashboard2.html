@@ -259,8 +259,7 @@ function laden(){
 function zeigeKopf(){
   var k=kanalDaten();
   el("knam").textContent=k?k.name:"Kein Kanal";
-  var vn=(S.vorlagen[k&&k.vorlage]||{}).name||(k?k.vorlage:"");
-  el("kunt").textContent=k?(vn+" · "+sprachName((k.sprachen||["de"])[0])+" · "+(S.einst.format||"9:16")):"";
+  el("kunt").textContent=k?(sprachName((k.sprachen||["de"])[0])+" · "+(S.einst.format||"9:16")):"";
   el("pt").className="punkt"+(k?"":" aus");
   var a=S.daten.apis||{};
   var g=S.guthaben&&S.guthaben.ok?(Number(S.guthaben.betrag).toFixed(2)+" "+(S.guthaben.waehrung==="USD"?"$":S.guthaben.waehrung)):"—";
@@ -314,7 +313,6 @@ function zeichne(){
    Schluessel ist der Feldname. Das Fragezeichen baut reihe() selbst
    ein, sobald hier ein Eintrag steht. */
 var ERK={
-videoart:"Ein Startpunkt, kein Korsett. Tippst du eine Videoart an, stellen sich Tempo, Bildstimmung, Musik und Untertitel auf Werte, die für diese Sorte Video erfahrungsgemäß passen. Danach kannst du jeden Schalter einzeln weiter ändern — die Videoart merkt sich das nicht und redet dir nicht mehr rein.",
 
 format:"Das Seitenverhältnis des fertigen Videos. <i>9:16</i> ist Hochkant für TikTok, Reels und Shorts — das ist deins. <i>4:5</i> ist der Instagram-Feed, <i>1:1</i> quadratisch, <i>16:9</i> das normale Querformat für YouTube. Das Format bestimmt auch, in welcher Form die Bilder gemalt werden — nachträglich umstellen heißt, die Bilder passen nicht mehr.",
 
@@ -716,7 +714,7 @@ function stimmungJetzt(){
 }
 
 function tVideo(){
-  var o=tArten();
+  var o='';
   o+='<div class="karte p">'+kartenKopf("Format","format")
    +knoepfe("format",S.einst.format||"9:16",[["9:16","9:16 TikTok"],["4:5","4:5 Insta"],["1:1","1:1"],["16:9","16:9 YouTube"]])+'</div>';
   /* "Bilder pro Minute" und "Serie: Teile" sind raus: die Zahl der Szenen
@@ -935,24 +933,23 @@ function tKanaele(){
   var ks=S.daten.kanaele||[];
   var o='<div class="karte"><div class="liste">';
   ks.forEach(function(k){
-    var vn=(S.vorlagen[k.vorlage]||{}).name||k.vorlage;
     o+='<div class="e'+(k.eltern?" kind":"")+'">'
      +'<span class="punkt'+(k.key===S.kanal?"":" aus")+'"></span>'
      +'<div class="tx" onclick="waehle(\''+k.key+'\')"><div class="ti">'+h(k.name)+'</div>'
-     +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(vn)+' · '+h(sprachName((k.sprachen||["de"])[0]))+' · '+(k.videos||0)+' Videos</div></div>'
+     +'<div class="me">'+(k.eltern?"Geschwisterkanal · ":"")+h(sprachName((k.sprachen||["de"])[0]))+' · '+(k.videos||0)+' Videos</div></div>'
      +(k.eltern?'<button class="ik" title="lösen" onclick="fragLoesen(\''+k.key+'\')">⛓</button>':'')
      +'<button class="ik rot" onclick="fragKanalWeg(\''+k.key+'\',\''+h(k.name).replace(/'/g,"")+'\')">✕</button></div>';
   });
   o+='</div></div>';
   o+='<div class="karte p"><h2 class="kt">Neuer Kanal</h2>'
    +'<input type="text" id="nname" class="breit" placeholder="Name" style="margin-bottom:8px">'
-   +'<div class="r" style="padding-top:4px"><div class="lb">Vorlage</div><select id="nvorlage">'
-   +Object.keys(S.vorlagen).map(function(v){return '<option value="'+v+'">'+h(S.vorlagen[v].name)+'</option>'}).join("")
-   +'</select></div>'
    +'<div class="r"><div class="lb">Sprache</div><select id="nsprache">'
    +[["de","Deutsch"],["en","Englisch"],["es","Spanisch"],["fr","Französisch"]].map(function(s){return '<option value="'+s[0]+'">'+s[1]+'</option>'}).join("")
    +'</select></div>'
-   +'<button class="knopf or" style="width:100%;margin-top:10px;padding:14px" onclick="kanalNeu()">Kanal anlegen</button></div>';
+   +'<button class="knopf or" style="width:100%;margin-top:10px;padding:14px" onclick="kanalNeu()">Kanal anlegen</button>'
+   +'<div class="hinw" style="margin-top:9px">Was für eine Sorte Video der Kanal macht, '
+   +'steht im Masterprompt des Kanals — im Reiter <b>Video machen</b>. Bild und Ton stellst '
+   +'du hier in den Einstellungen ein.</div></div>';
   var k=kanalDaten();
   if(k){
     o+='<div class="karte p"><h2 class="kt">Von '+h(k.name)+' ableiten</h2>'
@@ -979,8 +976,7 @@ function standKarte(){
   var e=S.einst||{}, k=kanalDaten()||{};
   var modus=(e.modus==="szenen")?"Eigene Szenen":
             ((e.modus==="geschichte")?"Deine Geschichte":"Claude schreibt");
-  var vn=(S.vorlagen[e.vorlage]||{}).name||e.vorlage||"—";
-  var z=[["Vorlage",h(vn)],["Wie",modus],["Format",h(e.format||"9:16")],
+  var z=[["Wie",modus],["Format",h(e.format||"9:16")],
          ["Sprache",h(sprachName((e.sprachen||["de"])[0]))],["Länge",(e.laenge||20)+" Sek."],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
          ["Telegram",jn(e.telegram_token&&e.telegram_chat)],
@@ -1041,7 +1037,7 @@ function themaNeu(){
 function themaWeg(t){api("/api/themen?k="+S.kanal,{weg:t}).then(function(x){S.themen=x;zeichne()})}
 function kanalNeu(){
   var n=(el("nname").value||"").trim();if(!n)return melde("Bitte einen Namen eingeben.");
-  api("/api/kanal_neu",{name:n,vorlage:el("nvorlage").value,sprache:el("nsprache").value}).then(function(r){S.kanal=r.key;laden()});
+  api("/api/kanal_neu",{name:n,sprache:el("nsprache").value}).then(function(r){S.kanal=r.key;laden()});
 }
 function klon(){
   var n=(el("kname").value||"").trim();if(!n)return melde("Bitte einen Namen eingeben.");
@@ -2119,7 +2115,6 @@ var SUCHE=[
  ["Anteil bewegter Szenen","einst","kling animation ki bewegt prozent anteil video"],
  ["Bewegungs-Anweisung","einst","kling prompt kamerafahrt animation"],
  ["Abbrechen","machen","stopp stoppen beenden abbrechen lauf anhalten geschichte"],
- ["Videoart","einst","voreinstellung erklaervideo fakten maerchen story build firmenvideo art typ"],
  ["Tempo","einst","schnitt schnelligkeit einstellungen teilen erklaervideo"],
  ["Bildstimmung","einst","look farbe korn filmkorn kalt warm hart farbkorrektur vignette tiefen"],
  ["Musik an","einst","musik lied hintergrund an aus"],
@@ -2286,18 +2281,6 @@ function geschichteStart(){
 /* ---------- Videoart als Voreinstellung (Patch P10) ---------- */
 function ladeArten(){return api("/api/arten?k="+S.kanal).then(function(d){S.arten=d;zeichne()})}
 
-function tArten(){
-  var a=S.arten;
-  if(!a){ladeArten();return ''}
-  var o='<div class="karte p"'+'>'+kartenKopf("Videoart","videoart")
-   +'<div class="pills">'
-   +(a.arten||[]).map(function(x){
-      return '<button class="'+(a.jetzt===x[0]?"an":"")+'" onclick="artSetzen(\''+x[0]+'\')">'+h(x[1])+'</button>'}).join("")
-   +'</div>'
-   +'<div class="hinw" style="margin-top:9px">Ein Tipp stellt Tempo, Stimmung, Musik und Untertitel passend ein. '
-   +'Danach kannst du jeden einzelnen Schalter weiter ändern — die Videoart ist nur ein Startpunkt.</div></div>';
-  return o;
-}
 
 function artSetzen(n){
   api("/api/voreinstellung?k="+S.kanal,{name:n}).then(function(r){
@@ -2434,7 +2417,7 @@ function teilWaehlen(i){
 /* ---------- Start ---------- */
 try{var _t=(location.search.match(/[?&]tab=([a-z]+)/)||[])[1];if(_t)S.tab=_t}catch(e){}
 try{S.alt=(localStorage.getItem("aiu_alt")==="1")}catch(e){S.alt=false}
-api("/api/vorlagen").then(function(v){S.vorlagen=v;return api("/api/schluessel")})
+api("/api/schluessel")
  .then(function(s){S.schluessel=s;return laden()})
  .then(function(){setInterval(function(){if((S.daten.lauf||{}).laeuft)laden()},4000)});
 </script>
