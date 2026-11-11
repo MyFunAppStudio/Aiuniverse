@@ -41,7 +41,7 @@ h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
 .frag{flex:0 0 auto;width:18px;height:18px;line-height:16px;padding:0;border-radius:50%;background:#1B1F2C;border:1px solid #2A3147;color:#8593AC;font:inherit;font-size:11px;cursor:pointer;vertical-align:middle}
 .frag.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;font-weight:600}
 .erk{font-size:11.5px;line-height:1.55;color:#A3B3CA;background:#131824;border-left:2px solid #24D3E8;border-radius:0 7px 7px 0;padding:9px 11px;margin:0 0 11px}
-.erk b{color:#D7E0EE}.erk i{color:#C7D2E2;font-style:normal;font-weight:600}
+.erk b{color:#D7E0EE}.erk i{color:#9FD9E4;font-style:italic}
 .r label,.r .lb{font-size:12.5px;color:#C0C9DA}
 .r .lb{display:flex;align-items:center;gap:6px}
 .r .hint{font-size:10.5px;color:#76849E;margin-top:2px}
@@ -319,6 +319,8 @@ function zeichne(){
    Schluessel ist der Feldname. Das Fragezeichen baut reihe() selbst
    ein, sobald hier ein Eintrag steht. */
 var ERK={
+szenentext:"<b>So schreibst du den Text einer Szene.</b><br><br><b>Normaler Text</b> wird vom Erzähler gesprochen — der Stimme, die bei den Stimmen auf aktiv steht.<br><br><b>In Anführungszeichen</b> spricht ein Avatar:<br><i>Der Vulkan rumort seit Tagen. „Wir müssen hier weg!“ Niemand hört auf ihn.</i><br>Alles zwischen den Anführungszeichen bekommt die Stimme des Avatars, der bei dieser Szene unter <b>Im Bild</b> an erster Stelle steht. Dafür muss ein Stimmen-Eintrag genauso heißen wie der Avatar. Der Rest bleibt beim Erzähler. Es gehen alle Sorten Anführungszeichen.<br><br><b>In eckigen Klammern</b> steht die Regieanweisung:<br><i>[Kamera fährt langsam zurück, Asche fällt]</i><br>Die wird nicht gesprochen, steht in keinem Untertitel und geht nur an das Modell, das die Szene bewegt. Sie beschreibt, was im Bild passiert — nicht was gesagt wird.<br><br><b>Alles zusammen:</b><br><i>Am Morgen zitterte die Erde. „Lauf!“ schrie sie. [Staub wirbelt auf, Menschen rennen durchs Bild]</i>",
+
 prompt:"Wer der Kanal ist und wie er klingt. Steht am Anfang jeder Anfrage an Claude: Rolle, Tonfall, Sprache, für wen das Video gemacht ist. Gilt für jedes Video dieses Kanals, egal welches Thema. Hier steht das <b>Wer und Wie</b>.",
 
 regeln:"Die harten Vorgaben, die bei jedem Schreiben zusätzlich mitgehen — eine Regel je Zeile. Hook in den ersten Sekunden, keine Begrüßung, keine Themenwiederholung, was nicht vorkommen darf. Hier steht das <b>Was darf und was nicht</b>. Claude bekommt Masterprompt und Regeln zusammen, dazu rechnet der Code Länge, Szenenzahl und Wortzahl selbst aus.",
@@ -539,12 +541,10 @@ function setz(feld,wert,zahlFeld){
 
 /* ---------- Reiter ---------- */
 function tStartKopf(){
-  /* Nur noch, was du vor jedem Video anfasst. Alles Dauerhafte steht
-     unter Einstellungen in "Länge & Abspann". */
-  return '<div class="karte"><div class="r"><div><div class="lb">Kanalname</div>'
-   +'<div class="hint">'+h((kanalDaten()||{}).name||"")+'</div></div>'
-   +'<button class="knopf" onclick="kanalUmbenennen()">ändern</button></div></div>'
-   +'<div class="karte">'
+  /* Nur noch, was du vor jedem einzelnen Video anfasst. Der Kanalname
+     steht bei den Kanaelen, Masterprompt und Regeln in den
+     Einstellungen. */
+  return '<div class="karte">'
    +reihe("Thema von Hand",'<input type="text" id="thema" placeholder="leer = nächstes aus der Liste" style="width:160px;text-align:left">',"leer lassen nimmt das nächste Thema")
    +'</div>';
 }
@@ -607,7 +607,7 @@ function tStart(){
 function tMachen(){
   /* Der Ablauf von oben nach unten: was gebaut wird, woraus, dann die
      Szenen mit ihren Clips, dann was gerade laeuft und was fertig ist. */
-  return tStartKopf()+tAbspannWahl()+tPrompt()+tLauf()+tVideos();
+  return tWie()+tStartKopf()+tAbspannWahl()+tPrompt()+tLauf()+tVideos();
 }
 
 function tDarstellerSeite(){
@@ -652,17 +652,26 @@ function tEinst(){
 }
 
 
-function tPrompt(){
-  var modus=(S.einst.modus==="szenen")?"szenen":((S.einst.modus==="geschichte")?"geschichte":"auto");
-  var kopf='<div class="karte">'+reihe("Wie das Video entsteht",
+function modusJetzt(){
+  return (S.einst.modus==="szenen")?"szenen":((S.einst.modus==="geschichte")?"geschichte":"auto");
+}
+function tWie(){
+  /* Steht ganz oben, weil diese eine Auswahl bestimmt, was darunter
+     ueberhaupt kommt. */
+  var modus=modusJetzt();
+  return '<div class="karte">'+reihe("Wie das Video entsteht",
     wahl("modus",modus,[["auto","Claude schreibt es"],["geschichte","Text ansehen und ändern"],["szenen","Ich baue es selbst"]]),
     modus==="szenen"?"Deine Bilder, Clips und Texte":
-    (modus==="geschichte"?"Thema rein, Text zum Gegenlesen, dann erzeugen":"Thema rein, fertiges Video raus"))+'</div>';
-  kopf+='<div class="karte">'+reihe("Sprache",wahl("sprachen_eins",(S.einst.sprachen||["de"])[0],SPRACHEN),
-         "gilt für Text und Untertitel")+'</div>';
-  if(modus==="szenen")return kopf+tSzenen();
-  if(modus==="geschichte")return kopf+tThemen()+tGeschichte()+tSzenen();
-  return kopf+tThemen();
+    (modus==="geschichte"?"Thema rein, Text zum Gegenlesen, dann erzeugen":"Thema rein, fertiges Video raus"))
+   +reihe("Sprache",wahl("sprachen_eins",(S.einst.sprachen||["de"])[0],SPRACHEN),
+          "gilt für Text und Untertitel")
+   +'</div>';
+}
+function tPrompt(){
+  var modus=modusJetzt();
+  if(modus==="szenen")return tSzenen();
+  if(modus==="geschichte")return tThemen()+tGeschichte()+tSzenen();
+  return tThemen();
 }
 
 function tSchreiben(){
@@ -932,6 +941,10 @@ function tKanaele(){
      +'<button class="ik rot" onclick="fragKanalWeg(\''+k.key+'\',\''+h(k.name).replace(/'/g,"")+'\')">✕</button></div>';
   });
   o+='</div></div>';
+  var jetzt=kanalDaten();
+  if(jetzt)o+='<div class="karte">'
+   +reihe("Name dieses Kanals",'<button class="knopf" onclick="kanalUmbenennen()">ändern</button>',
+          h(jetzt.name||""))+'</div>';
   o+='<div class="karte p"><h2 class="kt">Neuer Kanal</h2>'
    +'<input type="text" id="nname" class="breit" placeholder="Name" style="margin-bottom:8px">'
    +'<div class="r"><div class="lb">Sprache</div><select id="nsprache">'
@@ -1504,7 +1517,7 @@ function tSzenen(){
   var o='';
   o+=clipKarte();
 
-  o+='<div class="karte p"><h2 class="kt">Szenen · '+li.length+' · etwa '+Math.round(szenenDauer())+' Sek.</h2>';
+  o+='<div class="karte p">'+kartenKopf("Szenen · "+li.length+" · etwa "+Math.round(szenenDauer())+" Sek.","szenentext");
   if(!li.length)o+='<div class="leer">noch nichts — lade dein erstes Bild hoch</div>';
   li.forEach(function(s,i){
     var vor=(s.typ==="clip")
