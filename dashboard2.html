@@ -45,7 +45,7 @@ textarea{width:100%;text-align:left;resize:vertical;min-height:92px;line-height:
 .sch{width:46px;height:26px;border-radius:999px;background:#272E42;position:relative;flex:none;border:none;cursor:pointer;padding:0}
 .sch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#66748E;transition:.15s}
 .sch.an{background:#24D3E8}.sch.an i{left:23px;background:#04161B}
-.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pills{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;max-width:62%;justify-content:flex-end}
 .pills button{background:#1B1F2C;border:1px solid #2A3147;color:#8593AC;border-radius:8px;padding:6px 10px;font:inherit;font-size:11px;cursor:pointer}
 .pills button.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;font-weight:600}
 .liste .e{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1D222F}
@@ -493,10 +493,10 @@ function tMusik(){
 function tAblauf(){
   return '<div class="karte">'
    +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
-   +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde — danach wird die Wortzahl für die Länge berechnet")
-   +'</div>'
-   +'<div class="karte"><div class="r"><div><div class="lb">Automatik</div><div class="hint">'
-   +(S.einst.automatik_an?"läuft":"ausgeschaltet")+'</div></div>'+schalter("automatik_an",!!S.einst.automatik_an)+'</div></div>';
+   +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde")
+   +'<div class="hinw">Aus Länge mal Sprechtempo rechnet Claude die Wortzahl '
+   +'für das Drehbuch aus. 20 Sek. bei normal sind rund 50 Wörter.</div>'
+   +'</div>';
 }
 
 function tLauf(){
@@ -952,7 +952,6 @@ function standKarte(){
   var vn=(S.vorlagen[e.vorlage]||{}).name||e.vorlage||"—";
   var z=[["Vorlage",h(vn)],["Wie",modus],["Format",h(e.format||"9:16")],
          ["Sprache",h(sprachName((e.sprachen||["de"])[0]))],["Länge",(e.laenge||20)+" Sek."],
-         ["Automatik",jn(e.automatik_an)],
          ["Untertitel",jn(e.untertitel_an!==false)],["Musik",jn(e.musik_an!==false)],
          ["Telegram",jn(e.telegram_token&&e.telegram_chat)],
          ["Tempo",h((e.tempo||"normal").replace("_"," "))],
@@ -2119,7 +2118,6 @@ var SUCHE=[
  ["Ausblenden","einst","musik fade ende ausblenden abklingen"],
  ["Bewegung","darsteller","figur statisch bewegt animiert atmen wippen schleife"],
  ["Stimme","darsteller","figur stimme zuordnen elevenlabs"],
- ["Automatik","einst","zeitplan automatisch taeglich lauf"],
  ["Kanalname","machen","name umbenennen kanal"],
  ["Fertige Videos","machen","download herunterladen ansehen loeschen"],
  ["Eingestellt","machen","uebersicht was eingestellt ist zusammenfassung"],
