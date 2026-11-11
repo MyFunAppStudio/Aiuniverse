@@ -2918,3 +2918,15 @@ def _p56_look(kanal):
     k["look_stil"] = w
     k.update(fest)
     return _p62_look_alt(k)
+
+
+# ---------- Nachtrag p63: Einblendung abgeschafft ----------
+#
+# Die Folgen/Like/Abo-Grafik ist raus. Der Schalter dafuer ist aus dem
+# Dashboard verschwunden; damit alte Kanaldateien mit cta_ende=True
+# nicht doch noch eine Grafik ins Bild kleben, gibt der Filter
+# grundsaetzlich nichts mehr zurueck. einblendung.py bleibt liegen,
+# wird aber nicht mehr aufgerufen.
+
+def _einblendung_filter(kanal, gesamt, b, h, quelle):
+    return None, []

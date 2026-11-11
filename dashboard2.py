@@ -493,43 +493,32 @@ VOREINSTELLUNGEN = [
         "bildstimmung": "kalt",
         "tempo": "schnell",
         "stimme_energie": 0.55, "untertitel_an": True, "untertitel_woerter": 3,
-        "musik_an": True, "musik_leise": 10, "musik_laut": 70,
-        "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
-        "eb_art": "folgen", "eb_text": "FOLGEN", "eb_platz": "links_unten"}],
+        "musik_an": True, "musik_leise": 10, "musik_laut": 70}],
     ["fakten", "Fakten und Listen", {
         "bildstimmung": "kalt",
         "tempo": "sehr_schnell",
         "stimme_energie": 0.75, "untertitel_an": True, "untertitel_woerter": 2,
-        "musik_an": True, "musik_leise": 14, "musik_laut": 85,
-        "cta_anfang": True, "cta_mitte": False, "cta_ende": True,
-        "eb_art": "folgen", "eb_text": "FOLGEN", "eb_platz": "links_unten"}],
+        "musik_an": True, "musik_leise": 14, "musik_laut": 85}],
     ["story", "Geschichte", {
         "bildstimmung": "warm",
         "tempo": "normal",
         "stimme_energie": 0.45, "untertitel_an": True, "untertitel_woerter": 3,
-        "musik_an": True, "musik_leise": 11, "musik_laut": 62,
-        "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
-        "eb_art": "folgen", "eb_text": "MEHR?", "eb_platz": "links_unten"}],
+        "musik_an": True, "musik_leise": 11, "musik_laut": 62}],
     ["maerchen", "Maerchen", {
         "bildstimmung": "warm",
         "tempo": "ruhig",
         "stimme_energie": 0.15, "untertitel_an": True, "untertitel_woerter": 3,
-        "musik_an": True, "musik_leise": 9, "musik_laut": 45,
-        "cta_anfang": False, "cta_mitte": False, "cta_ende": False}],
+        "musik_an": True, "musik_leise": 9, "musik_laut": 45}],
     ["build", "Build und Prozess", {
         "bildstimmung": "kalt",
         "tempo": "schnell",
         "stimme_an": False, "untertitel_an": True, "untertitel_woerter": 3,
-        "musik_an": True, "musik_leise": 60, "musik_laut": 85,
-        "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
-        "eb_art": "like", "eb_text": "LIKE", "eb_platz": "links_unten"}],
+        "musik_an": True, "musik_leise": 60, "musik_laut": 85}],
     ["firma", "Firmenvideo", {
         "bildstimmung": "warm",
         "tempo": "schnell",
         "stimme_energie": 0.5, "untertitel_an": True, "untertitel_woerter": 3,
-        "musik_an": True, "musik_leise": 12, "musik_laut": 68,
-        "cta_anfang": False, "cta_mitte": False, "cta_ende": True,
-        "eb_art": "nur_text", "eb_text": "JETZT ANFRAGEN", "eb_platz": "mitte_unten"}],
+        "musik_an": True, "musik_leise": 12, "musik_laut": 68}],
 ]
 
 
@@ -1195,10 +1184,10 @@ def _p69_figur(k, szene):
 
 
 def _p69_einblendung(kanal, b, h):
-    """Pfad und Platz der Einblendung, oder (None, None, None)."""
+    """Abgeschafft - die Vorschau zeigt keine Folgen/Like-Grafik mehr."""
+    return None, None, None
     import einblendung
-    an = (kanal.get("cta_ende") is not False
-          or kanal.get("cta_anfang") or kanal.get("cta_mitte"))
+    an = False
     if not an:
         return None, None, None
     try:

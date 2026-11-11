@@ -350,22 +350,10 @@ musik_aus:"Wie viele Sekunden die Musik am Ende ausblendet. Das passiert am Ende
 
 untertitel_an:"Blendet den gesprochenen Text als Untertitel ein, Wort für Wort mitlaufend. Auf TikTok und Reels wird der größte Teil ohne Ton geschaut — ohne Untertitel ist das Video für die meisten stumm. Die Zeiten kommen vom Sprachmodell selbst, deshalb sitzen sie genau auf dem Wort.",
 
-untertitel_groesse:"Wie groß die Schrift ist. <i>normal</i> passt für die meisten Videos. <i>groß</i> nur, wenn wenig Text pro Szene kommt — sonst nimmt der Untertitel das halbe Bild ein und verdeckt das Motiv.",
 
-untertitel_hoehe:"Wie weit über dem unteren Bildrand der Untertitel sitzt. <i>normal</i> ist mit Absicht so gewählt, dass er über dem Bereich liegt, in dem TikTok seinen eigenen Text, den Kanalnamen und die Musikzeile einblendet. Verschieb das nur, wenn das Motiv der Szene genau dort sitzt — zu tief und TikTok schreibt darüber, zu hoch und es wirkt wie ein Fehler.",
 
-cta_anfang:"Blendet einen Aufruf am Anfang ein („folgen“, „liken“ und so weiter). Am Anfang stört er am meisten, weil in den ersten zwei Sekunden entschieden wird, ob weitergeschaut wird.",
-cta_mitte:"Blendet den Aufruf in der Mitte ein, wenn der Zuschauer schon drin ist. Von den drei Stellen ist das die unauffälligste.",
-cta_ende:"Blendet den Aufruf am Ende ein. Die übliche Stelle — da ist das Video ohnehin vorbei.",
-cta_gesprochen:"Der Aufruf wird zusätzlich gesprochen, nicht nur eingeblendet. Kostet Sprechzeit, die vom Inhalt abgeht.",
 
-eb_art:"Welches Symbol eingeblendet wird — Herz, Daumen, Pfeil und so weiter.",
-eb_text:"Text neben dem Symbol. Leer lassen heißt: nur das Symbol, ohne Wort.",
-eb_platz:"Wo im Bild die Einblendung sitzt. Rechts ist auf TikTok schlecht, da liegen die Knöpfe der App darüber. Unten liegt der Untertitel.",
-eb_groesse:"Wie groß die Einblendung ist, in Prozent der Bildhöhe.",
-eb_dauer:"Wie lange die Einblendung stehenbleibt, in Sekunden.",
 
-eb_farbe:"Die Farbe der eingeblendeten Grafik. Nimm eine, die sich vom Bild abhebt — auf dunklen Szenen eine helle, sonst sieht man sie nicht.",
 
 modus:"Wer den Text schreibt. <i>Claude schreibt es</i> — du gibst nur Thema und Länge, alles andere kommt von selbst. <i>Text ansehen und ändern</i> — dasselbe, aber du liest das Drehbuch vorher und kannst eingreifen. <i>Ich baue es selbst</i> — du legst jede Szene von Hand an, mit eigenen Bildern und eigenem Text.",
 
@@ -652,7 +640,6 @@ function tEinst(){
    +falte("Länge & Tempo",tAblauf(),false)
    +falte("Video & Ton",tVideo(),false)
    +falte("Musik",tMusik(),false)
-   +falte("Untertitel & Einblendung",tTexte(),false)
    +falte("KI & Technik",tTechnik(),false)
    +falte("Kanäle",tKanaele(),false);
   o+='<div class="karte">'
@@ -745,6 +732,7 @@ function tVideo(){
      STIMMUNG_WOZU[stimmungJetzt()])
    +'</div>';
   o+=stimmenKarte();
+  o+=tTexte();
   if(!S.modelle)ladeModelle();
   var kl=(S.modelle&&((S.modelle.apis||{}).video||[]).filter(function(e){return e.url&&e.key})[0])||null;
   if(S.alt)o+='<div class="karte p"><h2 class="kt">KI-Animation</h2>'
@@ -904,51 +892,13 @@ function p70Karte(){
    +'</div></div></div>';
 }
 function tTexte(){
-  /* Ein fester Stil, der sitzt. Statt sechzehn Feldern bleiben zwei -
-     Groesse und Hoehe, je drei Stufen. Alles andere ist festgelegt:
-     ein bis zwei Woerter, eine Groesse, weiss, dicker schwarzer Rand,
-     gemischte Schreibweise, mittig im sicheren Streifen. */
-  var an=S.einst.untertitel_an!==false;
-  var o='<div class="karte p">'
-   +'<div class="hinw" style="padding:0;margin-bottom:10px">'
-   +'Ein bis zwei Wörter, groß, weiß mit dickem schwarzem Rand, '
-   +'gemischte Schreibweise. Nichts wird grau, nichts springt in der Größe. '
-   +'Die Höhe hält sich von TikToks eigenen Knöpfen fern.</div>'
-   +reihe("Untertitel",schalter("untertitel_an",an));
-  if(an){
-    o+=reihe("Größe",knoepfe("untertitel_groesse",S.einst.untertitel_groesse||"normal",
-         [["klein","klein"],["normal","normal"],["gross","groß"]]))
-     +reihe("Höhe",knoepfe("untertitel_hoehe",S.einst.untertitel_hoehe||"normal",
-         [["tief","tief"],["normal","normal"],["hoch","hoch"]]),
-         "nur verschieben, wenn das Motiv der Szene genau dort sitzt");
-  }
-  o+='</div>';
-  var ebAn=!!(S.einst.cta_anfang||S.einst.cta_mitte||S.einst.cta_ende!==false);
-  o+='<div class="karte p"><h2 class="kt">Einblendung</h2>'
-   +reihe("Am Anfang",schalter("cta_anfang",!!S.einst.cta_anfang))
-   +reihe("In der Mitte",schalter("cta_mitte",!!S.einst.cta_mitte))
-   +reihe("Am Ende",schalter("cta_ende",S.einst.cta_ende!==false))
-   +reihe("Auch gesprochen",schalter("cta_gesprochen",!!S.einst.cta_gesprochen),"nur im Automatik-Modus")
+  /* Ein fester Stil, der sitzt: ein bis zwei Woerter, gross, weiss mit
+     dickem schwarzem Rand, gemischte Schreibweise, mittig im sicheren
+     Streifen ueber TikToks eigenen Knoepfen. Nichts davon ist
+     einstellbar - sitzt es nicht, wird der Stil im Code geaendert. */
+  return '<div class="karte">'
+   +reihe("Untertitel",schalter("untertitel_an",S.einst.untertitel_an!==false))
    +'</div>';
-  if(ebAn){
-    o+='<div class="karte p"><h2 class="kt">Wie sie aussieht</h2>'
-     +reihe("Symbol",wahl("eb_art",S.einst.eb_art||"folgen",
-        [["folgen","Folgen (Plus)"],["like","Like (Herz)"],["daumen","Daumen hoch"],
-         ["abo","Abo (Glocke)"],["nur_text","nur Text"]]))
-     +reihe("Text",'<input type="text" class="breit" style="max-width:150px" value="'
-        +h(S.einst.eb_text==null?"FOLGEN":S.einst.eb_text)
-        +'" onchange="setz(\'eb_text\',this.value)">',"leer lassen = nur Symbol")
-     +reihe("Platz",wahl("eb_platz",S.einst.eb_platz||"links_unten",
-        [["links_unten","links unten"],["mitte_unten","mitte unten"],["rechts_unten","rechts unten"],
-         ["links_oben","links oben"],["mitte_oben","mitte oben"],["rechts_oben","rechts oben"]]))
-     +reihe("Größe",zahl("eb_groesse",(S.einst.eb_groesse==null?7:S.einst.eb_groesse)),"Prozent der Bildhöhe")
-     +reihe("Wie lange",zahl("eb_dauer",(S.einst.eb_dauer==null?2.6:S.einst.eb_dauer)),"Sekunden je Einblendung")
-     +reihe("Farbe",farbregler("eb_farbe",S.einst.eb_farbe,"#24D3E8"),"Farbton, Saettigung, Helligkeit")
-     +'<div class="hinw" style="margin:6px 0 10px">Die Grafik wird vom Code gezeichnet — du musst nichts hochladen. '
-     +'Sie fliegt ein und wieder raus. Steht deine Figur rechts unten, nimm für die Einblendung die andere Seite.</div>'
-     +'</div>';
-  }
-  return o;
 }
 
 function tTechnik(){
@@ -2154,18 +2104,10 @@ function posenVon(n){
 /* ---------- Suche (Patch P4) ---------- */
 /* [Was im Dashboard steht, Reiter, Suchwoerter dazu] */
 var SUCHE=[
- ["Symbol","einst","einblendung symbol herz plus glocke daumen folgen like abo"],
  ["Text","einst","einblendung text beschriftung folgen"],
- ["Platz","einst","einblendung position ecke links rechts oben unten"],
- ["Wie lange","einst","einblendung dauer sekunden"],
- ["Farbe","einst","einblendung farbe orange kanalfarbe hex"],
- ["Am Anfang","einst","einblendung follow like abo cta anfang hook"],
- ["In der Mitte","einst","einblendung follow like abo cta mitte"],
- ["Am Ende","einst","einblendung follow like abo cta ende abspann"],
  ["Einblendung Anfang","einst","follow like abo cta aufforderung anfang hook"],
  ["Einblendung Mitte","einst","follow like abo cta aufforderung mitte"],
  ["Einblendung Ende","einst","follow like abo cta aufforderung ende abspann"],
- ["Auch gesprochen","einst","cta gesprochen vorlesen aufforderung"],
  ["Schrift","einst","untertitel schriftart font"],
  ["Größe","einst","untertitel schriftgroesse gross klein"],
  ["Höhe im Bild","einst","untertitel position hoehe unten oben"],
