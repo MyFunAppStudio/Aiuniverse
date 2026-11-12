@@ -751,51 +751,68 @@ def erzeuge_paket(kanal, eigenes_thema=None):
 P88_BILD = """BILD UND BEWEGUNG
 Hinter jeden gesprochenen Satz setzt du eine Bildbeschreibung in eckige
 Klammern, mit BILD davor. Sie wird nicht gesprochen und steht in keinem
-Untertitel. Sie ist das, was gemalt wird - also muss sie ein Bild sein
-und nicht der Satz noch einmal. Schreib sie auf Englisch.
+Untertitel. Sie ist die Anweisung an das Bildmodell - schreib sie auf
+Englisch und schreib sie AUSFUEHRLICH. Kurze Beschreibungen geben
+beliebige Bilder.
 
-Beispiel: Am Morgen des 18. Juni stand das Heer im Schlamm.
-[BILD: wide shot of a muddy battlefield at dawn, rows of soldiers in
-dark uniforms, low grey clouds, rolling green hills behind]
+DIE SZENE, NICHT EIN DING DANEBEN
+Zeig, was im Satz passiert, als Szene am Ort des Geschehens. Geht es um
+eine Schlacht, male die Schlacht mit den Heeren darin. Geht es um eine
+Stadt, male die Stadt mit ihren Menschen. Geht es um eine Ueberfahrt,
+male das Meer mit den Schiffen.
+Weit statt nah: Totale oder Halbtotale, Landschaft und Menschen
+zusammen im Bild. Nahaufnahmen nur, wenn der Satz wirklich von einem
+einzelnen Ding handelt - hoechstens jede fuenfte Szene.
 
-SO BAUST DU EIN BILD
-Zeig den ORT und das EREIGNIS, nicht ein Ding daneben. Geht es um eine
-Schlacht, male die Schlacht. Geht es um eine Stadt, male die Stadt. Geht
-es um eine Ueberfahrt, male das Meer und die Schiffe.
-Weit statt nah: eine Totale oder Halbtotale, in der man die Landschaft
-und die Menschen zusammen sieht. Nahaufnahmen nur, wenn der Satz
-wirklich von einem einzelnen Ding handelt - und auch dann hoechstens
-jede fuenfte Szene.
-Menschen gehoeren hinein, ganze Gestalten, auch viele: Soldaten,
-Reiter, Haendler, Zuschauer. Nenne, was sie tun.
-Nenne die Zeit: Morgen, Mittag, Abend, Nacht, und das Wetter.
-Nenne die Epoche an der Kleidung und den Bauten, nicht mit einer
-Jahreszahl - Jahreszahlen kann ein Bildmodell nicht malen.
-Zehn bis fuenfundzwanzig Woerter. Jede Szene ein anderer Blick: mal
-weit ueber das Land, mal von einem Huegel, mal mitten hinein.
-Der VORDERGRUND bleibt frei - dort stehen spaeter die Figuren.
+SECHS DINGE GEHOEREN IN JEDE BESCHREIBUNG
+1. Einstellung und Ort: wide shot / aerial view / low angle, und wo.
+2. Wer ist zu sehen und was tut er: nicht "soldiers", sondern
+   "rows of infantry in blue coats advancing through trampled wheat".
+   Ganze Gestalten, ruhig viele.
+3. Tageszeit, Licht, Wetter: dawn, low sun from the left, heavy rain,
+   smoke drifting, overcast.
+4. Epoche an Kleidung und Bauten, nie als Jahreszahl - Jahreszahlen
+   kann kein Bildmodell malen.
+5. Blickwinkel und Tiefe: from a hilltop, from behind the lines,
+   foreground empty, hills receding into haze.
+6. Ein oder zwei konkrete Einzelheiten, die das Bild echt machen:
+   mud, broken fence, horses, campfires, church tower in the distance.
+
+DREISSIG BIS SECHZIG WOERTER. Lieber zu genau als zu knapp.
+Jede Szene ein anderer Blick: mal weit ueber das Land, mal von einem
+Huegel, mal mitten hinein zwischen die Leute.
+Der VORDERGRUND bleibt frei und offen - dort stehen spaeter die Figuren.
 
 WAS NIE INS BILD KOMMT
 Keine Schrift, keine Buchstaben, keine Zahlen, keine Wappen mit Text,
-keine Karten mit Beschriftung, keine Urkunden, keine Siegel, keine
+keine beschrifteten Karten, keine Urkunden, keine Siegel, keine
 Buecher, keine Zeitungen. Daraus werden unleserliche Zeichen.
-Keine Sinnbilder fuer das Thema: kein einzelnes Schwert auf einem Tisch,
-kein Helm im Gras, kein Brief, kein verkohltes Papier, keine Sanduhr,
-keine Kerze. Das ist Deko statt Geschichte.
-Keine Gesichter in Grossaufnahme, keine bekannten echten Personen.
-Keine modernen Dinge: Autos, Strassenlaternen, Stromleitungen,
-Asphalt, Kleidung von heute.
+Keine Sinnbilder statt der Szene: kein einzelnes Schwert auf einem
+Tisch, kein Helm im Gras, kein Brief, kein verkohltes Papier, keine
+Sanduhr, keine Kerze, keine Landkarte. Das ist Deko statt Geschichte.
+Keine Gesichter in Grossaufnahme, keine benannten echten Personen.
+Keine modernen Dinge: Autos, Strassenlaternen, Stromleitungen, Asphalt,
+Kleidung von heute.
 Kein Blut, keine Leichen, keine Verstuemmelung.
 
-ACHT BILDER ALS RICHTUNG
-wide view of a harbour at dawn, three wooden sailing ships leaving, crowd on the quay
-a walled medieval town on a hill, fields and a river in front, morning haze
-a long column of soldiers crossing a frozen plain, snow drifting, grey sky
-a crowded market square with timber houses, stalls, people trading, midday sun
-cavalry charging across open farmland, dust rising, hedgerows in the distance
-a cathedral under construction, wooden scaffolding, workers and carts below
-a wide river valley with a stone bridge, travellers on the road, late afternoon light
-a camp of tents at the edge of a forest, campfires, figures moving between them
+DREI BEISPIELE IN DER RICHTIGEN LAENGE
+[BILD: wide shot of a muddy battlefield at dawn, two long lines of
+infantry in dark blue and red coats facing each other across trampled
+wheat, white powder smoke drifting low, cavalry massing on the right
+flank, rolling green hills and a farmhouse in the distance, heavy grey
+clouds, viewed from a low ridge, open muddy ground in the foreground]
+
+[BILD: aerial view of a walled medieval town on a hill at midday,
+timber-framed houses packed inside grey stone walls, a cathedral tower
+rising above the roofs, carts and traders crowding the road to the
+gate, ploughed fields and a winding river beyond, summer haze softening
+the far hills, empty dusty road in the foreground]
+
+[BILD: wide view of a harbour at sunrise, three wooden sailing ships
+with furled sails being towed out past a stone pier, a crowd of
+onlookers in simple cloaks waving from the quay, barrels and coiled
+rope stacked along the dock, orange light on calm water, gulls
+circling, open flagstones in the foreground]
 
 BEWEGUNG
 Nur wenn sich im Video etwas ruehren soll, setzt du eine zweite Klammer
@@ -807,10 +824,7 @@ Eine Menschenmenge, die sich im Ganzen bewegt, geht auch - einzelne
 Personen, die greifen, sich umdrehen oder reden, werden Matsch.
 Hoechstens zwoelf Woerter.
 
-Beispiel mit beidem: Die Flotte lief bei Sonnenaufgang aus.
-[BILD: wide view of a harbour at dawn, three wooden sailing ships
-leaving, crowd on the quay, orange light on the water]
-[BEWEGUNG: Kamera faehrt langsam zurueck, Segel und Fahnen im Wind]"""
+[BEWEGUNG: Kamera faehrt langsam zurueck, Rauch zieht ueber das Feld]"""
 
 
 _p88_prompt_alt = lade_prompt
