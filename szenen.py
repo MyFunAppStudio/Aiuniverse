@@ -1107,3 +1107,102 @@ def r6_braucht_clip(s):
     if (s.get("modus") or "") not in ("avatare", "bild_ki"):
         return False
     return art(s.get("datei") or "") == "bild"
+
+
+# ---------- Nachtrag r19: nur zeigen, wer auch redet ----------
+#
+# In einer Szene hat Mara gesprochen, zu sehen war aber Jonas. Das sieht
+# nach Fehler aus, weil es einer ist: wer im Bild steht und den Mund
+# nicht aufmacht, wirkt wie vergessen.
+#
+# Erlaubt sind von jetzt an nur zwei Faelle:
+#   wer = []        niemand im Bild, es wird aus dem Off geredet
+#   wer = Sprecher  genau die, die in dieser Szene reden
+# Alles andere wird zurechtgerueckt. Reine Sprecher ohne Bilder zaehlen
+# nicht mit - die stehen nie im Bild.
+
+# Nur bekannte Namen zaehlen. Ein freies Muster hat aus "Mara: Eins.
+# Jonas: Zwei." den Sprecher "ins. Jonas" gemacht - Punkte und
+# Leerzeichen gehoeren eben auch zu erlaubten Namen.
+
+
+def r19_namen(kanal):
+    try:
+        import darsteller
+        return [(x.get("name") or "").strip()
+                for x in (darsteller.laden(kanal).get("darsteller") or [])
+                if (x.get("name") or "").strip()]
+    except Exception:
+        return []
+
+
+def r19_redner(kanal, text):
+    """Die bekannten Namen, die in diesem Text vor einem Doppelpunkt stehen."""
+    t = text or ""
+    treffer = []
+    # Laengere Namen zuerst pruefen, damit "Sprecherin Frau" nicht als
+    # "Frau" durchgeht. Sortiert wird am Ende nach der Stelle im Text.
+    for n in sorted(r19_namen(kanal), key=len, reverse=True):
+        m = re.search(r"(?<![\wÄÖÜäöüß])" + re.escape(n) + r"\s*:", t, re.I)
+        if m and n not in [x[1] for x in treffer]:
+            treffer.append((m.start(), n))
+    return [n for _, n in sorted(treffer)]
+
+
+def r19_richten(kanal, s):
+    """Setzt wer auf die, die reden. Gibt True, wenn sich etwas geaendert hat."""
+    alt = list(s.get("wer") or [])
+    if not alt:
+        return False                      # niemand im Bild ist in Ordnung
+    ids = r16_zuordnen(kanal, r19_redner(kanal, s.get("text") or ""))
+    try:
+        import darsteller
+        d = darsteller.laden(kanal)
+        echte = set(x["id"] for x in (d.get("darsteller") or [])
+                    if x.get("art") != "sprecher")
+        ids = [i for i in ids if i in echte]
+    except Exception:
+        pass
+    if ids == alt:
+        return False
+    s["wer"] = ids
+    return True
+
+
+_r19_aufteilen_alt = r13_aufteilen
+
+
+def r13_aufteilen(kanal):
+    n = _r19_aufteilen_alt(kanal)
+    try:
+        d = _r13_laden_alt(kanal)
+        geaendert = 0
+        for s in d["szenen"]:
+            if r19_richten(kanal, s):
+                geaendert += 1
+        if geaendert:
+            speichern(kanal, d)
+            print("[Szenen] %d mal zurechtgerueckt: nur zeigen, wer redet"
+                  % geaendert)
+            n += geaendert
+    except Exception as e:
+        print("[Szenen] wer nicht pruefbar:", e)
+    return n
+
+
+_r19_aendern_alt = aendern
+
+
+def aendern(kanal, sid, feld, wert):
+    r = _r19_aendern_alt(kanal, sid, feld, wert)
+    if feld != "text":
+        return r
+    try:
+        d = _r13_laden_alt(kanal)
+        for s in d["szenen"]:
+            if s.get("id") == sid and r19_richten(kanal, s):
+                speichern(kanal, d)
+                break
+    except Exception as e:
+        print("[Szenen] wer nach Textaenderung nicht pruefbar:", e)
+    return r

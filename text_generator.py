@@ -928,6 +928,10 @@ def _t4_anweisung(namen):
         "die Figuren koennen auch aus dem Off reden, waehrend man nur die "
         "Landschaft sieht. Zeig sie nicht in jeder Szene; bei Szenen, in "
         "denen der Ort oder das Ereignis wichtiger ist, gehoert \"wer\": []."
+        "\nWICHTIG: \"wer\" ist entweder LEER oder enthaelt genau die, "
+        "die in DIESER Szene reden. Zeig nie jemanden, der in der Szene "
+        "nichts sagt - das sieht aus wie ein Fehler. Redet nur einer, "
+        "steht entweder nur er drin oder die Liste bleibt leer."
         % (liste, beispiel, form)
     )
 
