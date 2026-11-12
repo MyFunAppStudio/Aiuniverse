@@ -733,3 +733,99 @@ def erzeuge_paket(kanal, eigenes_thema=None):
     k2 = dict(kanal or {})
     k2["prompt"] = (k2.get("prompt") or "") + _t4_anweisung(namen)
     return _t4_erzeuge_alt(k2, eigenes_thema)
+
+
+# ---------- Nachtrag p88: Orte und Ereignisse statt Gegenstaende ----------
+#
+# Der Bildblock aus p85 stammt vom True-Crime- und Finanzkanal. Er
+# verlangt woertlich "Ein Gegenstand, nah dran. Keine Szene mit mehreren
+# Dingen darin" und verbietet ganze Personen. Fuer einen Geschichtskanal
+# ist das genau verkehrt: Zu "Die Schlacht bei Waterloo" kam ein
+# Nahaufnahme-Foto von verkohltem Papier auf nassem Stein.
+#
+# Hat der Kanal eine Besetzung, ist es ein Erzaehlkanal - dann gilt der
+# Block hier: der Ort, das Ereignis, die Menschen, weit statt nah. Ohne
+# Besetzung bleibt es beim alten Block, damit der Finanzkanal weiter
+# seine Gegenstaende bekommt.
+
+P88_BILD = """BILD UND BEWEGUNG
+Hinter jeden gesprochenen Satz setzt du eine Bildbeschreibung in eckige
+Klammern, mit BILD davor. Sie wird nicht gesprochen und steht in keinem
+Untertitel. Sie ist das, was gemalt wird - also muss sie ein Bild sein
+und nicht der Satz noch einmal. Schreib sie auf Englisch.
+
+Beispiel: Am Morgen des 18. Juni stand das Heer im Schlamm.
+[BILD: wide shot of a muddy battlefield at dawn, rows of soldiers in
+dark uniforms, low grey clouds, rolling green hills behind]
+
+SO BAUST DU EIN BILD
+Zeig den ORT und das EREIGNIS, nicht ein Ding daneben. Geht es um eine
+Schlacht, male die Schlacht. Geht es um eine Stadt, male die Stadt. Geht
+es um eine Ueberfahrt, male das Meer und die Schiffe.
+Weit statt nah: eine Totale oder Halbtotale, in der man die Landschaft
+und die Menschen zusammen sieht. Nahaufnahmen nur, wenn der Satz
+wirklich von einem einzelnen Ding handelt - und auch dann hoechstens
+jede fuenfte Szene.
+Menschen gehoeren hinein, ganze Gestalten, auch viele: Soldaten,
+Reiter, Haendler, Zuschauer. Nenne, was sie tun.
+Nenne die Zeit: Morgen, Mittag, Abend, Nacht, und das Wetter.
+Nenne die Epoche an der Kleidung und den Bauten, nicht mit einer
+Jahreszahl - Jahreszahlen kann ein Bildmodell nicht malen.
+Zehn bis fuenfundzwanzig Woerter. Jede Szene ein anderer Blick: mal
+weit ueber das Land, mal von einem Huegel, mal mitten hinein.
+Der VORDERGRUND bleibt frei - dort stehen spaeter die Figuren.
+
+WAS NIE INS BILD KOMMT
+Keine Schrift, keine Buchstaben, keine Zahlen, keine Wappen mit Text,
+keine Karten mit Beschriftung, keine Urkunden, keine Siegel, keine
+Buecher, keine Zeitungen. Daraus werden unleserliche Zeichen.
+Keine Sinnbilder fuer das Thema: kein einzelnes Schwert auf einem Tisch,
+kein Helm im Gras, kein Brief, kein verkohltes Papier, keine Sanduhr,
+keine Kerze. Das ist Deko statt Geschichte.
+Keine Gesichter in Grossaufnahme, keine bekannten echten Personen.
+Keine modernen Dinge: Autos, Strassenlaternen, Stromleitungen,
+Asphalt, Kleidung von heute.
+Kein Blut, keine Leichen, keine Verstuemmelung.
+
+ACHT BILDER ALS RICHTUNG
+wide view of a harbour at dawn, three wooden sailing ships leaving, crowd on the quay
+a walled medieval town on a hill, fields and a river in front, morning haze
+a long column of soldiers crossing a frozen plain, snow drifting, grey sky
+a crowded market square with timber houses, stalls, people trading, midday sun
+cavalry charging across open farmland, dust rising, hedgerows in the distance
+a cathedral under construction, wooden scaffolding, workers and carts below
+a wide river valley with a stone bridge, travellers on the road, late afternoon light
+a camp of tents at the edge of a forest, campfires, figures moving between them
+
+BEWEGUNG
+Nur wenn sich im Video etwas ruehren soll, setzt du eine zweite Klammer
+mit BEWEGUNG davor. Laesst du sie weg, bleibt das Bild stehen.
+Hinein kommt, was ein Bild-zu-Video-Modell sauber kann: Kamera langsam
+heran, zurueck oder zur Seite, Rauch, Staub, Regen, Nebel der zieht,
+Wasser das sich bewegt, Fahnen und Stoff im Wind, Licht das wandert.
+Eine Menschenmenge, die sich im Ganzen bewegt, geht auch - einzelne
+Personen, die greifen, sich umdrehen oder reden, werden Matsch.
+Hoechstens zwoelf Woerter.
+
+Beispiel mit beidem: Die Flotte lief bei Sonnenaufgang aus.
+[BILD: wide view of a harbour at dawn, three wooden sailing ships
+leaving, crowd on the quay, orange light on the water]
+[BEWEGUNG: Kamera faehrt langsam zurueck, Segel und Fahnen im Wind]"""
+
+
+_p88_prompt_alt = lade_prompt
+
+
+def lade_prompt(kanal):
+    text = _p88_prompt_alt(kanal)
+    try:
+        if not _t4_besetzung(kanal):
+            return text
+    except Exception:
+        return text
+    alt = globals().get("P85_BILD") or ""
+    if alt and alt in text:
+        return text.replace(alt, P88_BILD)
+    if "BILD UND BEWEGUNG" not in text:
+        return text.rstrip() + "\n\n" + P88_BILD
+    return text

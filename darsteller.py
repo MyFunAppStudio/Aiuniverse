@@ -641,6 +641,15 @@ def _d8_roh(kanal):
     return nach_id, nach_name
 
 
+def _d8_besetzung_roh(kanal):
+    try:
+        with open(_pfad(kanal), encoding="utf-8") as f:
+            d = json.load(f)
+        return [str(x) for x in (d.get("besetzung") or []) if isinstance(x, str)]
+    except Exception:
+        return []
+
+
 def laden(kanal):
     d = _d8_laden_alt(kanal)
     nach_id, nach_name = _d8_roh(kanal)
@@ -649,8 +658,13 @@ def laden(kanal):
                 or nach_name.get(str(f.get("name") or "").strip().lower()) or {})
         for feld, wert in satz.items():
             f[feld] = wert
-    # Noch einmal, weil art sich gerade geaendert haben kann:
-    # Sprecher stehen nie im Bild und gehoeren nie in die Besetzung.
-    ids = set(f["id"] for f in d["darsteller"] if f.get("art") != "sprecher")
-    d["besetzung"] = [x for x in d.get("besetzung") or [] if x in ids]
+    # Der Vorgaenger hat die Besetzung gefiltert, als art noch geraten war:
+    # ein Avatar ohne Bilder galt dort als Sprecher und flog raus. Darum
+    # wird sie hier aus der Datei nachgezogen, jetzt mit dem richtigen art.
+    erlaubt = set(f["id"] for f in d["darsteller"] if f.get("art") != "sprecher")
+    bes = [x for x in (d.get("besetzung") or []) if x in erlaubt]
+    for x in _d8_besetzung_roh(kanal):
+        if x in erlaubt and x not in bes:
+            bes.append(x)
+    d["besetzung"] = bes[:BESETZUNG_MAX]
     return d
