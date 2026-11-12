@@ -2273,3 +2273,167 @@ def stimmprobe(key, stimme):
     if not os.path.exists(ziel) or os.path.getsize(ziel) < 500:
         return None, "Das Stimmmodell hat nichts geliefert"
     return ziel, ""
+
+
+# ---------- Nachtrag d5: Stimmenvorrat von ElevenLabs holen ----------
+#
+# Stefan soll die Stimm-IDs nicht von Hand abschreiben muessen. ElevenLabs
+# hat eine Liste aller Stimmen, die man abrufen kann - mit Name, ID und
+# der Angabe Frau oder Mann. Diese Liste wird hier geholt und beim Kanal
+# als Stimmen eingetragen, Frauen zuerst, dann Maenner.
+#
+# Gespeichert wird immer die ID, nie nur der Name: die ID gilt bei jedem
+# Anbieter, der ElevenLabs-Stimmen durchreicht - also auch bei fal.ai.
+# Der Name steht nur davor, damit Stefan sieht, wen er anklickt.
+#
+# Ein Schluessel wird mitgeschickt, wenn irgendwo einer eingetragen ist.
+# Ist keiner da, wird es ohne versucht - die oeffentlichen Stimmen gibt
+# ElevenLabs auch ohne Konto heraus.
+
+D5_URL = "https://api.elevenlabs.io/v1/voices?show_legacy=true"
+D5_MAX = 15          # je Geschlecht
+
+D5_AKZENT = {"american": "amerikanisch", "british": "britisch",
+             "australian": "australisch", "irish": "irisch",
+             "canadian": "kanadisch", "transatlantic": "transatlantisch",
+             "german": "deutsch", "swedish": "schwedisch",
+             "indian": "indisch", "italian": "italienisch",
+             "french": "franzoesisch", "spanish": "spanisch",
+             "us-southern": "US-Sueden", "scottish": "schottisch"}
+
+D5_ALTER = {"young": "jung", "middle-aged": "mittel", "middle_aged": "mittel",
+            "old": "aelter", "middle aged": "mittel"}
+
+
+def _d5_schluessel(kanal):
+    """Ein ElevenLabs-Schluessel, falls irgendwo einer steht. Sonst leer."""
+    try:
+        import schluessel as _s
+    except Exception:
+        return ""
+    apis = (kanal or {}).get("apis") or {}
+    if isinstance(apis, dict):
+        for liste in apis.values():
+            for x in (liste or []):
+                if isinstance(x, dict) and _s.anbieter(x.get("url")) == "eleven":
+                    kk = (x.get("key") or "").strip()
+                    if kk:
+                        return kk
+    try:
+        return _s.aus_umgebung("eleven")
+    except Exception:
+        return ""
+
+
+def _d5_abrufen(el_key):
+    kopf = {"Accept": "application/json", "User-Agent": "AiUniverse/1.0"}
+    if el_key:
+        kopf["xi-api-key"] = el_key
+    anfrage = urllib.request.Request(D5_URL, headers=kopf)
+    with urllib.request.urlopen(anfrage, timeout=45) as r:
+        return json.loads(r.read().decode("utf-8", "replace"))
+
+
+def _d5_beschriftung(v):
+    """Aus einem Stimmeintrag Name und Zusatz machen."""
+    lab = v.get("labels") or {}
+    if not isinstance(lab, dict):
+        lab = {}
+    g = str(lab.get("gender") or "").strip().lower()
+    akz = str(lab.get("accent") or "").strip().lower()
+    alt = str(lab.get("age") or "").strip().lower()
+    teile = []
+    if alt:
+        teile.append(D5_ALTER.get(alt, alt.replace("_", " ")))
+    if akz:
+        teile.append(D5_AKZENT.get(akz, akz))
+    zusatz = (" (" + ", ".join(teile) + ")") if teile else ""
+    wer = "Frau" if g.startswith("female") else ("Mann" if g.startswith("male") else "")
+    return wer, zusatz
+
+
+def stimmen_holen(key):
+    """Holt die Stimmenliste von ElevenLabs und traegt sie beim Kanal ein."""
+    alle = einstellungen.laden()
+    kanal = alle.get(key) or {}
+    if not kanal:
+        return {"ok": False, "fehler": "Kanal unbekannt"}
+
+    try:
+        daten = _d5_abrufen(_d5_schluessel(kanal))
+    except Exception as e:
+        grund = str(e)[:200]
+        if "401" in grund or "403" in grund or "Unauthorized" in grund:
+            return {"ok": False, "fehler":
+                    "ElevenLabs will dafür einen eigenen Schlüssel. Lege dir "
+                    "ein kostenloses ElevenLabs-Konto an und trage den "
+                    "Schlüssel im Reiter Technik beim Eintrag "
+                    "„ElevenLabs direkt“ ein. Danach hier nochmal tippen."}
+        return {"ok": False, "fehler": "ElevenLabs nicht erreichbar: " + grund}
+
+    frauen, maenner, rest = [], [], []
+    for v in (daten.get("voices") or []):
+        if not isinstance(v, dict):
+            continue
+        vid = str(v.get("voice_id") or "").strip()
+        nam = str(v.get("name") or "").strip()
+        if not vid or not nam:
+            continue
+        wer, zusatz = _d5_beschriftung(v)
+        if wer == "Frau":
+            frauen.append(("Frau · " + nam + zusatz, vid))
+        elif wer == "Mann":
+            maenner.append(("Mann · " + nam + zusatz, vid))
+        else:
+            rest.append((nam + zusatz, vid))
+
+    frauen.sort(key=lambda x: x[0].lower())
+    maenner.sort(key=lambda x: x[0].lower())
+    rest.sort(key=lambda x: x[0].lower())
+
+    liste = [e for e in (kanal.get("stimmen") or [])
+             if isinstance(e, dict) and (e.get("name") or "").strip()]
+    schon = set()
+    for e in liste:
+        vid = (e.get("id") or "").strip()
+        if vid:
+            schon.add(vid)
+
+    neu_f = neu_m = neu_r = 0
+    for nam, vid in frauen[:D5_MAX]:
+        if vid not in schon:
+            liste.append({"name": nam, "id": vid}); schon.add(vid); neu_f += 1
+    for nam, vid in maenner[:D5_MAX]:
+        if vid not in schon:
+            liste.append({"name": nam, "id": vid}); schon.add(vid); neu_m += 1
+    if not frauen and not maenner:
+        for nam, vid in rest[:D5_MAX * 2]:
+            if vid not in schon:
+                liste.append({"name": nam, "id": vid}); schon.add(vid); neu_r += 1
+
+    if not (neu_f or neu_m or neu_r):
+        return {"ok": True, "neu": 0,
+                "text": "Es kam nichts Neues dazu – die Stimmen stehen schon alle drin."}
+
+    alle[key]["stimmen"] = liste
+    einstellungen.speichern(alle)
+
+    stuecke = []
+    if neu_f:
+        stuecke.append("%d Frauen" % neu_f)
+    if neu_m:
+        stuecke.append("%d Männer" % neu_m)
+    if neu_r:
+        stuecke.append("%d ohne Angabe" % neu_r)
+    return {"ok": True, "neu": neu_f + neu_m + neu_r,
+            "text": "Eingetragen: " + " und ".join(stuecke)
+                    + ". Mit ▶ kannst du jede anhören."}
+
+
+_d5_schreiben_alt = darsteller_schreiben
+
+
+def darsteller_schreiben(key, b):
+    if (b.get("aktion") or "") == "stimmen_holen":
+        return stimmen_holen(key)
+    return _d5_schreiben_alt(key, b)

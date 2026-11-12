@@ -1729,13 +1729,31 @@ function stimmenKarte(){
       +'<div class="me">'+h(e.id||"ohne ID")+'</div></div>'
       +'<button class="ik rot" onclick="stimmeWeg('+i+',\''+h(e.name).replace(/'/g,"")+'\')">✕</button></div>';
   });
-  o+='</div><button class="knopf" style="width:100%;margin:9px 0 4px" onclick="stimmeNeu()">+ Stimme</button>'
+  o+='</div><button class="knopf or" style="width:100%;margin:9px 0 6px" onclick="stimmenHolen(this)">'
+   +'⬇ Stimmen von ElevenLabs holen</button>'
+   +'<button class="knopf" style="width:100%;margin:0 0 4px" onclick="stimmeNeu()">+ Stimme von Hand</button>'
    +reihe("Grundstimmung",knoepfeStimmung(stimmungName(S.einst.stimme_energie)),"gilt, wo bei der Szene nichts anderes steht")
-   +'<div class="hinw" style="margin-top:8px">Die ID steht in deinem ElevenLabs-Konto bei der Stimme. '
-   +'Der Name ist frei wählbar — trägst du einen Avatar-Namen ein, spricht dieser Avatar mit dieser Stimme. '
-   +'<b>Ob</b> in einer Szene gesprochen wird, stellst du bei der Szene selbst ein '
-   +'(„Sprecher aus dem Off“ / „Die Avatare reden“ / „Niemand“).</div></div>';
+   +'<div class="hinw" style="margin-top:8px"><b>⬇ Stimmen holen</b> trägt den ganzen Vorrat ein — '
+   +'Frauen zuerst, dann Männer, jede mit Alter und Akzent im Namen. Mit ▶ im Reiter '
+   +'<b>Avatare &amp; Sprecher</b> hörst du jede an.<br><br>'
+   +'Den Punkt links setzt die <b>Kanalstimme</b>: die spricht, wo bei einem Avatar nichts eingestellt ist. '
+   +'Wer welche Stimme bekommt, stellst du beim Avatar selbst ein — eine Stimme darf mehrere bedienen.</div></div>';
   return o;
+}
+/* Holt die Stimmenliste bei ElevenLabs und traegt sie beim Kanal ein.
+   Gespeichert wird die ID, der Name steht nur davor. */
+function stimmenHolen(knopf){
+  var alt=knopf?knopf.textContent:"";
+  if(knopf){knopf.disabled=true;knopf.textContent="hole Stimmen …"}
+  api("/api/darsteller?k="+S.kanal,{aktion:"stimmen_holen"}).then(function(r){
+    if(knopf){knopf.disabled=false;knopf.textContent=alt}
+    if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+    melde(r.text||"fertig");
+    api("/api/kanal?k="+S.kanal).then(function(x){S.einst=x;ladeDarsteller()});
+  },function(){
+    if(knopf){knopf.disabled=false;knopf.textContent=alt}
+    melde("ElevenLabs hat nicht geantwortet.");
+  });
 }
 function knoepfeStimmung(jetzt){
   return '<div class="pills">'+STIMMUNG.map(function(o){
@@ -2054,8 +2072,8 @@ function stimmZeile(f){
    +'<button class="knopf" style="padding:9px 13px" title="kurz anhören" '
    +'onclick="stimmProbe(\''+h(jetzt)+'\',this)">▶</button></div></div>';
   if(!liste.length)
-    o+='<div class="szh" style="margin-top:5px;color:#FFB454">Noch keine Stimme eingetragen — '
-     +'unter <b>Einstellungen → Video &amp; Ton → Stimmen</b> anlegen.</div>';
+    o+='<div class="szh" style="margin-top:5px;color:#FFB454">Noch keine Stimme da — '
+     +'hol sie dir mit dem Knopf unten in diesem Reiter.</div>';
   return o;
 }
 function dsStimme(id,wert){
@@ -2193,6 +2211,18 @@ function tDarsteller(){
   });
   o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="sprecherNeu()">'
    +'+ Sprecher anlegen</button></div>';
+
+  var anz=((S.ds&&S.ds.stimmliste)||[]).length;
+  o+='<div class="karte p"><h2 class="kt">Stimmen</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:10px">'
+   +(anz?('Im Vorrat sind <b>'+anz+' Stimmen</b>. Sie stehen in jeder Auswahl oben, '
+         +'Frauen zuerst, dann Männer. Mit ▶ hörst du jede an, bevor du sie vergibst. '
+         +'Eine Stimme darf mehrere Avatare bedienen.')
+       :('Noch kein Vorrat da. Der Knopf holt alle Stimmen von ElevenLabs — mit Namen, '
+         +'Alter und Akzent. Danach wählst du bei jedem Avatar und Sprecher oben eine aus.'))
+   +'</div>'
+   +'<button class="knopf or" style="width:100%" onclick="stimmenHolen(this)">'
+   +'⬇ Stimmen von ElevenLabs holen</button></div>';
   return o;
 }
 
