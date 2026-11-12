@@ -30,7 +30,10 @@ h1,h2,.zahl{font-family:"Space Grotesk",sans-serif}
 .reiter button.an{background:#24D3E8;border-color:#24D3E8;color:#04161B;box-shadow:0 6px 16px rgba(36,211,232,.32)}
 .erkl{display:flex;gap:9px;margin:11px 16px 0;padding:11px 12px;background:rgba(36,211,232,.07);border:1px solid rgba(36,211,232,.25);border-radius:12px;font-size:11.5px;line-height:1.5;color:#C0C9DA}
 .erkl i{width:7px;height:7px;border-radius:50%;background:#24D3E8;margin-top:5px;flex:none}
-.inhalt{padding:12px 16px 0;display:flex;flex-direction:column;gap:10px}
+/* Unten steht die feste Leiste mit VIDEO ERZEUGEN, bei einem laufenden
+   Bau zusaetzlich die Statuszeile. Ohne Abstand verschwindet die letzte
+   Karte dahinter - genau das ist bei den fertigen Videos passiert. */
+.inhalt{padding:12px 16px calc(150px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:10px}
 .karte{background:linear-gradient(180deg,#171B26,#11141C);border:1px solid #242B3E;border-radius:16px;padding:4px 13px;box-shadow:0 10px 28px rgba(0,0,0,.45)}
 .karte.p{padding:13px}
 .kt{font-family:"Space Grotesk",sans-serif;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:#8593AC;margin:0 0 9px}
@@ -662,7 +665,10 @@ function tAblauf(){
 function tLauf(){
   var l=S.daten.lauf||{};
   if(!(l.laeuft||(l.zeilen&&l.zeilen.length)))return '';
-  return '<div class="karte p"><h2 class="kt">'+(l.laeuft?"Läuft gerade":"Letzter Lauf")+'</h2><div class="log">'
+  var text=(l.zeilen||[]).join("\n");
+  var fertig=!l.laeuft&&/FERTIG in/.test(text);
+  return '<div class="karte p"'+(fertig?' style="border:2px solid #37D67A"':'')+'><h2 class="kt">'
+    +(l.laeuft?"Läuft gerade":(fertig?'<span style="color:#37D67A">● Fertig</span>':"Letzter Lauf"))+'</h2><div class="log">'
     +h((l.zeilen||[]).join("\n")||"—")+'</div>'
     +(l.laeuft?'<button class="knopf" style="width:100%;margin-top:10px" onclick="abbrechen()">Abbrechen</button>':'')+'</div>';
 }
@@ -672,7 +678,11 @@ function tVideos(){
   if(!S.videos.length)o+='<div class="leer">noch keine</div>';
   S.videos.forEach(function(v){
     var laeuft=(S.spielt===v.ordner);
-    o+='<div class="e"><div class="tx"><div class="ti">'+h(v.titel)+'</div><div class="me">'+h(v.zeit)+' · '+v.mb+' MB</div></div>'
+    /* Gerade fertig geworden: gruen umrandet, damit man es sofort sieht. */
+    var frisch=(v.alter_min!=null&&v.alter_min<=30);
+    o+='<div class="e"'+(frisch?' style="border:2px solid #37D67A;border-radius:12px;padding:9px 10px;background:rgba(55,214,122,.07)"':'')+'>'
+      +'<div class="tx"><div class="ti">'+(frisch?'<span style="color:#37D67A">● NEU </span>':'')+h(v.titel)+'</div>'
+      +'<div class="me">'+h(v.zeit)+' · '+v.mb+' MB'+(frisch?' · gerade fertig':'')+'</div></div>'
       +'<button class="ik" onclick="spiel(\''+v.ordner+'\')">'+(laeuft?"✕":"▶")+'</button>'
       +'<button class="ik" onclick="herunter(\''+v.ordner+'\')">⤓</button>'
       +'<button class="ik rot" onclick="fragWeg(\''+v.ordner+'\',\''+h(v.titel).replace(/'/g,"")+'\')">✕</button></div>';
@@ -1576,13 +1586,17 @@ function clipZeile(s){
      +'oder schalte unten auf das alte Bild zurück.</div></div>';
 
   if(hier){
-    o+='<div class="szz p62" style="display:block;color:#FFB454">'
-     +'<b>Clip läuft…</b> '+h(txt||"wird geschickt")
+    o+='<div class="szz p62" style="display:block;color:#FFB454;'
+     +'border:2px solid #FFB454;border-radius:12px;padding:10px">'
+     +'<b>● Clip läuft…</b> '+h(txt||"wird geschickt")
      +'<div class="szh">Das dauert ein paar Minuten. Du kannst die Seite zumachen.</div></div>';
     return o;
   }
   if(clip){
-    o+='<div class="szz p62" style="display:block">'
+    /* Fertiger Clip: gruen umrandet, wie das fertige Video. */
+    o+='<div class="szz p62" style="display:block;border:2px solid #37D67A;'
+     +'border-radius:12px;padding:9px">'
+     +'<div class="szh" style="color:#37D67A;margin-bottom:6px">● Clip fertig</div>'
      +'<video src="/eigen/'+encodeURIComponent(clip)+'?k='+S.kanal+'" controls playsinline muted '
      +'style="width:100%;max-height:300px;border-radius:9px;background:#000;display:block"></video>'
      +'<div style="display:flex;gap:7px;margin-top:7px">'

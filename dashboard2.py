@@ -101,6 +101,7 @@ def ordner_liste(key=None):
                 "ordner": n, "kanal": kid, "titel": titel,
                 "mb": round(os.path.getsize(v) / 1048576.0, 1),
                 "zeit": time.strftime("%d.%m. %H:%M", time.localtime(os.path.getmtime(v))),
+                "alter_min": int(max(0, (time.time() - os.path.getmtime(v)) / 60)),
                 "thumb": os.path.exists(os.path.join(p, "thumbnail.jpg")),
             })
     except Exception:
