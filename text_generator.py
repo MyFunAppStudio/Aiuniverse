@@ -748,7 +748,27 @@ def erzeuge_paket(kanal, eigenes_thema=None):
 # Besetzung bleibt es beim alten Block, damit der Finanzkanal weiter
 # seine Gegenstaende bekommt.
 
-P88_BILD = """BILD UND BEWEGUNG
+P88_BILD = """DIE SZENEN EINES EREIGNISSES
+Bevor du schreibst, denk wie ein Regisseur: Welche fuenf bis acht
+Momente braucht man, um dieses Ereignis zu verstehen? Nimm die, die
+eine Dokumentation zeigen wuerde, in zeitlicher Reihenfolge - die Lage
+davor, der Ausloeser, der Aufmarsch, der entscheidende Moment, die
+Wendung, der Ausgang, die Folgen.
+Jede Szene ist genau einer dieser Momente, und ihr Bild zeigt diesen
+Moment - nicht die Stimmung drumherum und nicht einen Gegenstand, der
+dazu passen koennte.
+
+Beispiel Waterloo: der Regen in der Nacht davor, die Heere im
+Morgengrauen gegenueber, der Kampf um das Gehoeft, die
+Kavallerieattacke in den Schlamm, das Eintreffen der Preussen, das
+Feld am Abend.
+
+Steht im Thema nur ein Stichwort, nimm den bekannten Ablauf des
+Ereignisses. Bist du dir bei einer Einzelheit nicht sicher, lass sie
+weg und nimm einen Moment, der belegt ist. Erfinde keine Zahlen,
+keine Namen und keine Zitate.
+
+BILD UND BEWEGUNG
 Hinter jeden gesprochenen Satz setzt du eine Bildbeschreibung in eckige
 Klammern, mit BILD davor. Sie wird nicht gesprochen und steht in keinem
 Untertitel. Sie ist die Anweisung an das Bildmodell - schreib sie auf
