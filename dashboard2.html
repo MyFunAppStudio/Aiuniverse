@@ -1450,6 +1450,9 @@ function schalterZeile(s,d){
      +'onclick="szeneSetz(\''+s.id+'\',\'modus\',\''+m[0]+'\')">'+h(m[1])+'</button>';
   });
   o+='</div>';
+  o+='<div class="szh" style="margin-top:5px">Der Schalter sagt nur, was man <b>sieht</b>. '
+   +'Geredet wird in jeder Szene — wer redet, steht im Sprechtext vor der Zeile. '
+   +'Auch bei „Nur Bild" reden sie also, nur eben aus dem Off.</div>';
   if(s.eigener_clip)
     o+='<div class="szh" style="margin-top:5px;color:#24D3E8">'
      +'Eigener Clip hochgeladen — Bild und Videomodell werden übersprungen.</div>';

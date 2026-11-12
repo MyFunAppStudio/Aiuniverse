@@ -673,7 +673,7 @@ def plan_bauen(kanal, ordner):
         plan.append({"nr": nr, "quelle": quelle, "typ": s["typ"], "text": text,
                      "stuecke": teile_info, "regie": regie,
                      "untertitel": bool(s["untertitel"]), "stimme": ton is not None,
-                     "ton": ton, "bewegung": s.get("bewegung", "auto"), "musik": s.get("musik", "auto"),
+                     "ton": ton, "bewegung": _m1_bewegung(s), "musik": s.get("musik", "auto"),
                      "passen": s.get("passen") or "auto",
                      "stimmung": s.get("stimmung", ""), "figur": s.get("figur", ""),
                      "pose": s.get("pose", ""), "platz": s.get("platz", "rechts_unten"),
@@ -3109,3 +3109,30 @@ def _stimme_fuer(kanal, figur):
 # Reine Sprecher sollen in Texten als Name erkannt werden, obwohl sie
 # nie im Bild stehen. _r15_namen liest schon alle Darsteller - damit
 # sind sie automatisch dabei.
+
+
+# ---------- Nachtrag m1: "still" heisst wirklich still ----------
+#
+# Bei jeder Szene stehen drei Schalter: "Avatare im Bild", "Nur Bild,
+# bewegt", "Nur Bild, still". Gelesen wurde davon nur der erste - er
+# entscheidet, ob ein Clip mit den Avataren erzeugt wird. Ob sich ein
+# Standbild bewegt, kam dagegen allein aus der Kanaleinstellung und aus
+# der Animationsanweisung der Szene. "bewegt" und "still" haben deshalb
+# genau dasselbe getan.
+#
+# Jetzt entscheidet der Schalter bei der Szene:
+#   still   -> das Bild steht, egal was sonst eingestellt ist
+#   bewegt  -> es bewegt sich; steht in der Szene eine Richtung, gilt die
+#   avatare -> wie bisher, der Clip kommt vom Videomodell
+#
+# Die Kanaleinstellung "Bewegung im Bild: aus" bleibt der Hauptschalter
+# und sticht alles - sonst haette man zwei Stellen, die sich streiten.
+
+def _m1_bewegung(s):
+    bew = (s.get("bewegung") or "auto")
+    modus = (s.get("modus") or "")
+    if modus == "still":
+        return "aus"
+    if modus == "bewegt" and bew == "aus":
+        return "auto"
+    return bew
