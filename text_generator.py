@@ -1047,6 +1047,11 @@ def erzeuge_paket(kanal, eigenes_thema=None):
             szenen = max(3, int(round(gesamt / stufe)))
             # +0.4, weil der Bau die Szenenzahl mit int() abschneidet
             k["bilder_pro_minute"] = (szenen + 0.4) / max(0.01, minuten)
+            # Etwas Reserve: die Stimme haelt sich nicht exakt an die
+            # gerechneten Woerter je Sekunde. Ohne Puffer wird aus einer
+            # 10-Sekunden-Szene schnell eine von 11 - und die passt dann
+            # nicht mehr in die Stufe, der Rest wird eingefroren.
+            k["woerter_pro_sekunde"] = round(_p37_wps(k) * 0.92, 3)
             print("[Text] %d Szenen zu je %d Sekunden - so weit das Modell "
                   "animiert (vorher %d zu je %.1f)"
                   % (szenen, stufe, bisher, je_bisher))
