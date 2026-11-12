@@ -3197,3 +3197,77 @@ def _lauf(befehl, *a, **k):
     except Exception:
         pass
     return _m10_lauf_alt(befehl, *a, **k)
+
+
+# ---------- Nachtrag m13: wo die Zeit hingeht ----------
+#
+# "Warum dauert das so lange" liess sich bisher nur raten. Jeder
+# ffmpeg-Aufruf wird jetzt gestoppt; dauert einer laenger als fuenf
+# Sekunden, steht er im Log, und am Ende kommt eine Zusammenfassung
+# nach Art des Schrittes.
+#
+# Nur Messen, kein Eingriff: der Bau laeuft genau wie vorher.
+
+import time as _m13_time
+
+_M13_ZEITEN = {}
+
+
+def _m13_art(befehl):
+    try:
+        ziel = os.path.basename(str(befehl[-1]))
+    except Exception:
+        return "sonst"
+    if ziel.startswith("v") and ziel[1:3].isdigit():
+        return "Stueck (Bild/Clip)"
+    if ziel.startswith("ki_"):
+        return "KI-Clip holen"
+    if "unter" in ziel or ziel.startswith("ut"):
+        return "Untertitel einbrennen"
+    if ziel.startswith("ton") or ziel.endswith(".mp3") or ziel.endswith(".m4a"):
+        return "Ton"
+    if "fertig" in ziel or ziel == "video.mp4":
+        return "Endvideo"
+    return ziel
+
+
+def m13_bericht():
+    if not _M13_ZEITEN:
+        return
+    zeilen = sorted(_M13_ZEITEN.items(), key=lambda x: -x[1][0])
+    gesamt = sum(v[0] for _k, v in zeilen)
+    print("[Zeit] ffmpeg gesamt %.0f s:" % gesamt)
+    for art, (sek, mal) in zeilen:
+        print("[Zeit]   %-22s %6.0f s  (%d Aufrufe)" % (art, sek, mal))
+
+
+_m13_lauf_alt = _lauf
+
+
+def _lauf(befehl, *a, **k):
+    t0 = _m13_time.time()
+    r = _m13_lauf_alt(befehl, *a, **k)
+    try:
+        if befehl and befehl[0] == "ffmpeg":
+            d = _m13_time.time() - t0
+            art = _m13_art(befehl)
+            alt = _M13_ZEITEN.get(art, (0.0, 0))
+            _M13_ZEITEN[art] = (alt[0] + d, alt[1] + 1)
+            if d > 5:
+                print("[Zeit] %s: %.0f s" % (art, d))
+    except Exception:
+        pass
+    return r
+
+
+_m13_baue_alt = baue
+
+
+def baue(kanal, ziel_pfad, ordner=None):
+    _M13_ZEITEN.clear()
+    t0 = _m13_time.time()
+    try:
+        return _m13_baue_alt(kanal, ziel_pfad, ordner)
+    finally:
+        print("[Zeit] Bau insgesamt %.0f s" % (_m13_time.time() - t0))
+        m13_bericht()
