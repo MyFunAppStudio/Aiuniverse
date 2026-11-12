@@ -2677,37 +2677,71 @@ def _r5_figuren(k, s=None):
     return _m3_figuren_alt(k, s)
 
 
-# ---------- Nachtrag m4: Leute im Hintergrund bleiben, wer sie sind ----------
+# ---------- Nachtrag m4: wer im Bild steht, und wie oft ----------
 #
-# Im Hintergrundbild stand ein Briefbote, der einen Brief verbrennt.
-# Im Clip war er weg - Jonas hielt den brennenden Brief. Kling klebt die
-# Figuren nicht ins Bild, es erzeugt das ganze Bild neu; steht dort schon
-# jemand, wird die Referenzfigur einfach ueber ihn gelegt.
+# Zwei Dinge gingen schief, beide aus demselben Grund: dem Modell wurde
+# nie gesagt, wie viele Leute dazukommen und dass die im Hintergrund
+# andere sind.
 #
-# Dem Modell fehlte der Satz, dass das zwei verschiedene Leute sind. Der
-# steht jetzt drin: die Referenzfiguren kommen zusaetzlich in den freien
-# Vordergrund, wer im Bild schon steht, bleibt wer er ist und tut weiter,
-# was er tut.
+# 1. Im Hintergrundbild stand ein Briefbote, der einen Brief verbrennt.
+#    Im Clip war er weg - Jonas hielt den Brief. Kling klebt die Figuren
+#    nicht ins Bild, es erzeugt das ganze Bild neu; steht dort schon
+#    jemand, legt es die Referenzfigur ueber ihn.
+# 2. Eine einzige Figur kam viermal vor. Eine Figur bringt mehrere
+#    Referenzbilder mit - frontal, seitlich, von hinten. Stand im Prompt
+#    "the people ... facing each other", hat das Modell daraus eine
+#    Gruppe gemacht und jedes Referenzbild einmal hingestellt.
+#
+# Jetzt steht die Zahl und der Name darin, und dass jeder genau einmal
+# vorkommt.
 
-M4_GETRENNT = (
-    "The @Element people are added to the scene: they stand together in the "
-    "open foreground, facing each other and talking. Anyone already visible "
-    "in @Image1 is a different person - keep them in their place, at their "
-    "own size, doing what they were doing. Never turn a person from @Image1 "
-    "into an @Element person and never swap their roles.")
+
+def _m4_liste(namen):
+    if len(namen) < 3:
+        return " and ".join(namen)
+    return ", ".join(namen[:-1]) + " and " + namen[-1]
+
+
+def _m4_text(namen):
+    n = len(namen)
+    if n == 1:
+        wer = ("There is exactly ONE added person in this shot: %s. "
+               "Show this person a single time only. Do not duplicate, clone, "
+               "mirror or repeat this person anywhere in the frame - the "
+               "reference images all show the same one person from different "
+               "sides, not several people. " % namen[0])
+        steh = ("%s stands alone in the open foreground, facing the camera "
+                "and talking." % namen[0])
+    else:
+        wer = ("There are exactly %d added people in this shot: %s. Each of "
+               "them appears a single time only. Do not duplicate, clone, "
+               "mirror or repeat any of them - the several reference images of "
+               "one person all show that same person from different sides. "
+               % (n, _m4_liste(namen)))
+        steh = ("They stand together in the open foreground, facing each other "
+                "and talking.")
+    rest = ("Anyone already visible in @Image1 is a different person - keep "
+            "them in their place, at their own size, doing what they were "
+            "doing. Never turn a person from @Image1 into an @Element person "
+            "and never swap their roles.")
+    return wer + steh + " " + rest
+
 
 _m4_prompt_alt = _r5_prompt
 
 
 def _r5_prompt(k, kanal, s):
     text = _m4_prompt_alt(k, kanal, s)
-    if not _r5_figuren(k, s):
+    namen = [(f.get("name") or "").strip() for f in _r5_figuren(k, s)]
+    namen = [x for x in namen if x]
+    if not namen:
         return text          # ohne Figuren gibt es nichts zu verwechseln
     import animation
+    zusatz = _m4_text(namen)
     fest = getattr(animation, "R4_STILL", "")
     if fest and fest in text:
-        return text.replace(fest, M4_GETRENNT + " " + fest)
-    return (text + " " + M4_GETRENNT).strip()
+        return text.replace(fest, zusatz + " " + fest)
+    return (text + " " + zusatz).strip()
 
 
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
