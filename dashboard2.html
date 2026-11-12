@@ -795,7 +795,8 @@ function tVideo(){
      [["aus","aus"],["kalt","kalt"],["warm","warm"],["hart","hart"]]),
      STIMMUNG_WOZU[stimmungJetzt()])
    +'</div>';
-  o+=stimmenKarte();
+  /* Die Stimmenkarte stand hier ein zweites Mal. Sie gehoert zu denen,
+     die reden - also in den Reiter "Avatare & Sprecher". */
   o+=tTexte();
   o+='<div class="karte p"><h2 class="kt">Schluss</h2>'
    +reihe("Nachlauf",zahl("nachlauf",(S.einst.nachlauf===undefined?0.9:S.einst.nachlauf),1),
@@ -1717,27 +1718,52 @@ function stimmungName(e){
   return beste;
 }
 function stimmenListe(){return (S.einst.stimmen||[]).filter(function(x){return x&&x.name})}
+/* Alles zur Stimme steht an einer Stelle: im Reiter Avatare & Sprecher,
+   direkt unter denen, die damit reden. Unter Video & Ton stand frueher
+   dieselbe Karte ein zweites Mal - die ist raus. */
 function stimmenKarte(){
   var li=stimmenListe(), aktiv=(S.einst.stimme_id||"");
-  var o='<div class="karte p"><h2 class="kt">Stimmen</h2><div class="liste">';
-  if(!li.length)o+='<div class="leer">keine eingetragen — dann nimmt er die Standardstimme des Modells</div>';
-  li.forEach(function(e,i){
-    var an=(e.id&&e.id===aktiv);
-    o+='<div class="e"><button class="ik" style="'+(an?"background:#24D3E8;border-color:#24D3E8;color:#04161B":"")+'"'
-      +' onclick="stimmeAktiv('+i+')">'+(an?"●":"○")+'</button>'
-      +'<div class="tx" onclick="stimmeBearbeiten('+i+')"><div class="ti">'+h(e.name)+'</div>'
-      +'<div class="me">'+h(e.id||"ohne ID")+'</div></div>'
-      +'<button class="ik rot" onclick="stimmeWeg('+i+',\''+h(e.name).replace(/'/g,"")+'\')">✕</button></div>';
-  });
-  o+='</div><button class="knopf or" style="width:100%;margin:9px 0 6px" onclick="stimmenHolen(this)">'
+  var o='<div class="karte p"><h2 class="kt">Stimmen</h2>';
+  if(!li.length){
+    o+='<div class="hinw" style="padding:0;margin-bottom:10px">Noch kein Vorrat da. Der Knopf holt alle '
+     +'Stimmen von ElevenLabs — mit Namen, Alter und Akzent. Danach wählst du bei jedem Avatar und '
+     +'Sprecher oben eine aus.</div>';
+  }else{
+    o+='<div class="hinw" style="padding:0;margin-bottom:10px">Im Vorrat sind <b>'+li.length+' Stimmen</b>. '
+     +'Sie stehen in jeder Auswahl oben, Frauen zuerst, dann Männer. '
+     +'Eine Stimme darf mehrere bedienen.</div>'
+     +'<div class="szz"><span class="szh">Kanalstimme — spricht nur da, wo bei jemandem nichts eingestellt ist</span>'
+     +'<div style="display:flex;gap:7px;align-items:center">'
+     +'<select style="flex:1" onchange="stimmeAktivId(this.value)">'
+     +'<option value=""'+(aktiv?"":" selected")+'>keine</option>';
+    li.forEach(function(e){
+      o+='<option value="'+h(e.id)+'"'+(e.id&&e.id===aktiv?" selected":"")+'>'+h(e.name)+'</option>'});
+    o+='</select>'
+     +(aktiv?'<button class="knopf" style="padding:9px 13px" title="kurz anhören" '
+             +'onclick="stimmProbe(\''+h(aktiv)+'\',this)">▶</button>':'')
+     +'</div></div>';
+  }
+  o+=reihe("Grundstimmung",knoepfeStimmung(stimmungName(S.einst.stimme_energie)),
+           "wie lebendig gesprochen wird — gilt für alle Stimmen")
+   +'<button class="knopf or" style="width:100%;margin:9px 0 8px" onclick="stimmenHolen(this)">'
    +'⬇ Stimmen von ElevenLabs holen</button>'
-   +'<button class="knopf" style="width:100%;margin:0 0 4px" onclick="stimmeNeu()">+ Stimme von Hand</button>'
-   +reihe("Grundstimmung",knoepfeStimmung(stimmungName(S.einst.stimme_energie)),"gilt, wo bei der Szene nichts anderes steht")
-   +'<div class="hinw" style="margin-top:8px"><b>⬇ Stimmen holen</b> trägt den ganzen Vorrat ein — '
-   +'Frauen zuerst, dann Männer, jede mit Alter und Akzent im Namen. Mit ▶ im Reiter '
-   +'<b>Avatare &amp; Sprecher</b> hörst du jede an.<br><br>'
-   +'Den Punkt links setzt die <b>Kanalstimme</b>: die spricht, wo bei einem Avatar nichts eingestellt ist. '
-   +'Wer welche Stimme bekommt, stellst du beim Avatar selbst ein — eine Stimme darf mehrere bedienen.</div></div>';
+   +falte("Vorrat ansehen und aufräumen",vorratListe(),false)
+   +'</div>';
+  return o;
+}
+function vorratListe(){
+  var li=stimmenListe();
+  var o='<div class="liste">';
+  if(!li.length)o+='<div class="leer">noch nichts drin</div>';
+  li.forEach(function(e,i){
+    o+='<div class="e"><div class="tx" onclick="stimmeBearbeiten('+i+')"><div class="ti">'+h(e.name)+'</div>'
+     +'<div class="me">'+h(e.id||"ohne ID")+'</div></div>'
+     +'<button class="knopf" style="padding:8px 12px" title="kurz anhören" '
+     +'onclick="stimmProbe(\''+h(e.id)+'\',this)">▶</button>'
+     +'<button class="ik rot" onclick="stimmeWeg('+i+',\''+h(e.name).replace(/'/g,"")+'\')">✕</button></div>';
+  });
+  o+='</div><button class="knopf" style="width:100%;margin-top:8px" onclick="stimmeNeu()">'
+   +'+ Stimme von Hand</button>';
   return o;
 }
 /* Holt die Stimmenliste bei ElevenLabs und traegt sie beim Kanal ein.
@@ -1780,9 +1806,8 @@ function stimmeWeg(i,n){
   frage("Stimme löschen?","<b>"+h(n)+"</b><br><br>Der Eintrag wird entfernt.","Löschen",function(){
     var li=stimmenListe().slice(); li.splice(i,1); stimmenSichern(li);},true);
 }
-function stimmeAktiv(i){
-  var e=stimmenListe()[i]||{};
-  S.einst.stimme_id=e.id||"";
+function stimmeAktivId(id){
+  S.einst.stimme_id=String(id||"");
   api("/api/kanal?k="+S.kanal,{stimme_id:S.einst.stimme_id}).then(zeichne);
 }
 function stimmenSichern(li,danach){
@@ -2212,17 +2237,7 @@ function tDarsteller(){
   o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="sprecherNeu()">'
    +'+ Sprecher anlegen</button></div>';
 
-  var anz=((S.ds&&S.ds.stimmliste)||[]).length;
-  o+='<div class="karte p"><h2 class="kt">Stimmen</h2>'
-   +'<div class="hinw" style="padding:0;margin-bottom:10px">'
-   +(anz?('Im Vorrat sind <b>'+anz+' Stimmen</b>. Sie stehen in jeder Auswahl oben, '
-         +'Frauen zuerst, dann Männer. Mit ▶ hörst du jede an, bevor du sie vergibst. '
-         +'Eine Stimme darf mehrere Avatare bedienen.')
-       :('Noch kein Vorrat da. Der Knopf holt alle Stimmen von ElevenLabs — mit Namen, '
-         +'Alter und Akzent. Danach wählst du bei jedem Avatar und Sprecher oben eine aus.'))
-   +'</div>'
-   +'<button class="knopf or" style="width:100%" onclick="stimmenHolen(this)">'
-   +'⬇ Stimmen von ElevenLabs holen</button></div>';
+  o+=stimmenKarte();
   return o;
 }
 
