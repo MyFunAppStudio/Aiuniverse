@@ -1107,12 +1107,33 @@ function kanalNameSpeichern(){
 
 function abbrechen(){api("/api/stop",{}).then(laden)}
 
+/* Die Abfrage sprach immer vom naechsten Thema aus der Liste - auch
+   dann, wenn aus fertigen Szenen gebaut wird und gar kein Thema
+   gebraucht wird. Jetzt steht da, was wirklich passiert. */
 function fragGenerieren(){
   var t=(el("thema")&&el("thema").value||"").trim();
-  var k=kanalDaten();
+  var k=kanalDaten(), p=S.preis||{};
+  var szenen=(((S.szenen||{}).szenen)||[]);
+  var kopf, was;
+  if(p.modus==="szenen"){
+    var mitClip=szenen.filter(function(x){return x.clip}).length;
+    kopf="Aus deinen "+(p.szenen||szenen.length)+" Szenen";
+    was="Gebaut wird aus dem, was da ist: "
+      +(mitClip?(mitClip+(mitClip===1?" Szene":" Szenen")+" mit Clip, "):"")
+      +"der Rest als Bild. Dazu kommen Stimme, Untertitel, Musik und Abspann."
+      +"<br>Es wird <b>kein</b> neuer Text geschrieben und kein Thema verbraucht.";
+  }else{
+    kopf=t||"nächstes Thema aus der Liste";
+    was="Die Text-KI schreibt eine neue Geschichte, dann werden Bilder, "
+      +"Stimme und Video erzeugt.";
+  }
+  var sek=(p.sekunden?(Math.round(p.sekunden)+" Sek gesprochen"):((S.einst.laenge||20)+" Sek"));
   frage("Video erzeugen?",
-    "<b>"+h(t||"nächstes Thema aus der Liste")+"</b><br>"+h(k?k.name:"")+" · "+(S.einst.laenge||20)+" Sek · "+(S.einst.format||"9:16")
-    +"<br><br>Kostet etwa <b>"+(S.preis.gesamt||0).toFixed(2).replace(".",",")+" €</b> echtes Guthaben.",
+    "<b>"+h(kopf)+"</b><br>"+h(k?k.name:"")+" · "+sek+" · "+(S.einst.format||"9:16")
+    +"<br><br>"+was
+    +"<br><br>Kostet etwa <b>"+(Number(p.gesamt)||0).toFixed(2).replace(".",",")+" €</b> echtes Guthaben."
+    +'<br><br><span style="color:#FFB454">Während das läuft, keinen Neustart '
+    +'machen — der Bau wird sonst abgebrochen.</span>',
     "Ja, erzeugen",function(){
       api("/api/start",{k:S.kanal,thema:t}).then(function(r){if(!r.ok)melde(r.text||"ging nicht");laden()});
     });
