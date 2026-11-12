@@ -3271,3 +3271,42 @@ def baue(kanal, ziel_pfad, ordner=None):
     finally:
         print("[Zeit] Bau insgesamt %.0f s" % (_m13_time.time() - t0))
         m13_bericht()
+
+
+# ---------- Nachtrag m17: keine Sprechernamen im Untertitel ----------
+#
+# Die Tonspur wird je Sprecher getrennt, die Namen werden dabei
+# abgeschnitten - gesprochen wird nur der Satz. Die Untertitel nehmen
+# aber den rohen Szenentext, und darin steht "Mara:" und "Jonas:" noch
+# drin. Im Video stand der Name damit auf dem Bild, ohne dass ihn
+# jemand sagt.
+#
+# Entfernt werden nur bekannte Namen der Besetzung, damit ein Doppel-
+# punkt mitten im Satz stehen bleiben darf.
+
+
+def _m17_ohne_namen(text, kanal):
+    t = text or ""
+    try:
+        namen = _r15_namen(kanal)
+    except Exception:
+        return t
+    for n in sorted([x for x in namen if x], key=len, reverse=True):
+        t = re.sub(r"(?<![\wÄÖÜäöüß])" + re.escape(n) + r"\s*:\s*", "", t,
+                   flags=re.I)
+    return re.sub(r"\s{2,}", " ", t).strip()
+
+
+_m17_ass_alt = _ass
+
+
+def _ass(plan, ziel, b, h, kanal=None):
+    sauber = []
+    for s in plan:
+        if isinstance(s, dict) and (s.get("text") or "").strip():
+            s2 = dict(s)
+            s2["text"] = _m17_ohne_namen(s["text"], kanal)
+            sauber.append(s2)
+        else:
+            sauber.append(s)
+    return _m17_ass_alt(sauber, ziel, b, h, kanal)
