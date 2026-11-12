@@ -3146,3 +3146,54 @@ def _m1_bewegung(s):
     if modus == "bewegt" and bew == "aus":
         return "auto"
     return bew
+
+
+# ---------- Nachtrag m10: Zwischenstuecke schneller kodieren ----------
+#
+# Jede Szene wird einzeln kodiert, danach wird alles aneinandergehaengt
+# und NOCH EINMAL kodiert. Die Zwischenstuecke landen also nie im
+# fertigen Video - trotzdem wurden sie mit "veryfast" und crf 22
+# gerechnet, als waeren sie das Endergebnis.
+#
+# "ultrafast" mit crf 20 ist deutlich schneller und verliert nichts,
+# was man am Ende noch sehen koennte: die Qualitaet des fertigen Videos
+# entscheidet der letzte Durchgang. Die Zwischendateien werden groesser,
+# aber sie fliegen danach ohnehin weg.
+#
+# Auf einem Droplet mit einem Rechenkern ist das der Unterschied
+# zwischen Warten und laenger Warten.
+
+M10_SCHNELL = ["-preset", "ultrafast", "-crf", "20"]
+
+
+def _m10_tausch(befehl):
+    raus, i = [], 0
+    while i < len(befehl):
+        if befehl[i] == "-preset" and i + 1 < len(befehl):
+            raus += M10_SCHNELL
+            i += 2
+            continue
+        if befehl[i] == "-crf" and i + 1 < len(befehl):
+            i += 2            # steckt schon in M10_SCHNELL
+            continue
+        raus.append(befehl[i])
+        i += 1
+    return raus
+
+
+_m10_lauf_alt = _lauf
+_M10_STUECKE = ("v%02d_", "ki_", "sz_")
+
+
+def _lauf(befehl, *a, **k):
+    try:
+        ziel = str(befehl[-1])
+        if (befehl and befehl[0] == "ffmpeg"
+                and "-preset" in befehl
+                and os.path.basename(ziel).startswith(("v0", "v1", "v2", "v3",
+                                                       "v4", "v5", "v6", "v7",
+                                                       "v8", "v9"))):
+            befehl = _m10_tausch(befehl)
+    except Exception:
+        pass
+    return _m10_lauf_alt(befehl, *a, **k)
