@@ -815,16 +815,29 @@ rope stacked along the dock, orange light on calm water, gulls
 circling, open flagstones in the foreground]
 
 BEWEGUNG
-Nur wenn sich im Video etwas ruehren soll, setzt du eine zweite Klammer
-mit BEWEGUNG davor. Laesst du sie weg, bleibt das Bild stehen.
-Hinein kommt, was ein Bild-zu-Video-Modell sauber kann: Kamera langsam
-heran, zurueck oder zur Seite, Rauch, Staub, Regen, Nebel der zieht,
-Wasser das sich bewegt, Fahnen und Stoff im Wind, Licht das wandert.
-Eine Menschenmenge, die sich im Ganzen bewegt, geht auch - einzelne
-Personen, die greifen, sich umdrehen oder reden, werden Matsch.
-Hoechstens zwoelf Woerter.
+Zu JEDER Szene schreibst du eine zweite Klammer mit BEWEGUNG davor.
+Sie sagt, was sich ruehrt. Auf Deutsch, hoechstens zwanzig Woerter.
+Drei Teile, immer in dieser Reihenfolge:
 
-[BEWEGUNG: Kamera faehrt langsam zurueck, Rauch zieht ueber das Feld]"""
+1. DIE FIGUREN. Stehen in dieser Szene Figuren im Bild (siehe "wer"),
+   schreib hinein, was sie tun, waehrend sie reden: zeigt hinunter ins
+   Tal, deutet auf die Reihen, dreht sich zum anderen, breitet die Arme
+   aus, schuettelt den Kopf. Sie sollen nicht herumstehen wie
+   hingestellt. Aber: nicht gehen, nicht greifen, nicht hinsetzen,
+   nichts aufheben - sie bleiben auf der Stelle, sonst wird der Koerper
+   Matsch. Ist "wer" leer, laesst du diesen Teil weg.
+2. DER HINTERGRUND. Was dort die ganze Zeit lebt: Rauch zieht, die
+   Reihen schieben sich vorwaerts, die Menge bewegt sich, Fahnen und
+   Gras im Wind, Regen, Nebel der zieht, Wasser, Licht das wandert.
+   Eine Menschenmenge als Ganzes geht; einzelne Leute im Hintergrund,
+   die etwas anfassen, werden Matsch.
+3. EINE Kamerabewegung, nur eine: faehrt langsam heran, zurueck oder
+   zur Seite.
+
+Mit Figuren: [BEWEGUNG: Mara zeigt hinunter ins Tal, Rauch zieht ueber
+das Feld, die Reihen schieben sich vor, Kamera faehrt langsam zurueck]
+
+Ohne Figuren: [BEWEGUNG: Kamera faehrt langsam zurueck, Rauch zieht ueber das Feld]"""
 
 
 _p88_prompt_alt = lade_prompt
