@@ -739,6 +739,7 @@ R4_STILL = M5_LEBEN
 # dass hier etwas geaendert werden muss.
 
 M7_MAX = 9
+M7_STUFEN = [6, 10]      # welche Laengen H3 annimmt
 M7_AUFLOESUNG = "768P"   # fal will das P gross: 480P, 768P, 2K, 4K
 
 
@@ -759,8 +760,27 @@ def m7_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16"):
                 bilder.append(_daten_uri(p))
     return {"prompt": (prompt or "")[:2000],
             "reference_image_urls": bilder[:M7_MAX],
+            "duration": m7_dauer(sekunden),
             "resolution": M7_AUFLOESUNG,
             "aspect_ratio": seite or "9:16"}
+
+
+def m7_dauer(sekunden):
+    """Die naechste Stufe, die mindestens so lang ist wie gebraucht.
+
+    Ohne Angabe nimmt H3 seine eigene Laenge - zuletzt 5,2 Sekunden fuer
+    eine Szene, die 8 braucht. Der fehlende Rest wird beim Zusammenbauen
+    mit einem eingefrorenen Bild aufgefuellt, und genau das sieht man.
+    Lieber zu lang: ueberschuessiges wird abgeschnitten.
+    """
+    try:
+        n = float(sekunden or 6)
+    except Exception:
+        n = 6.0
+    for stufe in M7_STUFEN:
+        if stufe >= n - 0.2:
+            return stufe
+    return M7_STUFEN[-1]
 
 
 def m7_vorspann(hintergrund, figuren):
