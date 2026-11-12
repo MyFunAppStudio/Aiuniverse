@@ -2665,7 +2665,30 @@ function ankerVorschlag(){
 
 
 
+/* Die Szenen der letzten Geschichte stehen sonst unter der neuen weiter -
+   samt Clips, fuer die schon bezahlt wurde. Vor dem Schreiben wird
+   deshalb gefragt, und dann werden sie geleert. */
 function textSchreiben(){
+  var weiter=function(){
+    var li=((S.szenen||{}).szenen)||[];
+    if(!li.length)return textSchreibenLos();
+    var mitClip=li.filter(function(s){return s.clip}).length;
+    frage("Neue Geschichte schreiben?",
+      "Aus der letzten Geschichte stehen noch <b>"+li.length+" Szenen</b> da"
+      +(mitClip?(", davon <b>"+mitClip+" mit fertigem Clip</b>"):"")+".<br><br>"
+      +"Die werden vorher geleert — sonst hängen sie unter der neuen Geschichte."
+      +(mitClip?"<br><br><span style=\"color:#FFB454\">Die fertigen Clips sind damit weg. "
+                +"Willst du sie behalten, brich ab und sichere sie zuerst.</span>":""),
+      "Leeren und schreiben",function(){
+        api("/api/szenen?k="+S.kanal,{aktion:"alle_weg"}).then(function(){
+          ladeSzenen(); textSchreibenLos();
+        },function(){melde("Die alten Szenen ließen sich nicht leeren.")});
+      },true);
+  };
+  if(!S.szenen&&typeof ladeSzenen==="function")ladeSzenen().then(weiter,weiter);
+  else weiter();
+}
+function textSchreibenLos(){
   var b=el("gsknopf"); if(!b)return;
   var thema=(el("gsthema")||{}).value||"";
   b.disabled=true; b.textContent="schreibt…";
