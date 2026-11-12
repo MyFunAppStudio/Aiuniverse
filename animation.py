@@ -739,7 +739,7 @@ R4_STILL = M5_LEBEN
 # dass hier etwas geaendert werden muss.
 
 M7_MAX = 9
-M7_AUFLOESUNG = "768p"
+M7_AUFLOESUNG = "768P"   # fal will das P gross: 480P, 768P, 2K, 4K
 
 
 def m7_ist_h3(url):
