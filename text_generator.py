@@ -902,10 +902,13 @@ def _t4_anweisung(namen):
             "  %s: Und Napoleon wartete bis Mittag, weil der Boden vom Regen "
             "der Nacht noch zu weich war fuer die Kanonen.\n"
             % (namen[0], namen[1]))
-        form = ("Sie reden MITEINANDER: einer erzaehlt weiter, der andere hakt "
-                "nach, ergaenzt oder widerspricht. Das Gespraech ist die Form, "
-                "nicht der Inhalt - in JEDEM Beitrag steckt eine Angabe. "
-                "Niemand sagt nur \"Unglaublich\" oder \"Erzaehl weiter\".\n")
+        form = ("Sie wechseln sich ab wie zwei Sprecher einer Dokumentation: "
+                "einer erzaehlt ein Stueck, der naechste fuehrt genau dort "
+                "weiter, wo der erste aufgehoert hat. KEINE Fragen "
+                "aneinander, keine Rueckmeldungen, kein Staunen, kein "
+                "\"Unglaublich\", kein \"Erzaehl weiter\", keine Anrede mit "
+                "Namen. Solche Zeilen halten nur auf. Jede Zeile bringt die "
+                "Geschichte voran und enthaelt eine Angabe.\n")
     else:
         beispiel = ("  %s: Am Morgen des 18. Juni standen sich bei Waterloo "
                     "zweihunderttausend Mann gegenueber.\n" % namen[0])
@@ -917,9 +920,9 @@ def _t4_anweisung(namen):
         "Schreib den Text jeder Szene als Zeilen mit dem Namen davor:\n"
         "%s"
         "%s"
-        "Die Figuren fuehren durch das Thema, sie sind keine Zeitzeugen und "
-        "keine historischen Personen. Sie duerfen staunen, zweifeln und "
-        "nachfragen - aber immer an einer Angabe entlang.\n"
+        "Die Figuren erklaeren das Thema, sie sind keine Zeitzeugen und "
+        "keine historischen Personen. Sie kommentieren nicht, sie "
+        "berichten.\n"
         "Dazu gehoert je Szene das Feld \"wer\": eine Liste der Namen, die in "
         "DIESEM Bild zu sehen sind. Das ist unabhaengig davon, wer spricht - "
         "die Figuren koennen auch aus dem Off reden, waehrend man nur die "
