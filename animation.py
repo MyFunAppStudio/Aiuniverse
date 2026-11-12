@@ -702,3 +702,24 @@ def ref_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16",
     if hg:
         k["image_urls"] = [_daten_uri(hg)]
     return k
+
+
+# ---------- Nachtrag m5: gestikulieren statt stillstehen ----------
+#
+# R4_STILL war gegen Matsch geschrieben: "hold their position", "they do
+# not walk around". Das hat zu viel verboten - die Figuren standen da wie
+# hingestellt, und im Hintergrund ruehrte sich nichts.
+#
+# Nicht gehen bleibt richtig, davon wird ein Koerper unfoermig. Gesten,
+# Kopfdrehen und auf die Szene zeigen kann das Modell sauber, und der
+# Hintergrund soll ohnehin die ganze Zeit leben.
+
+M5_LEBEN = ("They stay on the spot and do not walk around, but they move "
+            "naturally while they talk: hand gestures, turning the head, "
+            "and pointing towards what is happening behind them. "
+            "The background stays alive for the whole shot: smoke drifts, "
+            "crowds and troops keep moving, flags, grass and cloth move in "
+            "the wind. One single camera move for the whole shot. "
+            "No text, no letters, no logos, no watermark.")
+
+R4_STILL = M5_LEBEN
