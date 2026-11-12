@@ -1074,3 +1074,36 @@ def laden(kanal):
         if s.get("gesprochen") is False and (s.get("text") or "").strip():
             s["gesprochen"] = True
     return d
+
+
+# ---------- Nachtrag m2: Hintergrund allein animieren ----------
+#
+# Bisher gab es drei Schalter je Szene, und nur einer hat einen KI-Clip
+# ausgeloest: "Avatare im Bild". Wer wollte, dass geredet wird, ohne dass
+# jemand zu sehen ist, bekam ein Standbild - das Hintergrundbild liess
+# sich nicht allein animieren.
+#
+# Jetzt sind es vier:
+#   avatare  - KI-Clip, die Avatare sind drin und gestikulieren  (kostet)
+#   bild_ki  - KI-Clip nur vom Hintergrund, niemand zu sehen     (kostet)
+#   bewegt   - Standbild mit langsamer Kamerafahrt               (gratis)
+#   still    - Standbild, steht                                   (gratis)
+#
+# Geredet wird in allen vieren. Wer redet, steht im Sprechtext.
+
+M2_MODI = [["avatare", "Avatare im Bild"],
+           ["bild_ki", "Nur Bild animieren"],
+           ["bewegt", "Kamerafahrt"],
+           ["still", "Standbild"]]
+
+R6_MODI[:] = [list(x) for x in M2_MODI]
+R6_MODUS_NAMEN[:] = [a[0] for a in R6_MODI]
+
+
+def r6_braucht_clip(s):
+    """Soll fuer diese Szene ein KI-Clip erzeugt werden?"""
+    if s.get("eigener_clip"):
+        return False
+    if (s.get("modus") or "") not in ("avatare", "bild_ki"):
+        return False
+    return art(s.get("datei") or "") == "bild"

@@ -674,6 +674,7 @@ def plan_bauen(kanal, ordner):
                      "stuecke": teile_info, "regie": regie,
                      "untertitel": bool(s["untertitel"]), "stimme": ton is not None,
                      "ton": ton, "bewegung": _m1_bewegung(s), "musik": s.get("musik", "auto"),
+                     "modus": s.get("modus", "still"),
                      "passen": s.get("passen") or "auto",
                      "stimmung": s.get("stimmung", ""), "figur": s.get("figur", ""),
                      "pose": s.get("pose", ""), "platz": s.get("platz", "rechts_unten"),
@@ -773,11 +774,16 @@ def _ki_animieren(kanal, plan, arbeit):
         return (s.get("typ") != "clip"
                 and any(a for a, _p, _d in (s.get("stuecke") or [])))
 
-    redner = set(i for i, s in enumerate(plan) if _redet_hier(s))
+    # Der Schalter bei der Szene entscheidet, nicht mehr allein die Frage,
+    # ob geredet wird. "Avatare im Bild" holt den Avatar, "Nur Bild
+    # animieren" einen Clip ohne jemanden darin, die zwei anderen gar nichts.
+    redner = set(i for i, s in enumerate(plan)
+                 if _redet_hier(s) and (s.get("modus") or "") == "avatare")
+    nur_bild = set(i for i, s in enumerate(plan)
+                   if (s.get("modus") or "") == "bild_ki" and s.get("typ") != "clip")
 
-    # Sprechszenen gehen immer an den Avatar - wer redet, soll auch zu sehen
-    # sein. Der Prozentsatz ist nur noch fuer die Szenen da, in denen niemand
-    # redet, also fuer die reine Bewegung im Bild.
+    # Der Prozentsatz greift nur noch dort, wo der Schalter nichts
+    # vorgibt - er darf keine Szene bewegen, die auf Standbild steht.
     if avatar_ok and redner:
         uebrig = [i for i, s in enumerate(plan)
                   if i not in redner and s.get("typ") != "clip"]
@@ -785,8 +791,11 @@ def _ki_animieren(kanal, plan, arbeit):
         auto = set(uebrig[j] for j in animation.auswahl(teilplan, anteil))
         wunsch = sorted(manuell | redner | auto)
     else:
-        auto = animation.auswahl(plan, anteil)
+        auto = set(animation.auswahl(plan, anteil))
         wunsch = sorted(manuell | auto)
+    wunsch = sorted((set(wunsch) | nur_bild) - set(
+        i for i, x in enumerate(plan)
+        if (x.get("modus") or "") in ("bewegt", "still") and not x.get("ki_animation")))
     if not wunsch:
         return plan
 
@@ -808,7 +817,8 @@ def _ki_animieren(kanal, plan, arbeit):
         if s.get("typ") == "clip":
             continue
         hinweis = _bewegungs_text(kanal, s)
-        redet = any(a for a, _p, _d in (s.get("stuecke") or []))
+        redet = (any(a for a, _p, _d in (s.get("stuecke") or []))
+                 and (s.get("modus") or "") != "bild_ki")
         if redet:
             if avatar_ok:
                 pfad, bezahlt = _avatar_szene(kanal, s, i, arbeit, hinweis)

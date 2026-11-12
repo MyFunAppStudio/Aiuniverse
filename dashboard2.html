@@ -1441,8 +1441,9 @@ function szeneWer(sid,did){
 
 function schalterZeile(s,d){
   var modi=(d&&d.modi)||[["avatare","Avatare im Bild"],
-                         ["bewegt","Nur Bild, bewegt"],
-                         ["still","Nur Bild, still"]];
+                         ["bild_ki","Nur Bild animieren"],
+                         ["bewegt","Kamerafahrt"],
+                         ["still","Standbild"]];
   var jetzt=s.modus||"still";
   var o='<div class="schalt">';
   modi.forEach(function(m){
@@ -1450,9 +1451,13 @@ function schalterZeile(s,d){
      +'onclick="szeneSetz(\''+s.id+'\',\'modus\',\''+m[0]+'\')">'+h(m[1])+'</button>';
   });
   o+='</div>';
-  o+='<div class="szh" style="margin-top:5px">Der Schalter sagt nur, was man <b>sieht</b>. '
-   +'Geredet wird in jeder Szene — wer redet, steht im Sprechtext vor der Zeile. '
-   +'Auch bei „Nur Bild" reden sie also, nur eben aus dem Off.</div>';
+  o+='<div class="szh" style="margin-top:5px">Der Schalter sagt nur, was man <b>sieht</b> — '
+   +'geredet wird in allen vieren, wer redet steht im Sprechtext vor der Zeile.<br>'
+   +'<b>Avatare im Bild</b>: KI-Clip, sie sind drin und gestikulieren. '
+   +'<b>Nur Bild animieren</b>: KI-Clip vom Hintergrund, niemand zu sehen, sie reden aus dem Off. '
+   +'Diese beiden kosten. '
+   +'<b>Kamerafahrt</b>: Standbild, das langsam wandert. <b>Standbild</b>: es steht. '
+   +'Die zwei sind gratis.</div>';
   if(s.eigener_clip)
     o+='<div class="szh" style="margin-top:5px;color:#24D3E8">'
      +'Eigener Clip hochgeladen — Bild und Videomodell werden übersprungen.</div>';

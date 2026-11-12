@@ -2661,6 +2661,22 @@ def darsteller_schreiben(key, b):
     return _d7_schreiben_alt(key, b)
 
 
+# ---------- Nachtrag m3: Clip ohne Avatare ----------
+#
+# Steht die Szene auf "Nur Bild animieren", geht derselbe Clip-Knopf los
+# wie sonst, nur ohne Figuren: das Modell bekommt allein das
+# Hintergrundbild und die Animationsanweisung. Niemand ist zu sehen,
+# geredet wird trotzdem - die Tonspur kommt beim Zusammenbauen darueber.
+
+_m3_figuren_alt = _r5_figuren
+
+
+def _r5_figuren(k, s=None):
+    if (s or {}).get("modus") == "bild_ki":
+        return []
+    return _m3_figuren_alt(k, s)
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
