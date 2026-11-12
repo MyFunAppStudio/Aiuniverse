@@ -598,3 +598,59 @@ def stimme_von(kanal, name):
     except Exception:
         pass
     return ""
+
+
+# ---------- Nachtrag d8: Stimme und Art ueberleben das Laden ----------
+#
+# laden() liest die Datei nicht einfach ein, es baut jeden Eintrag neu
+# auf - mit genau den Feldern, die es kennt. stimme und art kennt es
+# nicht. Gespeichert wurden sie also richtig, waren beim naechsten Laden
+# aber wieder weg. Im Dashboard sprang die Stimmenauswahl deshalb sofort
+# auf "Kanalstimme" zurueck, und ein Sprecher wurde wieder zum Avatar.
+#
+# Hier werden beide Felder aus der Datei nachgereicht: erst ueber die id,
+# sonst ueber den Namen - Namen sind eindeutig.
+
+_d8_laden_alt = laden
+
+
+def _d8_roh(kanal):
+    try:
+        with open(_pfad(kanal), encoding="utf-8") as f:
+            d = json.load(f)
+    except Exception:
+        return {}, {}
+    if not isinstance(d, dict):
+        return {}, {}
+    nach_id, nach_name = {}, {}
+    for f in d.get("darsteller") or []:
+        if not isinstance(f, dict):
+            continue
+        satz = {}
+        for feld in ("stimme", "art"):
+            if f.get(feld):
+                satz[feld] = f[feld]
+        if not satz:
+            continue
+        i = str(f.get("id") or "").strip()
+        n = str(f.get("name") or "").strip().lower()
+        if i:
+            nach_id[i] = satz
+        if n:
+            nach_name[n] = satz
+    return nach_id, nach_name
+
+
+def laden(kanal):
+    d = _d8_laden_alt(kanal)
+    nach_id, nach_name = _d8_roh(kanal)
+    for f in d.get("darsteller") or []:
+        satz = (nach_id.get(str(f.get("id") or ""))
+                or nach_name.get(str(f.get("name") or "").strip().lower()) or {})
+        for feld, wert in satz.items():
+            f[feld] = wert
+    # Noch einmal, weil art sich gerade geaendert haben kann:
+    # Sprecher stehen nie im Bild und gehoeren nie in die Besetzung.
+    ids = set(f["id"] for f in d["darsteller"] if f.get("art") != "sprecher")
+    d["besetzung"] = [x for x in d.get("besetzung") or [] if x in ids]
+    return d
