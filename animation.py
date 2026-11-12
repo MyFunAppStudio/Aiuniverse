@@ -1124,3 +1124,80 @@ def _m14_warten(basis, key, start, ziel, sag):
             else "Kein Video in der Antwort")
         return None
     return _laden(url, ziel)
+
+
+# ---------- Nachtrag m18: Dateien hochladen statt mitschicken ----------
+#
+# Bilder gehen als Datenblock in der Anfrage durch. Eine Tonspur ist
+# dafuer zu gross: MultiTalk antwortete mit "Invalid URL: URL too long".
+#
+# fal nimmt Dateien entgegen und gibt eine Adresse zurueck: erst
+# anmelden, dann die Datei per PUT hinschicken. Danach steht in der
+# Anfrage nur noch die kurze Adresse.
+
+M18_ANMELDEN = "https://rest.fal.ai/storage/upload/initiate?storage_type=fal-cdn-v3"
+
+
+def m18_hochladen(pfad, key):
+    """Datei zu fal hochladen. Gibt die Adresse zurueck, sonst None."""
+    if not pfad or not os.path.exists(pfad) or not key:
+        return None
+    art = mimetypes.guess_type(str(pfad))[0] or "application/octet-stream"
+    name = os.path.basename(str(pfad))
+    try:
+        a = urllib.request.Request(
+            M18_ANMELDEN,
+            data=json.dumps({"content_type": art, "file_name": name}).encode("utf-8"),
+            method="POST")
+        a.add_header("Authorization", "Key " + key)
+        a.add_header("Content-Type", "application/json")
+        with urllib.request.urlopen(a, timeout=60) as r:
+            antwort = json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        print("[Hochladen] Anmelden ging nicht: %s" % str(e)[:140])
+        return None
+
+    ziel = antwort.get("upload_url")
+    fertig = antwort.get("file_url")
+    if not ziel or not fertig:
+        print("[Hochladen] Antwort ohne Adressen: %s" % sorted(antwort.keys()))
+        return None
+    try:
+        with open(pfad, "rb") as f:
+            roh = f.read()
+        b = urllib.request.Request(ziel, data=roh, method="PUT")
+        b.add_header("Content-Type", art)
+        with urllib.request.urlopen(b, timeout=300):
+            pass
+    except Exception as e:
+        print("[Hochladen] Datei ging nicht durch: %s" % str(e)[:140])
+        return None
+    print("[Hochladen] %s (%d KB) liegt bei fal" % (name, len(roh) // 1024))
+    return fertig
+
+
+def m18_adresse(pfad, key):
+    """Erst hochladen; klappt das nicht, der alte Weg als Datenblock."""
+    url = m18_hochladen(pfad, key)
+    return url or _daten_uri(pfad)
+
+
+_m18_multi_alt = erzeuge_multi
+
+
+def erzeuge_multi(kanal, bild_pfad, ton_links, ton_rechts, ziel, prompt="",
+                  melden=None):
+    ok, grund = multi_bereit(kanal)
+    if not ok:
+        print("[Multi] %s" % grund)
+        return None
+    e = _slot(kanal, M14_SLOT)
+    key = schluessel.fuer(kanal, e)
+    # Waehrend dieses Aufrufs liefert _daten_uri eine hochgeladene Adresse
+    alt = globals()["_daten_uri"]
+    globals()["_daten_uri"] = lambda p: m18_adresse(p, key)
+    try:
+        return _m18_multi_alt(kanal, bild_pfad, ton_links, ton_rechts, ziel,
+                              prompt, melden)
+    finally:
+        globals()["_daten_uri"] = alt
