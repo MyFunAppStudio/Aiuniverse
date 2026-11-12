@@ -1080,30 +1080,41 @@ def erzeuge_multi(kanal, bild_pfad, ton_links, ton_rechts, ziel, prompt="",
     return _m14_warten(basis, key, start, ziel, sag)
 
 
+# Zwei Muender synchronisieren dauert laenger als ein Clip aus Bildern.
+# Mit den sieben Minuten der Referenzclips kam "Zeit abgelaufen", obwohl
+# das Modell noch gerechnet hat. Der Auftrag lief dabei weiter und wurde
+# nur nicht mehr abgeholt.
+M14_WARTE = 1200.0         # zwanzig Minuten
+
+
 def _m14_warten(basis, key, start, ziel, sag):
     status_url = start.get("status_url")
     antwort_url = start.get("response_url")
     if not status_url and not antwort_url:
         url = _video_url(start)
         return _laden(url, ziel) if url else None
-    t0, st, gemeldet = time.time(), {}, ""
-    while time.time() - t0 < WARTE_MAX:
+    t0, st, gemeldet, gesagt = time.time(), {}, "", 0
+    while time.time() - t0 < M14_WARTE:
         time.sleep(TAKT)
         try:
             st = _hole(status_url, key, zeit=40)
         except Exception:
             continue
         lage = (st.get("status") or "").upper()
-        if lage != gemeldet:
-            gemeldet = lage
-            sag("%s nach %d s" % (lage or "ohne Angabe", int(time.time() - t0)))
+        lief = int(time.time() - t0)
+        # Alle halbe Minute ein Lebenszeichen, sonst sieht es tot aus
+        if lage != gemeldet or lief - gesagt >= 30:
+            gemeldet, gesagt = lage, lief
+            sag("%s - %d:%02d" % (lage or "laeuft", lief // 60, lief % 60))
         if lage == "COMPLETED":
             break
         if st.get("error"):
             sag("Fehlgeschlagen: %s" % str(st.get("error"))[:200])
             return None
     else:
-        sag("Zeit abgelaufen")
+        sag("Nach %d Minuten noch nicht fertig - abgebrochen. Das Modell "
+            "rechnet bei fal weiter, der Clip wird nur nicht mehr abgeholt."
+            % int(M14_WARTE / 60))
         return None
     fertig = _ergebnis_holen(basis, key, start, st, status_url, antwort_url)
     url = _video_url(fertig) if fertig else None
