@@ -623,9 +623,38 @@ function tMusik(){
   return o;
 }
 
+/* Wie lang das fertige Video wird. "Länge in Sekunden" ist nur der
+   gesprochene Teil - Abspann und Nachlauf kommen oben drauf, und genau
+   deshalb kam bei 90 eingestellt ein Video von 99 heraus. */
+function abspannSek(){
+  var d=S.ab; if(!d)return null;
+  var li=d.eintraege||[], wahl=d.wahl||"";
+  for(var i=0;i<li.length;i++){
+    if(li[i].id===wahl||(!wahl&&i===0))return Number(li[i].sekunden)||0;
+  }
+  return li.length?(Number(li[0].sekunden)||0):0;
+}
+function laengeVorschau(){
+  var gesprochen=Number(S.einst.laenge)||0;
+  var nach=(S.einst.nachlauf===undefined?0.9:Number(S.einst.nachlauf))||0;
+  var ab=abspannSek();
+  if(ab===null){ladeAbspann();ab=0}
+  var fertig=gesprochen+nach+ab;
+  var teile='gesprochen '+gesprochen+' s';
+  if(nach)teile+=' + Nachlauf '+String(nach).replace(".",",")+' s';
+  teile+=' + Abspann '+(ab?(String(ab).replace(".",",")+' s'):'0 s (keiner gewählt)');
+  var warn=(fertig<63)
+    ?'<br><span style="color:#FFB454">Unter 63 Sekunden — fürs Monetarisieren solltest '
+     +'du über einer Minute landen, mit etwas Luft. Die Stimme spricht nicht immer '
+     +'gleich schnell.</span>':'';
+  return '<div class="szh" style="margin-top:7px;line-height:1.5">'
+   +'<b>Fertiges Video: etwa '+(Math.round(fertig*10)/10).toString().replace(".",",")+' Sekunden</b><br>'
+   +teile+warn+'</div>';
+}
 function tAblauf(){
   return '<div class="karte">'
-   +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1))
+   +reihe("Länge in Sekunden",zahl("laenge",S.einst.laenge||20,1),"nur der gesprochene Teil")
+   +laengeVorschau()
    +reihe("Sprechtempo",knoepfe("woerter_pro_sekunde",String(S.einst.woerter_pro_sekunde||2.5),[["2.2","ruhig"],["2.5","normal"],["2.8","flott"]]),"Wörter je Sekunde")
    +'</div>';
 }
