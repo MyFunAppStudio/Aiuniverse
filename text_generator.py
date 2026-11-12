@@ -997,3 +997,60 @@ def _p40_json(antwort):
     raise _p40_json_modul.JSONDecodeError(
         "Die Text-KI hat kaputtes JSON geschickt - %s. Anfang der Antwort: %r"
         % (str(letzter)[:90], (antwort or "")[:120]), antwort or "", 0)
+
+
+# ---------- Nachtrag t7: Szenen auf die Stufen des Modells legen ----------
+#
+# Bisher lief es andersherum: der Sprechtext bestimmte die Szenenlaenge,
+# und der Clip wurde auf die naechste Stufe aufgerundet. Eine Szene von
+# 8 Sekunden hat damit 10 bestellt und 2 verschenkt - und war sie laenger
+# als die groesste Stufe, endete sie mit einem stehenden Bild.
+#
+# Jetzt wird die Szenenzahl so gewaehlt, dass jede Szene genau auf einer
+# Stufe des Modells landet. Genommen wird die Stufe, die der bisherigen
+# Szenenlaenge am naechsten kommt - die Einstellung des Kanals aendert
+# sich also im Gefuehl nicht, es passt nur genau.
+#
+# Kennt das Modell keine Stufen (Kling nimmt jede ganze Sekunde), bleibt
+# alles wie bisher.
+
+
+def _t7_stufen(kanal):
+    try:
+        import animation
+        e = animation.ref_slot(kanal) or {}
+        url = (e.get("url") or "").strip().lower()
+        if not url:
+            return []
+        stufen = animation.m9_zahlen(animation.m9_laden().get(url) or {})
+        if not stufen and animation.m7_ist_h3(url):
+            stufen = list(getattr(animation, "M7_STUFEN", []) or [])
+        return stufen
+    except Exception as e:
+        print("[Text] Modellstufen nicht lesbar:", e)
+        return []
+
+
+_t7_erzeuge_alt = erzeuge_paket
+
+
+def erzeuge_paket(kanal, eigenes_thema=None):
+    try:
+        k = dict(kanal or {})
+        minuten = einstellungen.laenge_in_minuten(k)
+        gesamt = minuten * 60.0
+        stufen = _t7_stufen(k)
+        if stufen and gesamt > 0:
+            bisher = max(3, int(minuten * k.get("bilder_pro_minute", 6)))
+            je_bisher = gesamt / bisher
+            stufe = min(stufen, key=lambda x: abs(x - je_bisher))
+            szenen = max(3, int(round(gesamt / stufe)))
+            # +0.4, weil der Bau die Szenenzahl mit int() abschneidet
+            k["bilder_pro_minute"] = (szenen + 0.4) / max(0.01, minuten)
+            print("[Text] %d Szenen zu je %d Sekunden - so weit das Modell "
+                  "animiert (vorher %d zu je %.1f)"
+                  % (szenen, stufe, bisher, je_bisher))
+            return _t7_erzeuge_alt(k, eigenes_thema)
+    except Exception as e:
+        print("[Text] Szenenlaenge nicht anpassbar:", e)
+    return _t7_erzeuge_alt(kanal, eigenes_thema)
