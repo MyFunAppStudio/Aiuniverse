@@ -2594,6 +2594,73 @@ def darsteller_schreiben(key, b):
     return _d6_schreiben_alt(key, b)
 
 
+# ---------- Nachtrag d7: kurze Namen ----------
+#
+# ElevenLabs schreibt seine Beschreibung mit in den Namen: aus "Laura"
+# wird "Laura - Enthusiast, Quirky Attitude". In der Auswahl beim Avatar
+# hat das die Felder so breit gemacht, dass sich die ganze Seite seitlich
+# wegschieben liess. Alles zwischen dem Namen und der Klammer faellt
+# deshalb weg. Von Hand eingetragene Namen bleiben unberuehrt - erkannt
+# werden nur die, die mit "Frau · " oder "Mann · " anfangen.
+
+
+def _d7_kurz(name):
+    s = str(name or "")
+    if not (s.startswith("Frau · ") or s.startswith("Mann · ")):
+        return s
+    kopf, rest, klammer = s[:7], s[7:], ""
+    i = rest.rfind(" (")
+    if i > 0:
+        klammer, rest = rest[i:], rest[:i]
+    j = rest.find(" - ")
+    if j > 0:
+        rest = rest[:j]
+    return kopf + rest.strip() + klammer
+
+
+def _d7_aufraeumen(key):
+    """Kuerzt die Namen im Vorrat. Gibt zurueck, wie viele sich geaendert haben."""
+    alle = einstellungen.laden()
+    kanal = alle.get(key) or {}
+    liste = kanal.get("stimmen") or []
+    geaendert = 0
+    for e in liste:
+        if not isinstance(e, dict):
+            continue
+        neu = _d7_kurz(e.get("name"))
+        if neu != e.get("name"):
+            e["name"] = neu
+            geaendert += 1
+    if geaendert:
+        alle[key]["stimmen"] = liste
+        einstellungen.speichern(alle)
+    return geaendert
+
+
+_d7_holen_alt = stimmen_holen
+
+
+def stimmen_holen(key, quelle="fest"):
+    antwort = _d7_holen_alt(key, quelle)
+    try:
+        _d7_aufraeumen(key)
+    except Exception as e:
+        print("[Stimmen] Namen kuerzen ging nicht:", e)
+    return antwort
+
+
+_d7_schreiben_alt = darsteller_schreiben
+
+
+def darsteller_schreiben(key, b):
+    if (b.get("aktion") or "") == "namen_kuerzen":
+        n = _d7_aufraeumen(key)
+        return {"ok": True, "neu": n,
+                "text": "Da war nichts mehr zu kürzen." if not n else
+                        ("1 Name gekürzt." if n == 1 else "%d Namen gekürzt." % n)}
+    return _d7_schreiben_alt(key, b)
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
