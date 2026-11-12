@@ -1579,13 +1579,64 @@ function clipKarte(){
   return o;
 }
 
+/* Was in dieser Szene eingestellt ist, im Klartext. Vor dem Erzeugen
+   steht das in der Abfrage - ein falscher Schalter kostet sonst Geld,
+   und man sieht es erst, wenn der Clip da ist. */
+function szeneVon(id){
+  return (((S.szenen||{}).szenen)||[]).filter(function(x){return x.id===id})[0]||{};
+}
+function clipLage(s){
+  /* Ohne geladene Besetzung wuerde hier "niemand angehakt" stehen,
+     obwohl welche angehakt sind. Dann lieber gar nichts behaupten. */
+  var geladen=!!(S.ds&&S.ds.darsteller);
+  var dabei=((S.ds||{}).darsteller||[]).filter(function(f){return f.dabei});
+  var wer=(s.wer&&s.wer.length)?s.wer:dabei.map(function(f){return f.id});
+  var namen=dabei.filter(function(f){return wer.indexOf(f.id)>=0})
+                 .map(function(f){return f.name});
+  var text=(s.text||"").trim();
+  /* "Mara: ..." am Zeilenanfang - so steht im Sprechtext, wer redet. */
+  var redner=[], gesehen={};
+  text.split("\n").forEach(function(z){
+    var m=/^\s*([A-Za-zÄÖÜäöüß][\wÄÖÜäöüß .'-]{0,28}?)\s*:\s*\S/.exec(z);
+    if(m&&!gesehen[m[1]]){gesehen[m[1]]=1;redner.push(m[1].trim())}
+  });
+  return {namen:namen, text:text, redner:redner, modus:s.modus||"still",
+          geladen:geladen};
+}
+function clipAbfrage(s,sek,preis,schon){
+  var L=clipLage(s), o='';
+  var zeile=function(k,v){return '<div style="margin-bottom:5px">'+k+': <b>'+v+'</b></div>'};
+  if(L.modus==="avatare")
+    o+=zeile("Im Bild",!L.geladen?"Besetzung noch nicht geladen"
+             :(L.namen.length?h(L.namen.join(", ")):"niemand angehakt"));
+  else if(L.modus==="bild_ki")
+    o+=zeile("Im Bild","niemand — nur der Hintergrund wird animiert");
+  else
+    o+=zeile("Im Bild","Standbild"+(L.modus==="bewegt"?" mit Kamerafahrt":", ohne Bewegung"));
+  o+=zeile("Gesprochen", L.redner.length?(h(L.redner.join(", "))
+            +(L.modus==="avatare"?"":" — aus dem Off"))
+          :(L.text?"ja, ohne Namen davor":"nichts eingetragen"));
+  if(sek)o+=zeile("Länge",sek+" Sekunden");
+  if(preis)o+=zeile("Kostet etwa",preis.toFixed(2).replace(".",",")+" €");
+  var warn=[];
+  if(L.geladen&&L.modus==="avatare"&&!L.namen.length)
+    warn.push("Der Schalter steht auf <b>Avatare im Bild</b>, aber es ist niemand angehakt.");
+  if(L.geladen&&L.modus==="bild_ki"&&L.namen.length)
+    warn.push("Der Schalter steht auf <b>Nur Bild animieren</b> — die angehakten Avatare "
+             +"kommen nicht ins Bild, sie reden nur.");
+  if(!L.text)
+    warn.push("Im Sprechtext steht nichts. Die Szene bleibt stumm.");
+  if(!(s.bild||s.datei))
+    warn.push("Diese Szene hat noch kein Bild.");
+  if(warn.length)
+    o+='<div style="margin-top:10px;color:#FFB454">'+warn.join("<br>")+'</div>';
+  if(schon)o+='<div style="margin-top:10px">Der jetzige Clip geht nicht verloren — '
+    +'er rutscht in den Verlauf.</div>';
+  return o;
+}
 function clipNeu(id,sek,schon){
   var js=((R6.stand||{}).je_sekunde)||0, preis=(js&&sek)?(js*sek):0;
-  frage("Clip erzeugen?",
-    "Das Videomodell baut aus dem Bild und den angehakten Avataren einen Clip"
-    +(sek?(" von "+sek+" Sekunden"):"")+"."
-    +(preis?("<br><br>Das kostet etwa <b>"+preis.toFixed(2).replace(".",",")+" €</b>."):"")
-    +(schon?"<br><br>Der jetzige Clip geht nicht verloren — er rutscht in den Verlauf.":""),
+  frage("Clip erzeugen?", clipAbfrage(szeneVon(id),sek,preis,schon),
     "Erzeugen",function(){
       api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){
         if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
@@ -1595,9 +1646,24 @@ function clipNeu(id,sek,schon){
 }
 function clipAlle(){
   var d=R6.stand||{};
-  frage("Alle offenen Clips erzeugen?",
-    d.offen+" Szenen, zusammen "+d.offen_sekunden+" Sekunden.<br><br>Das kostet etwa <b>"
-    +(Number(d.offen_preis)||0).toFixed(2)+" USD</b>.","Los",function(){
+  /* Beim Stapel kostet ein falscher Schalter gleich mehrfach. Darum
+     steht hier, was fuer Clips das werden und wo etwas fehlt. */
+  var offen=(((S.szenen||{}).szenen)||[]).filter(function(s){
+    return !s.clip&&(s.modus==="avatare"||s.modus==="bild_ki")});
+  var mitA=offen.filter(function(s){return s.modus==="avatare"}).length;
+  var nurB=offen.filter(function(s){return s.modus==="bild_ki"}).length;
+  var ohneBild=offen.filter(function(s){return !(s.bild||s.datei)}).length;
+  var stumm=offen.filter(function(s){return !(s.text||"").trim()}).length;
+  var o=d.offen+" Szenen, zusammen "+d.offen_sekunden+" Sekunden.<br><br>";
+  if(mitA)o+='<div style="margin-bottom:5px"><b>'+mitA+'</b> mit Avataren im Bild</div>';
+  if(nurB)o+='<div style="margin-bottom:5px"><b>'+nurB+'</b> nur Hintergrund, niemand zu sehen</div>';
+  o+='<div style="margin-top:8px">Das kostet etwa <b>'
+   +(Number(d.offen_preis)||0).toFixed(2)+' USD</b>.</div>';
+  var warn=[];
+  if(ohneBild)warn.push(ohneBild+" davon "+(ohneBild===1?"hat":"haben")+" noch kein Bild.");
+  if(stumm)warn.push(stumm+" davon "+(stumm===1?"hat":"haben")+" keinen Sprechtext.");
+  if(warn.length)o+='<div style="margin-top:9px;color:#FFB454">'+warn.join("<br>")+'</div>';
+  frage("Alle offenen Clips erzeugen?",o,"Los",function(){
       api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{alle:true}).then(function(r){
         if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
         ladeClips();
@@ -1675,7 +1741,7 @@ function tSzenen(){
       +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\',\'bild\')">Eigenes Bild</button>'
       +'<button class="knopf" onclick="hochladen(\'szene\',\''+s.id+'\',\'video\')">Eigener Clip</button>'
       +'</div>';
-    if(s.modus==="avatare"||s.clip)o+=clipZeile(s);
+    if(s.modus==="avatare"||s.modus==="bild_ki"||s.clip)o+=clipZeile(s);
     mehr+='<div class="szz"><span class="szh">Musik</span><input type="text" style="width:78px" placeholder="automatisch" value="'
       +h(s.musik==="auto"?"":String(s.musik))+'" onchange="szeneSetz(\''+s.id+'\',\'musik\',this.value)"><span class="szh">% · leer = automatisch</span></div>';
     if(!s.da)o+='<div class="szz"><span class="szh" style="color:#FFB454">Datei fehlt auf dem Server</span></div>';
