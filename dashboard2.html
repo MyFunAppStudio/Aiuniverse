@@ -229,7 +229,7 @@ details.mehr[open]>summary{color:#24D3E8}
 <div id="dialog"></div>
 
 <script>
-var S={offen:{},erk:{},kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
+var S={offen:{},erk:{},kanal:null,tab:"machen",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
@@ -343,8 +343,14 @@ function zeichne(){
     return '<button class="'+(S.tab===t[0]?"an":"")+'" onclick="zeige(\''+t[0]+'\')">'+h(t[1])+'</button>'}).join("");
   var e=TABS.filter(function(t){return t[0]===S.tab})[0];
   el("erkl").textContent=e?e[2]:"Kanäle anlegen, klonen oder löschen. Jeder Kanal hat seinen eigenen Masterprompt.";
-  /* Der Erzeugen-Balken gehoert zum Machen, nicht zu den Einstellungen. */
-  el("leiste").style.display=(S.tab==="machen")?"flex":"none";
+  /* Der Erzeugen-Balken gehoert zum Machen, nicht zu den Einstellungen.
+     Er haengt an derselben Entscheidung wie der Inhalt weiter unten: zeigt
+     die Seite das Machen, ist der Balken da. Frueher stand hier der
+     Vergleich mit "machen", der Startwert war aber "start" - gleich nach
+     dem Laden zeigte die Seite also das Machen OHNE den Balken, und er
+     kam erst, wenn man einmal auf einen Reiter getippt hatte. */
+  var istMachen=!({darsteller:1,einst:1,kanaele:1}[S.tab]);
+  el("leiste").style.display=istMachen?"flex":"none";
   el("preis").textContent=(S.preis.gesamt!=null?S.preis.gesamt.toFixed(2).replace(".",","):"—")+" €";
   var f={machen:tMachen,darsteller:tDarstellerSeite,einst:tEinst,kanaele:tKanaele}[S.tab]||tMachen;
   /* Die Seite springt sonst bei jeder Aenderung nach oben. */
