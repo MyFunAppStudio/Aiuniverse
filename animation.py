@@ -1006,3 +1006,110 @@ def m9_passend(werte, feld, wunsch, ersatz):
         if str(x).strip().lower() == str(ersatz).strip().lower():
             return x
     return erlaubt[0]
+
+
+# ---------- Nachtrag m14: zwei Sprechende in einem Bild ----------
+#
+# reference-to-video bekommt die Tonspur nie zu sehen und kann die
+# Lippen darum nicht treffen. MultiTalk bekommt ein Bild und ZWEI
+# Tonspuren und synchronisiert beide Muender. Die Zuordnung geht nach
+# links und rechts im Bild - erste Tonspur links, zweite rechts.
+#
+# Eigener Slot "multi", damit Referenzclip und Avatar unberuehrt bleiben.
+
+M14_SLOT = "multi"
+
+
+def multi_bereit(kanal):
+    e = _slot(kanal, M14_SLOT)
+    if not e:
+        return False, ("Kein Modell fuer zwei Sprechende eingetragen. Unter "
+                       "KI & Technik bei „Zwei Sprechende“ auf "
+                       "„+ Eigenes Modell“: Adresse "
+                       "fal-ai/ai-avatar/multi")
+    if not (e.get("url") or "").strip():
+        return False, "Dem Modell fuer zwei Sprechende fehlt die Adresse"
+    if not schluessel.fuer(kanal, e):
+        return False, "Dem Modell fuer zwei Sprechende fehlt der Schluessel"
+    return True, ""
+
+
+def erzeuge_multi(kanal, bild_pfad, ton_links, ton_rechts, ziel, prompt="",
+                  melden=None):
+    """Bild + zwei Tonspuren -> Clip, in dem beide lippensynchron reden."""
+    def sag(t):
+        print("[Multi] %s" % t)
+        if melden:
+            try:
+                melden(t)
+            except Exception:
+                pass
+
+    ok, grund = multi_bereit(kanal)
+    if not ok:
+        sag(grund)
+        return None
+    for x in (bild_pfad, ton_links):
+        if not x or not os.path.exists(x):
+            sag("Datei fehlt: %s" % x)
+            return None
+    e = _slot(kanal, M14_SLOT)
+    basis = _basis_url(e.get("url"))
+    key = schluessel.fuer(kanal, e)
+    koerper = {"image_url": _daten_uri(bild_pfad),
+               "first_audio_url": _daten_uri(ton_links)}
+    if ton_rechts and os.path.exists(ton_rechts):
+        koerper["second_audio_url"] = _daten_uri(ton_rechts)
+    if prompt:
+        koerper["prompt"] = prompt[:900]
+    sag("schicke Bild und %d Tonspuren"
+        % (2 if koerper.get("second_audio_url") else 1))
+    try:
+        start = _hole(basis, key, koerper, zeit=180)
+    except urllib.error.HTTPError as f:
+        roh = ""
+        try:
+            roh = f.read().decode("utf-8", "replace")[:300]
+        except Exception:
+            pass
+        sag("Abgelehnt (%s). %s" % (f.code, roh))
+        return None
+    except Exception as f:
+        sag("Keine Verbindung: %s" % f)
+        return None
+    return _m14_warten(basis, key, start, ziel, sag)
+
+
+def _m14_warten(basis, key, start, ziel, sag):
+    status_url = start.get("status_url")
+    antwort_url = start.get("response_url")
+    if not status_url and not antwort_url:
+        url = _video_url(start)
+        return _laden(url, ziel) if url else None
+    t0, st, gemeldet = time.time(), {}, ""
+    while time.time() - t0 < WARTE_MAX:
+        time.sleep(TAKT)
+        try:
+            st = _hole(status_url, key, zeit=40)
+        except Exception:
+            continue
+        lage = (st.get("status") or "").upper()
+        if lage != gemeldet:
+            gemeldet = lage
+            sag("%s nach %d s" % (lage or "ohne Angabe", int(time.time() - t0)))
+        if lage == "COMPLETED":
+            break
+        if st.get("error"):
+            sag("Fehlgeschlagen: %s" % str(st.get("error"))[:200])
+            return None
+    else:
+        sag("Zeit abgelaufen")
+        return None
+    fertig = _ergebnis_holen(basis, key, start, st, status_url, antwort_url)
+    url = _video_url(fertig) if fertig else None
+    if not url:
+        b = globals().get("LETZTE_BEANSTANDUNG") or ""
+        sag(("fal.ai lehnt die Anfrage ab - " + b) if b
+            else "Kein Video in der Antwort")
+        return None
+    return _laden(url, ziel)

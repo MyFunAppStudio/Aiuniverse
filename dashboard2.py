@@ -188,7 +188,7 @@ def _woher_sicher(kanal, eintrag):
 
 
 def slots():
-    standard = ["text", "bilder", "stimme", "video", "ref", "musik", "sound", "avatar"]
+    standard = ["text", "bilder", "stimme", "video", "ref", "musik", "sound", "avatar", "multi"]
     try:
         roh = list(einstellungen.API_SLOTS)
     except Exception:
@@ -2875,6 +2875,104 @@ def ordner_liste(key=None):
                   or os.path.exists(os.path.join(ordner, "texte.txt")))
         v["fertig"] = bool(fertig)
     return raus
+
+
+# ---------- Nachtrag m15: Clip mit Lippensynchronitaet ----------
+#
+# Der Szenen-Knopf ging immer ueber reference-to-video. Das Modell
+# bekommt die Tonspur nie und kann die Lippen nicht treffen.
+#
+# Jetzt entscheidet die Szene:
+#   zwei Sprecher, zwei sichtbare Avatare -> MultiTalk, beide synchron
+#   ein Sprecher, ein sichtbarer Avatar   -> Avatar-Modell, synchron
+#   sonst                                 -> wie bisher
+#
+# Die Tonspuren werden dafuer vorher erzeugt - dieselben Stimmen wie im
+# fertigen Video, damit der Clip nicht anders klingt als das Ergebnis.
+
+_m15_einen_alt = _r5_einen
+
+
+def _m15_toene(k, kanal, s, namen, ordner):
+    """Je Sprecher eine Tonspur. Liste in der Reihenfolge der Namen."""
+    import medien
+    import szenen_video as sv
+    stuecke = sv._r15_zerlegen(s.get("text") or "", namen)
+    raus = []
+    for i, n in enumerate(namen):
+        text = " ".join(t for wer, t in stuecke
+                        if (wer or "").strip().lower() == n.strip().lower())
+        if not text.strip():
+            return []
+        ziel = os.path.join(ordner, "lippen_%s_%d.mp3"
+                            % (re.sub(r"[^A-Za-z0-9]+", "", str(s.get("id")))[:10], i))
+        try:
+            stimme = sv._stimme_fuer(kanal, n)
+        except Exception:
+            stimme = None
+        try:
+            medien.erzeuge_stimme(kanal, text, ziel, stimme_id=stimme)
+        except TypeError:
+            medien.erzeuge_stimme(kanal, text, ziel)
+        except Exception as e:
+            print("[Lippen] Stimme fuer %s ging nicht: %s" % (n, str(e)[:120]))
+            return []
+        if not os.path.exists(ziel):
+            return []
+        raus.append(ziel)
+    return raus
+
+
+def _r5_einen(k, sid):
+    import animation
+    kanal = _r5_kanal(k)
+    s = szenen.r3_szene(k, sid) or {}
+    namen = szenen.r19_redner(k, s.get("text") or "") if s else []
+    sichtbar = len(_r5_figuren(k, s) or [])
+    hintergrund = ""
+    if szenen.art(s.get("datei") or "") == "bild":
+        p = szenen.datei_pfad(k, s["datei"])
+        if os.path.exists(p):
+            hintergrund = p
+
+    # Nur wenn alles zusammenpasst - sonst der bisherige Weg
+    passt = (len(namen) >= 2 and sichtbar >= 2 and hintergrund
+             and animation.multi_bereit(kanal)[0])
+    if not passt:
+        return _m15_einen_alt(k, sid)
+
+    toene = _m15_toene(k, kanal, s, namen[:2], szenen.ordner(k))
+    if len(toene) < 2:
+        print("[Lippen] Tonspuren unvollstaendig - nehme den normalen Weg")
+        return _m15_einen_alt(k, sid)
+
+    ziel = os.path.join(szenen.ordner(k),
+                        "clip_%s_%s.mp4" % (re.sub(r"[^A-Za-z0-9]+", "", str(sid))[:12],
+                                            time.strftime("%H%M%S")))
+    letzte = {"text": ""}
+
+    def melden(t):
+        if t:
+            letzte["text"] = str(t)
+        szenen.r3_stand_setzen(k, sid, "laeuft", t)
+        with _R5_SPERRE:
+            if k in _R5_LAEUFT:
+                _R5_LAEUFT[k]["text"] = t
+
+    szenen.r3_stand_setzen(k, sid, "laeuft", "zwei Sprechende, wird geschickt")
+    prompt = (s.get("regie") or "").strip()[:600]
+    pfad = animation.erzeuge_multi(kanal, hintergrund, toene[0], toene[1],
+                                   ziel, prompt, melden)
+    if not pfad or not os.path.exists(ziel):
+        grund = (letzte["text"] or "").strip() or "Kein Clip geliefert."
+        szenen.r3_stand_setzen(k, sid, "fehler", grund[:400])
+        return False, grund[:200]
+    r = szenen.r3_clip_setzen(k, sid, os.path.basename(ziel))
+    if not r.get("ok"):
+        szenen.r3_stand_setzen(k, sid, "fehler", r.get("fehler") or "nicht angenommen")
+        return False, r.get("fehler") or "nicht angenommen"
+    szenen.r3_stand_setzen(k, sid, "fertig", "lippensynchron, zwei Sprechende")
+    return True, os.path.basename(ziel)
 
 
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------

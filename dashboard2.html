@@ -1240,14 +1240,15 @@ function schluesselSpeichern(slot){
 
 
 /* ---------- Modelle (Patch M1) ---------- */
-var SLOTNAME={ref:"Clips mit Avataren",text:"Drehbuch",bilder:"Bilder",stimme:"Stimme",video:"Bild bewegen",musik:"Musik",sound:"Geräusche",avatar:"Avatar"}
+var SLOTNAME={ref:"Clips mit Avataren",text:"Drehbuch",bilder:"Bilder",stimme:"Stimme",video:"Bild bewegen",musik:"Musik",sound:"Geräusche",avatar:"Avatar (einer spricht)",multi:"Zwei Sprechende"}
 /* Was das Modell TUT, nicht wie es heisst. */
-var SLOTWOZU={ref:"baut aus Bild und Figuren den Clip",text:"schreibt Text, Titel und Beschreibungen",bilder:"malt das Bild zu jeder Szene",stimme:"spricht den Text",video:"animiert ein Bild ohne Figuren",musik:"nur wenn du kein eigenes Lied hochlädst",sound:"Geräusche",avatar:"Lippensync, wird nicht mehr gebraucht"};
-var EINHEIT={ref:"je Sekunde",text:"je Video",bilder:"je Bild",stimme:"je Sekunde",video:"je Sekunde",musik:"je Stueck",sound:"je Stueck",avatar:"je Sekunde"};
-var BEISPIEL={text:"0.02",bilder:"0.04",stimme:"0.008",video:"0.09",musik:"0.01",sound:"0.01",avatar:"0.05"};
+var SLOTWOZU={ref:"baut aus Bild und Figuren den Clip",text:"schreibt Text, Titel und Beschreibungen",bilder:"malt das Bild zu jeder Szene",stimme:"spricht den Text",video:"animiert ein Bild ohne Figuren",musik:"nur wenn du kein eigenes Lied hochlädst",sound:"Geräusche",avatar:"Lippensync, wenn in der Szene EINER redet",multi:"Lippensync, wenn ZWEI im Bild reden"};
+var EINHEIT={ref:"je Sekunde",text:"je Video",bilder:"je Bild",stimme:"je Sekunde",video:"je Sekunde",musik:"je Stueck",sound:"je Stueck",avatar:"je Sekunde",multi:"je Sekunde"};
+var BEISPIEL={text:"0.02",bilder:"0.04",stimme:"0.008",video:"0.09",musik:"0.01",sound:"0.01",avatar:"0.05",multi:"0.05"};
 var ADRESSE={bilder:"fal-ai/flux-pro/v1.1",
              video:"fal-ai/kling-video/v2.5-turbo/pro/image-to-video",
-             avatar:"fal-ai/kling-video/ai-avatar/v2/standard"};
+             avatar:"fal-ai/kling-video/ai-avatar/v2/standard",
+             multi:"fal-ai/ai-avatar/multi"};
 
 function ladeModelle(){return api("/api/modelle?k="+S.kanal).then(function(m){S.modelle=m;zeichne()})}
 
@@ -1266,7 +1267,7 @@ function refAnleitung(wieviele){
 
 /* Eine Zeile, die auf einen Blick zeigt, was eingerichtet ist und was fehlt. */
 function modellUeberblick(m){
-  var reihe=["text","bilder","ref","stimme","video","musik"];
+  var reihe=["text","bilder","ref","multi","stimme","video","musik"];
   var o='<div class="karte p"><h2 class="kt">Modelle</h2>'
    +'<div class="szh" style="margin:-4px 0 10px">Was fehlt, ist grau. Antippen springt hin.</div>'
    +'<div style="display:flex;flex-wrap:wrap;gap:7px">';
