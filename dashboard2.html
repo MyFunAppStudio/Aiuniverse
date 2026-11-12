@@ -2108,16 +2108,37 @@ function dsStimme(id,wert){
   });
 }
 var STIMMTON=null;
+/* Der Knopf blieb frueher auf "…" stehen: zurueckgesetzt wurde er nur,
+   wenn die Probe zu Ende lief. Beim Wechsel auf eine andere Stimme wurde
+   die alte nur angehalten - der alte Knopf hat das nie erfahren. Jetzt
+   merkt sich die Seite, welcher Knopf dran ist, und gibt ihn in jedem
+   Fall wieder frei: bei Ende, Abbruch, Fehler und nach 90 Sekunden. */
+var STIMMKNOPF=null, STIMMUHR=null;
+function stimmFrei(){
+  if(STIMMUHR){clearTimeout(STIMMUHR);STIMMUHR=null}
+  if(STIMMKNOPF){STIMMKNOPF.disabled=false;STIMMKNOPF.textContent="▶";STIMMKNOPF=null}
+}
+function stimmAus(){
+  if(STIMMTON){try{STIMMTON.onended=STIMMTON.onerror=STIMMTON.onpause=STIMMTON.onplaying=null;
+                   STIMMTON.pause()}catch(e){}}
+  STIMMTON=null;
+  stimmFrei();
+}
 function stimmProbe(sid,knopf){
-  if(STIMMTON){try{STIMMTON.pause()}catch(e){}}
-  if(knopf){knopf.disabled=true;knopf.textContent="…"}
-  var fertig=function(){if(knopf){knopf.disabled=false;knopf.textContent="▶"}};
+  /* Laeuft gerade diese Stimme, hoert der zweite Tipper auf. */
+  if(knopf&&knopf===STIMMKNOPF&&STIMMTON&&!STIMMTON.paused)return stimmAus();
+  stimmAus();
+  if(knopf){knopf.disabled=true;knopf.textContent="…";STIMMKNOPF=knopf}
   var a=new Audio("/api/stimmprobe?k="+encodeURIComponent(S.kanal)
                   +"&s="+encodeURIComponent(sid||"")+"&t="+Date.now());
   STIMMTON=a;
-  a.onended=fertig;
-  a.onerror=function(){fertig();melde("Die Probe ging nicht. Steht bei den Modellen eine Stimme?")};
-  a.play().then(function(){}).catch(function(){fertig();
+  a.onplaying=function(){if(STIMMKNOPF){STIMMKNOPF.disabled=false;STIMMKNOPF.textContent="■"}};
+  a.onended=stimmFrei;
+  a.onpause=stimmFrei;
+  a.onerror=function(){stimmFrei();melde("Die Probe ging nicht. Steht bei den Modellen eine Stimme?")};
+  STIMMUHR=setTimeout(function(){stimmAus();
+    melde("Die Probe hat zu lange gebraucht. Nochmal tippen.")},90000);
+  a.play().then(function(){}).catch(function(){stimmFrei();
     melde("Der Browser hat das Abspielen abgelehnt. Nochmal tippen.")});
 }
 function sprecherNeu(){
