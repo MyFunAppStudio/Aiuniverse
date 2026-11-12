@@ -2677,6 +2677,39 @@ def _r5_figuren(k, s=None):
     return _m3_figuren_alt(k, s)
 
 
+# ---------- Nachtrag m4: Leute im Hintergrund bleiben, wer sie sind ----------
+#
+# Im Hintergrundbild stand ein Briefbote, der einen Brief verbrennt.
+# Im Clip war er weg - Jonas hielt den brennenden Brief. Kling klebt die
+# Figuren nicht ins Bild, es erzeugt das ganze Bild neu; steht dort schon
+# jemand, wird die Referenzfigur einfach ueber ihn gelegt.
+#
+# Dem Modell fehlte der Satz, dass das zwei verschiedene Leute sind. Der
+# steht jetzt drin: die Referenzfiguren kommen zusaetzlich in den freien
+# Vordergrund, wer im Bild schon steht, bleibt wer er ist und tut weiter,
+# was er tut.
+
+M4_GETRENNT = (
+    "The @Element people are added to the scene: they stand together in the "
+    "open foreground, facing each other and talking. Anyone already visible "
+    "in @Image1 is a different person - keep them in their place, at their "
+    "own size, doing what they were doing. Never turn a person from @Image1 "
+    "into an @Element person and never swap their roles.")
+
+_m4_prompt_alt = _r5_prompt
+
+
+def _r5_prompt(k, kanal, s):
+    text = _m4_prompt_alt(k, kanal, s)
+    if not _r5_figuren(k, s):
+        return text          # ohne Figuren gibt es nichts zu verwechseln
+    import animation
+    fest = getattr(animation, "R4_STILL", "")
+    if fest and fest in text:
+        return text.replace(fest, M4_GETRENNT + " " + fest)
+    return (text + " " + M4_GETRENNT).strip()
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
