@@ -917,7 +917,7 @@ def _t4_anweisung(namen):
         "\n\nBESETZUNG - SEHR WICHTIG:\n"
         "In diesem Kanal treten auf: %s. Es gibt KEINEN Erzaehler. "
         "Jeder gesprochene Satz gehoert einer dieser Figuren.\n"
-        "Schreib den Text jeder Szene als Zeilen mit dem Namen davor:\n"
+        "Schreib den Text jeder Szene mit dem Namen vor jedem Stueck, alles in EINER Zeile hintereinander - im JSON darf kein echter Zeilenumbruch stehen:\n"
         "%s"
         "%s"
         "Die Figuren erklaeren das Thema, sie sind keine Zeitzeugen und "
@@ -930,3 +930,66 @@ def _t4_anweisung(namen):
         "denen der Ort oder das Ereignis wichtiger ist, gehoert \"wer\": []."
         % (liste, beispiel, form)
     )
+
+
+# ---------- Nachtrag t6: kaputtes JSON flicken und richtig melden ----------
+#
+# Seit die Szenen mehrere Saetze haben duerfen, schreibt die Text-KI die
+# Sprecherzeilen untereinander:
+#     "text": "Mara: Erster Satz.
+#              Jonas: Zweiter Satz."
+# In JSON darf in einem String kein echter Zeilenumbruch stehen - die
+# Antwort war damit unlesbar, obwohl inhaltlich alles stimmte.
+#
+# Zwei Dinge: der Umbruch wird vor dem Lesen escaped, und wenn es dann
+# immer noch nicht geht, steht der echte Grund in der Meldung. Vorher
+# stand dort immer "line 1 column 1 (char 0)", weil die Stelle beim
+# Weiterreichen auf 0 gesetzt wurde - damit war nicht zu erkennen, wo es
+# klemmt.
+
+
+def _t6_flicken(s):
+    """Rohe Steuerzeichen innerhalb von JSON-Strings escapen."""
+    ersatz = {"\n": "\\n", "\r": "\\r", "\t": "\\t"}
+    raus, drin, esc = [], False, False
+    for ch in (s or ""):
+        if esc:
+            raus.append(ch)
+            esc = False
+            continue
+        if ch == "\\":
+            raus.append(ch)
+            esc = True
+            continue
+        if ch == '"':
+            drin = not drin
+            raus.append(ch)
+            continue
+        if drin and ch in ersatz:
+            raus.append(ersatz[ch])
+            continue
+        raus.append(ch)
+    return "".join(raus)
+
+
+_t6_json_alt = _p40_json
+
+
+def _p40_json(antwort):
+    try:
+        return _t6_json_alt(antwort)
+    except Exception:
+        pass
+    roh = _t3_schaelen(antwort) or (antwort or "")
+    for versuch in (_t6_flicken(roh), _t6_flicken(antwort or "")):
+        if not versuch:
+            continue
+        try:
+            d = _t3_json_alt(versuch)
+            print("[Text] Zeilenumbrueche im JSON geflickt")
+            return d
+        except Exception as e:
+            letzter = e
+    raise _p40_json_modul.JSONDecodeError(
+        "Die Text-KI hat kaputtes JSON geschickt - %s. Anfang der Antwort: %r"
+        % (str(letzter)[:90], (antwort or "")[:120]), antwort or "", 0)
