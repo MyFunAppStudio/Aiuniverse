@@ -723,3 +723,102 @@ M5_LEBEN = ("They stay on the spot and do not walk around, but they move "
             "No text, no letters, no logos, no watermark.")
 
 R4_STILL = M5_LEBEN
+
+
+# ---------- Nachtrag m7: MiniMax H3 als zweites Referenzmodell ----------
+#
+# Kling nimmt hoechstens vier Referenzen und bewegt die Figuren nur
+# sparsam. MiniMax H3 nimmt neun Bilder und ist fuer Bewegung gemacht.
+# Der Koerper sieht ganz anders aus: eine flache Liste statt der
+# elements-Struktur, und die Bilder werden im Prompt ueber ihre
+# Reihenfolge angesprochen ("Image 1 is ...").
+#
+# Welches Modell gilt, entscheidet die eingetragene Adresse. Steht dort
+# minimax oder h3, wird der H3-Koerper gebaut, sonst wie bisher Kling.
+# Umschalten geht damit allein ueber die Adresse im Dashboard, ohne
+# dass hier etwas geaendert werden muss.
+
+M7_MAX = 9
+M7_AUFLOESUNG = "768p"
+
+
+def m7_ist_h3(url):
+    u = (url or "").lower()
+    return ("minimax" in u or "/h3" in u or "h3-max" in u
+            or "seedance" in u)
+
+
+def m7_koerper(hintergrund, figuren, prompt, sekunden, seite="9:16"):
+    """Flache Bildliste. Reihenfolge: erst der Hintergrund, dann die Figuren."""
+    bilder = []
+    if hintergrund and os.path.exists(hintergrund):
+        bilder.append(_daten_uri(hintergrund))
+    for f in figuren or []:
+        for p in (f.get("bilder") or []):
+            if p and os.path.exists(p):
+                bilder.append(_daten_uri(p))
+    return {"prompt": (prompt or "")[:2000],
+            "reference_image_urls": bilder[:M7_MAX],
+            "resolution": M7_AUFLOESUNG,
+            "aspect_ratio": seite or "9:16"}
+
+
+def m7_vorspann(hintergrund, figuren):
+    """Sagt dem Modell, welches Bild welches ist - H3 zaehlt sie durch."""
+    teile, nr = [], 1
+    if hintergrund and os.path.exists(hintergrund):
+        teile.append("Image 1 is the background scene.")
+        nr = 2
+    for f in figuren or []:
+        n = len([p for p in (f.get("bilder") or []) if p and os.path.exists(p)])
+        if not n:
+            continue
+        if n == 1:
+            teile.append("Image %d is %s." % (nr, f.get("name") or "a person"))
+        else:
+            teile.append("Images %d to %d are %s, the same person from "
+                         "different sides." % (nr, nr + n - 1,
+                                               f.get("name") or "a person"))
+        nr += n
+    return " ".join(teile)
+
+
+_m7_erzeuge_alt = erzeuge_referenz
+
+
+def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,
+                     format_seite="9:16", melden=None):
+    """Bei H3 nur Koerper und Vorspann austauschen - Warten, Abholen und
+    Herunterladen bleiben, wie sie sind.
+
+    Getauscht wird ueber die Modulnamen, die die alte Funktion benutzt.
+    Zwei Clips gleichzeitig wuerden sich dabei in die Quere kommen; das
+    Dashboard laesst ohnehin nur einen auf einmal laufen.
+    """
+    e = ref_slot(kanal) or {}
+    if not m7_ist_h3(e.get("url")):
+        return _m7_erzeuge_alt(kanal, hintergrund, figuren, prompt, sekunden,
+                               ziel, format_seite, melden)
+
+    # Der Kling-Vorspann (@Element1 ...) passt nicht: H3 spricht die Bilder
+    # ueber ihre Nummer an. Alles ab dem ersten Satz danach bleibt stehen.
+    rest = prompt or ""
+    for marke in ("There is exactly", "There are exactly"):
+        if marke in rest:
+            rest = rest[rest.index(marke):]
+            break
+    neu_prompt = (m7_vorspann(hintergrund, figuren) + " " + rest).strip()
+
+    alt_koerper = globals().get("ref_koerper")
+    alt_platz = globals().get("ref_platz")
+    globals()["ref_koerper"] = (
+        lambda hg, fg, pr, sek, seite="9:16", dauer_als_text=True:
+        m7_koerper(hg, fg, pr, sek, seite))
+    # Die Vierer-Grenze ist eine Kling-Grenze. H3 nimmt neun Bilder.
+    globals()["ref_platz"] = lambda fg, hg: 1
+    try:
+        return _m7_erzeuge_alt(kanal, hintergrund, figuren, neu_prompt,
+                               sekunden, ziel, format_seite, melden)
+    finally:
+        globals()["ref_koerper"] = alt_koerper
+        globals()["ref_platz"] = alt_platz
