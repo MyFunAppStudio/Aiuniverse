@@ -229,7 +229,7 @@ details.mehr[open]>summary{color:#24D3E8}
 <div id="dialog"></div>
 
 <script>
-var S={offen:{},erk:{},kanal:null,tab:"machen",daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
+var S={offen:{},erk:{},kanal:null,tab:"machen",spielt:null,daten:{},einst:{},themen:{offen:[],erledigt:[]},videos:[],preis:{},modelle:null,szenen:null,tg:null,fig:null,gs:null,arten:null,vorlagen:{},schluessel:{},guthaben:null,schriften:null};
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
@@ -671,10 +671,17 @@ function tVideos(){
   var o='<div class="karte p"><h2 class="kt">Fertige Videos</h2><div class="liste">';
   if(!S.videos.length)o+='<div class="leer">noch keine</div>';
   S.videos.forEach(function(v){
+    var laeuft=(S.spielt===v.ordner);
     o+='<div class="e"><div class="tx"><div class="ti">'+h(v.titel)+'</div><div class="me">'+h(v.zeit)+' · '+v.mb+' MB</div></div>'
-      +'<button class="ik" onclick="spiel(\''+v.ordner+'\')">▶</button>'
+      +'<button class="ik" onclick="spiel(\''+v.ordner+'\')">'+(laeuft?"✕":"▶")+'</button>'
       +'<button class="ik" onclick="herunter(\''+v.ordner+'\')">⤓</button>'
       +'<button class="ik rot" onclick="fragWeg(\''+v.ordner+'\',\''+h(v.titel).replace(/'/g,"")+'\')">✕</button></div>';
+    if(laeuft)
+      o+='<div class="szz" style="display:block;margin:4px 0 10px">'
+       +'<video src="/video/'+encodeURIComponent(v.ordner)+'" controls playsinline preload="metadata" '
+       +'style="width:100%;max-height:70vh;border-radius:10px;background:#000;display:block"></video>'
+       +'<div class="szh" style="margin-top:5px">Läuft nicht? Dann mit ⤓ herunterladen und '
+       +'im Videoplayer des Handys ansehen.</div></div>';
   });
   o+='</div><div class="hinw">Vor jedem Löschen kommt eine Abfrage.</div></div>';
   return o;
@@ -1064,7 +1071,10 @@ function tKanaele(){
 function kanalMerken(k){try{localStorage.setItem("aiu_kanal",k||"")}catch(e){}}
 function kanalGemerkt(){try{return localStorage.getItem("aiu_kanal")||""}catch(e){return ""}}
 function waehle(k){S.kanal=k;kanalMerken(k);S.tab="machen";S.modelle=null;S.szenen=null;S.tg=null;S.fig=null;S.ds=null;S.ab=null;S.gs=null;S.arten=null;laden()}
-function spiel(o){window.open("/video/"+o,"_blank")}
+/* Frueher ging hier window.open auf einen neuen Tab. Auf dem Handy kam
+   dabei nichts - der Player laeuft jetzt in der Seite, so wie bei den
+   Clips, wo es nachweislich funktioniert. */
+function spiel(o){S.spielt=(S.spielt===o)?null:o;zeichne()}
 function herunter(o){location.href="/laden/"+encodeURIComponent(o)}
 function jn(x){return x?"an":"aus"}
 function standKarte(){
