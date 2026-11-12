@@ -679,12 +679,18 @@ function tVideos(){
   S.videos.forEach(function(v){
     var laeuft=(S.spielt===v.ordner);
     /* Gerade fertig geworden: gruen umrandet, damit man es sofort sieht. */
-    var frisch=(v.alter_min!=null&&v.alter_min<=30);
-    o+='<div class="e"'+(frisch?' style="border:2px solid #37D67A;border-radius:12px;padding:9px 10px;background:rgba(55,214,122,.07)"':'')+'>'
-      +'<div class="tx"><div class="ti">'+(frisch?'<span style="color:#37D67A">● NEU </span>':'')+h(v.titel)+'</div>'
-      +'<div class="me">'+h(v.zeit)+' · '+v.mb+' MB'+(frisch?' · gerade fertig':'')+'</div></div>'
-      +'<button class="ik" onclick="spiel(\''+v.ordner+'\')">'+(laeuft?"✕":"▶")+'</button>'
-      +'<button class="ik" onclick="herunter(\''+v.ordner+'\')">⤓</button>'
+    var roh=(v.fertig===false);          /* wird noch geschrieben */
+    var frisch=!roh&&(v.alter_min!=null&&v.alter_min<=30);
+    var rahmen=roh?'border:2px solid #FFB454;background:rgba(255,180,84,.07)'
+                  :(frisch?'border:2px solid #37D67A;background:rgba(55,214,122,.07)':'');
+    o+='<div class="e"'+(rahmen?' style="'+rahmen+';border-radius:12px;padding:9px 10px"':'')+'>'
+      +'<div class="tx"><div class="ti">'
+      +(roh?'<span style="color:#FFB454">● wird gebaut </span>':'')
+      +(frisch?'<span style="color:#37D67A">● NEU </span>':'')+h(v.titel)+'</div>'
+      +'<div class="me">'+h(v.zeit)+' · '+v.mb+' MB'
+      +(roh?' · noch nicht abspielbar':(frisch?' · gerade fertig':''))+'</div></div>'
+      +'<button class="ik"'+(roh?' disabled':'')+' onclick="spiel(\''+v.ordner+'\')">'+(laeuft?"✕":"▶")+'</button>'
+      +'<button class="ik"'+(roh?' disabled':'')+' onclick="herunter(\''+v.ordner+'\')">⤓</button>'
       +'<button class="ik rot" onclick="fragWeg(\''+v.ordner+'\',\''+h(v.titel).replace(/'/g,"")+'\')">✕</button></div>';
     if(laeuft)
       o+='<div class="szz" style="display:block;margin:4px 0 10px">'

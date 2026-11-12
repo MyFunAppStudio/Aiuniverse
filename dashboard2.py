@@ -2854,6 +2854,29 @@ def preis_szenen(key, d):
     return raus
 
 
+# ---------- Nachtrag m12: nur wirklich fertige Videos anzeigen ----------
+#
+# Die Liste hat jedes video.mp4 gezeigt, auch eines, das gerade noch
+# geschrieben wurde. Beim Antippen kam dann nichts - die Datei war
+# unvollstaendig, ffmpeg schreibt den Index (moov atom) erst zum Schluss.
+#
+# Der Lauf legt als letzten Schritt paket.json und texte.txt an. Ist
+# keine davon da, laeuft er noch. Dann steht das Video als "wird noch
+# gebaut" in der Liste, statt zum vergeblichen Antippen einzuladen.
+
+_m12_liste_alt = ordner_liste
+
+
+def ordner_liste(key=None):
+    raus = _m12_liste_alt(key)
+    for v in raus:
+        ordner = os.path.join(VIDEOS, v.get("ordner") or "")
+        fertig = (os.path.exists(os.path.join(ordner, "paket.json"))
+                  or os.path.exists(os.path.join(ordner, "texte.txt")))
+        v["fertig"] = bool(fertig)
+    return raus
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
