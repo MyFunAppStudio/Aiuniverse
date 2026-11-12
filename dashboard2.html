@@ -1603,9 +1603,17 @@ function clipLage(s){
   return {namen:namen, text:text, redner:redner, modus:s.modus||"still",
           geladen:geladen};
 }
+/* Welche Laenge wirklich bestellt wird. Leer = jede Sekunde moeglich. */
+function clipStufe(sek){
+  var st=((R6.stand||{}).stufen)||[];
+  if(!st.length||!sek)return 0;
+  for(var i=0;i<st.length;i++){if(st[i]>=sek-0.2)return st[i]}
+  return st[st.length-1];
+}
 function clipAbfrage(s,sek,preis,schon){
   var L=clipLage(s), o='';
   var zeile=function(k,v){return '<div style="margin-bottom:5px">'+k+': <b>'+v+'</b></div>'};
+  var warn=[];
   if(L.modus==="avatare")
     o+=zeile("Im Bild",!L.geladen?"Besetzung noch nicht geladen"
              :(L.namen.length?h(L.namen.join(", ")):"niemand angehakt"));
@@ -1616,9 +1624,18 @@ function clipAbfrage(s,sek,preis,schon){
   o+=zeile("Gesprochen", L.redner.length?(h(L.redner.join(", "))
             +(L.modus==="avatare"?"":" — aus dem Off"))
           :(L.text?"ja, ohne Namen davor":"nichts eingetragen"));
-  if(sek)o+=zeile("Länge",sek+" Sekunden");
+  if(sek){
+    var best=clipStufe(sek);
+    o+=zeile("Länge der Szene",sek+" Sekunden");
+    if(best&&best!==sek)
+      o+=zeile("Bestellt wird",best+" Sekunden"
+        +(best>sek?" — der Rest wird abgeschnitten":""));
+    if(best&&best<sek)
+      warn.push("Das Modell kann höchstens <b>"+best+" Sekunden</b>. Die letzten "
+        +(Math.round((sek-best)*10)/10)+" Sekunden der Szene werden mit einem "
+        +"stehenden Bild aufgefüllt. Kürze den Sprechtext, dann passt es.");
+  }
   if(preis)o+=zeile("Kostet etwa",preis.toFixed(2).replace(".",",")+" €");
-  var warn=[];
   if(L.geladen&&L.modus==="avatare"&&!L.namen.length)
     warn.push("Der Schalter steht auf <b>Avatare im Bild</b>, aber es ist niemand angehakt.");
   if(L.geladen&&L.modus==="bild_ki"&&L.namen.length)
@@ -1635,7 +1652,9 @@ function clipAbfrage(s,sek,preis,schon){
   return o;
 }
 function clipNeu(id,sek,schon){
-  var js=((R6.stand||{}).je_sekunde)||0, preis=(js&&sek)?(js*sek):0;
+  var js=((R6.stand||{}).je_sekunde)||0;
+  var zahlt=clipStufe(sek)||sek;        /* bezahlt wird die bestellte Laenge */
+  var preis=(js&&zahlt)?(js*zahlt):0;
   frage("Clip erzeugen?", clipAbfrage(szeneVon(id),sek,preis,schon),
     "Erzeugen",function(){
       api("/api/szene_clip?k="+encodeURIComponent(S.kanal),{sid:id}).then(function(r){

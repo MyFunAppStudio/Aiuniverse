@@ -2765,6 +2765,33 @@ def _r5_prompt(k, kanal, s):
     return "".join(t for t in teile if t).replace("  ", " ").strip()
 
 
+# ---------- Nachtrag m8: welche Clip-Laengen das Modell annimmt ----------
+#
+# Die Szene braucht 8 Sekunden, bestellt wird aber eine feste Stufe -
+# bei H3 sind das 6 oder 10. Steht das nirgends, wundert man sich
+# hinterher ueber einen Clip, der kuerzer ist als die Szene. Die Stufen
+# gehen deshalb mit an die Oberflaeche, damit die Abfrage vor dem
+# Erzeugen sagen kann, was wirklich bestellt wird.
+
+_m8_stand_alt = r5_clip_stand
+
+
+def r5_clip_stand(k):
+    raus = _m8_stand_alt(k)
+    try:
+        import animation
+        e = animation.ref_slot(_r5_kanal(k)) or {}
+        if animation.m7_ist_h3(e.get("url")):
+            raus["stufen"] = list(getattr(animation, "M7_STUFEN", []) or [])
+        else:
+            # Kling nimmt jede ganze Sekunde von 3 bis 15
+            raus["stufen"] = []
+    except Exception as f:
+        print("[Referenz] Stufen nicht lesbar:", f)
+        raus["stufen"] = []
+    return raus
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
