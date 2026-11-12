@@ -2677,23 +2677,35 @@ def _r5_figuren(k, s=None):
     return _m3_figuren_alt(k, s)
 
 
-# ---------- Nachtrag m4: wer im Bild steht, und wie oft ----------
+# ---------- Nachtrag m4/m6: was im Clip passieren soll ----------
 #
-# Zwei Dinge gingen schief, beide aus demselben Grund: dem Modell wurde
-# nie gesagt, wie viele Leute dazukommen und dass die im Hintergrund
-# andere sind.
+# Drei Dinge gingen schief, alle aus demselben Grund: im Prompt stand
+# nicht klar, wer was tut.
 #
-# 1. Im Hintergrundbild stand ein Briefbote, der einen Brief verbrennt.
-#    Im Clip war er weg - Jonas hielt den Brief. Kling klebt die Figuren
-#    nicht ins Bild, es erzeugt das ganze Bild neu; steht dort schon
-#    jemand, legt es die Referenzfigur ueber ihn.
-# 2. Eine einzige Figur kam viermal vor. Eine Figur bringt mehrere
-#    Referenzbilder mit - frontal, seitlich, von hinten. Stand im Prompt
-#    "the people ... facing each other", hat das Modell daraus eine
-#    Gruppe gemacht und jedes Referenzbild einmal hingestellt.
+# 1. Ein Briefbote im Hintergrundbild wurde zu Jonas - dem Modell fehlte
+#    der Satz, dass das zwei verschiedene Leute sind.
+# 2. Eine Figur kam viermal vor. Eine Figur bringt mehrere
+#    Referenzbilder mit; "the people ... facing each other" hat das
+#    Modell als Gruppe gelesen.
+# 3. Die Figur stand regungslos da. Die Handlung stand irgendwo in der
+#    Mitte eines langen Regelblocks, und wenn die Szene keine
+#    Animationsanweisung hatte, stand ueberhaupt keine darin.
 #
-# Jetzt steht die Zahl und der Name darin, und dass jeder genau einmal
-# vorkommt.
+# Der Prompt ist jetzt nach Wichtigkeit sortiert: zuerst wer wer ist,
+# dann was JETZT passiert, dann der Hintergrund, die Verbote zuletzt.
+# Fehlt in der Szene eine Anweisung, wird eine gebaut - stehen und
+# reden ist keine Regie.
+
+M6_HINTERGRUND = ("The background never freezes: smoke and dust drift, the "
+                  "crowds and troops keep moving, flags, grass and cloth move "
+                  "in the wind, clouds slide across the sky.")
+
+M6_VERBOTE = ("They stay on the spot - no walking, no grabbing, no sitting "
+              "down. Anyone already visible in @Image1 is a different person: "
+              "keep them in their place, at their own size, doing what they "
+              "were doing, and never turn them into an @Element person. "
+              "One single camera move for the whole shot. "
+              "No text, no letters, no logos, no watermark.")
 
 
 def _m4_liste(namen):
@@ -2702,46 +2714,55 @@ def _m4_liste(namen):
     return ", ".join(namen[:-1]) + " and " + namen[-1]
 
 
-def _m4_text(namen):
-    n = len(namen)
-    if n == 1:
-        wer = ("There is exactly ONE added person in this shot: %s. "
-               "Show this person a single time only. Do not duplicate, clone, "
-               "mirror or repeat this person anywhere in the frame - the "
-               "reference images all show the same one person from different "
-               "sides, not several people. " % namen[0])
-        steh = ("%s stands alone in the open foreground, facing the camera "
-                "and talking." % namen[0])
-    else:
-        wer = ("There are exactly %d added people in this shot: %s. Each of "
-               "them appears a single time only. Do not duplicate, clone, "
-               "mirror or repeat any of them - the several reference images of "
-               "one person all show that same person from different sides. "
-               % (n, _m4_liste(namen)))
-        steh = ("They stand together in the open foreground, facing each other "
-                "and talking.")
-    rest = ("Anyone already visible in @Image1 is a different person - keep "
-            "them in their place, at their own size, doing what they were "
-            "doing. Never turn a person from @Image1 into an @Element person "
-            "and never swap their roles.")
-    return wer + steh + " " + rest
+def _m6_wieviele(namen):
+    if len(namen) == 1:
+        return ("There is exactly ONE added person in this shot: %s. Show "
+                "this person a single time only - the reference images show "
+                "the same one person from different sides, not several "
+                "people. " % namen[0])
+    return ("There are exactly %d added people in this shot: %s. Each appears "
+            "a single time only - several reference images of one person show "
+            "that same person from different sides. "
+            % (len(namen), _m4_liste(namen)))
+
+
+def _m6_handlung(namen, regie):
+    """Was die Figuren tun. Steht nichts in der Szene, wird es gebaut."""
+    wer = _m4_liste(namen)
+    hat_namen = any(n.lower() in (regie or "").lower() for n in namen)
+    if regie and hat_namen:
+        grund = regie.strip()
+        if grund[-1] not in ".!?":
+            grund += "."
+        return grund + " "
+    wenn_zwei = ("They face each other and talk, taking turns, nodding and "
+                 "reacting to each other, " if len(namen) > 1
+                 else "%s talks to the camera, " % wer)
+    return (wenn_zwei + "gesturing with the hands the whole time and pointing "
+            "back towards what is happening behind them. "
+            + ((regie.strip() + ". ") if regie and regie.strip()[-1] not in ".!?"
+               else ((regie.strip() + " ") if regie else "")))
 
 
 _m4_prompt_alt = _r5_prompt
 
 
 def _r5_prompt(k, kanal, s):
-    text = _m4_prompt_alt(k, kanal, s)
+    import animation
     namen = [(f.get("name") or "").strip() for f in _r5_figuren(k, s)]
     namen = [x for x in namen if x]
     if not namen:
-        return text          # ohne Figuren gibt es nichts zu verwechseln
-    import animation
-    zusatz = _m4_text(namen)
-    fest = getattr(animation, "R4_STILL", "")
-    if fest and fest in text:
-        return text.replace(fest, zusatz + " " + fest)
-    return (text + " " + zusatz).strip()
+        return _m4_prompt_alt(k, kanal, s)
+    vorspann = darsteller.prompt_vorspann(k, nur=_r5_wer(s))
+    if vorspann and not vorspann.endswith(" "):
+        vorspann += " "
+    teile = [vorspann,
+             _m6_wieviele(namen),
+             "They stand together in the open foreground. "
+             if len(namen) > 1 else "%s stands in the open foreground. " % namen[0],
+             _m6_handlung(namen, _r5_regie(s, kanal)),
+             M6_HINTERGRUND, " ", M6_VERBOTE]
+    return "".join(t for t in teile if t).replace("  ", " ").strip()
 
 
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
