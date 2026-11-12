@@ -745,6 +745,13 @@ class Griff(BaseHTTPRequestHandler):
         if w == "/api/darsteller":
             return self.sende(darsteller_lesen(k))
 
+        if w == "/api/stimmprobe":
+            pfad, grund = stimmprobe(k, (q.get("s") or [""])[0])
+            if not pfad:
+                return self.sende({"fehler": grund or "ging nicht"}, code=500)
+            with open(pfad, "rb") as f:
+                return self.sende(f.read(), "audio/mpeg")
+
         if w == "/api/abspann":
             return self.sende(abspann_lesen(k))
 
@@ -2188,3 +2195,81 @@ G7_ANKER = ("photorealistic cinematic film still, shot on 35mm, natural daylight
 
 def stil_vorschlag(key):
     return {"ok": True, "text": G7_ANKER, "woher": "fest"}
+
+
+# ---------- Nachtrag d3: Stimme und Sprecher ueber die Oberflaeche ----------
+
+_d3_schreiben_alt = darsteller_schreiben
+
+
+def darsteller_schreiben(key, b):
+    a = b.get("aktion") or ""
+    if a == "stimme":
+        return darsteller.aendern(key, str(b.get("id") or ""), "stimme",
+                                  b.get("wert"))
+    if a == "sprecher_neu":
+        return darsteller.sprecher_anlegen(key, b.get("name") or "")
+    return _d3_schreiben_alt(key, b)
+
+
+_d3_lesen_alt = darsteller_lesen
+
+
+def darsteller_lesen(key):
+    d = _d3_lesen_alt(key)
+    try:
+        roh = {x["id"]: x for x in darsteller.laden(key).get("darsteller") or []}
+        for f in d.get("darsteller") or []:
+            q = roh.get(f.get("id")) or {}
+            f["stimme"] = q.get("stimme") or ""
+            f["art"] = q.get("art") or "avatar"
+        # Die Stimmen des Kanals als Auswahl, ohne die IDs preiszugeben
+        kanal = einstellungen.laden().get(key) or {}
+        d["stimmliste"] = [[(e.get("id") or "").strip(),
+                            (e.get("name") or "ohne Namen").strip()]
+                           for e in (kanal.get("stimmen") or [])
+                           if isinstance(e, dict) and (e.get("id") or "").strip()]
+    except Exception as e:
+        print("[Darsteller] Stimmen nicht lesbar:", e)
+        d["stimmliste"] = []
+    return d
+
+
+# ---------- Nachtrag d4: Stimmprobe im Dashboard ----------
+#
+# Stefan soll nicht zu ElevenLabs wechseln muessen, um zu hoeren, wie
+# eine Stimme klingt. Ein kurzer Satz reicht - und er wird je Stimme
+# nur einmal erzeugt und danach aus dem Ordner geliefert.
+
+D4_SATZ = ("Hallo, ich bin dabei. So klinge ich, wenn ich in deinem "
+           "Video spreche.")
+
+
+def _d4_ordner():
+    p = os.path.join(BASIS, "eigene", "_stimmproben")
+    os.makedirs(p, exist_ok=True)
+    return p
+
+
+def stimmprobe(key, stimme):
+    """Pfad zu einer kurzen Probe. Erzeugt sie beim ersten Mal."""
+    import re as _re
+    kanal = einstellungen.laden().get(key) or {}
+    if not kanal:
+        return None, "Kanal unbekannt"
+    sid = (stimme or "").strip()
+    marke = _re.sub(r"[^A-Za-z0-9_-]+", "", sid) or "standard"
+    ziel = os.path.join(_d4_ordner(), "probe_%s.mp3" % marke[:40])
+    if os.path.exists(ziel) and os.path.getsize(ziel) > 2000:
+        return ziel, ""
+    try:
+        import medien
+        try:
+            medien.erzeuge_stimme(kanal, D4_SATZ, ziel, stimme_id=sid or None)
+        except TypeError:
+            medien.erzeuge_stimme(kanal, D4_SATZ, ziel)
+    except Exception as e:
+        return None, str(e)[:200]
+    if not os.path.exists(ziel) or os.path.getsize(ziel) < 500:
+        return None, "Das Stimmmodell hat nichts geliefert"
+    return ziel, ""

@@ -531,3 +531,70 @@ def fuer_anzeige(kanal):
             "anzahl": len(d["besetzung"]),
             "bereit": ok, "grund": grund,
             "vorspann": prompt_vorspann(kanal)}
+
+
+# ---------- Nachtrag d2: Stimme je Avatar, dazu reine Sprecher ----------
+#
+# Bisher musste ein Eintrag in der Stimmenliste unter Einstellungen
+# genauso heissen wie der Avatar - ein unsichtbarer Trick, den niemand
+# ahnt. Jetzt steht die Stimme beim Avatar selbst.
+#
+# Dazu gibt es Eintraege ohne Bilder: reine Sprecher. Die koennen in
+# jeder Szene reden ("Sprecher Mann: ...") und tauchen nie im Bild
+# auf. art ist "avatar" oder "sprecher".
+
+_d2_laden_alt = laden
+
+
+def laden(kanal):
+    d = _d2_laden_alt(kanal)
+    for f in d["darsteller"]:
+        f.setdefault("stimme", "")
+        f.setdefault("art", "sprecher" if not f.get("bilder") else "avatar")
+    # Sprecher gehoeren nie in die Besetzung - sie sind nie im Bild.
+    ids = set(f["id"] for f in d["darsteller"] if f.get("art") != "sprecher")
+    d["besetzung"] = [x for x in d.get("besetzung") or [] if x in ids]
+    return d
+
+
+_d2_aendern_alt = aendern
+
+
+def aendern(kanal, did, feld, wert):
+    if feld != "stimme":
+        return _d2_aendern_alt(kanal, did, feld, wert)
+    d = laden(kanal)
+    f = _finde(d, did)
+    if f is None:
+        return {"ok": False, "fehler": "Eintrag unbekannt"}
+    f["stimme"] = str(wert or "").strip()[:80]
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+def sprecher_anlegen(kanal, name):
+    """Ein Eintrag, der nur redet und nie im Bild steht."""
+    d = laden(kanal)
+    w = str(name or "").strip()[:40]
+    if not w:
+        return {"ok": False, "fehler": "Name darf nicht leer sein"}
+    if any(x["name"].lower() == w.lower() for x in d["darsteller"]):
+        return {"ok": False, "fehler": "Gibt es schon"}
+    benutzt = set(x["id"] for x in d["darsteller"])
+    d["darsteller"].append({"id": _neue_id(benutzt), "name": w,
+                            "bilder": [], "stimme": "", "art": "sprecher"})
+    speichern(kanal, d)
+    return {"ok": True}
+
+
+def stimme_von(kanal, name):
+    """Die beim Avatar oder Sprecher hinterlegte Stimm-ID, sonst ''."""
+    if not str(name or "").strip():
+        return ""
+    try:
+        for f in laden(kanal).get("darsteller") or []:
+            if (f.get("name") or "").strip().lower() == str(name).strip().lower():
+                return (f.get("stimme") or "").strip()
+    except Exception:
+        pass
+    return ""

@@ -225,7 +225,7 @@ var S={offen:{},erk:{},kanal:null,tab:"start",daten:{},einst:{},themen:{offen:[]
 
 var TABS=[
  ["machen","Video machen","Thema, Text, Szenen und Clips. Hier entsteht das Video."],
- ["darsteller","Avatare","Deine Figurenbibliothek. Hak an, wer in diesem Video mitspielt."],
+ ["darsteller","Avatare & Sprecher","Wer mitspielt und wie er klingt. Avatare stehen im Bild, Sprecher reden nur."],
  ["einst","Einstellungen","Format, Ton, Untertitel, Abspann, Modelle und Kanäle."]
 ];
 
@@ -1395,7 +1395,7 @@ function werZeile(s){
   var dabei=(S.ds.darsteller||[]).filter(function(f){return f.dabei});
   if(!dabei.length)
     return '<div class="szh" style="margin-top:8px;color:#FFB454">Kein Avatar angehakt — '
-     +'im Reiter <b>Avatare</b> anhaken, sonst kann für diese Szene kein Clip entstehen.</div>';
+     +'im Reiter <b>Avatare &amp; Sprecher</b> anhaken, sonst kann für diese Szene kein Clip entstehen.</div>';
   var wer=(s.wer&&s.wer.length)?s.wer:dabei.map(function(f){return f.id});
   var o='<div class="wer"><span class="szh" style="flex:0 0 100%">Wer steht im Bild</span>';
   dabei.forEach(function(f){
@@ -2032,12 +2032,77 @@ function tAbspannBib(){
   return o+'</div>';
 }
 
+/* Stimme je Avatar oder Sprecher. Die Auswahl kommt aus der
+   Stimmenliste des Kanals; dieselbe Stimme darf mehrfach vergeben
+   werden. Der Knopf daneben spielt eine kurze Probe - einmal erzeugt,
+   danach aus dem Ordner. */
+function stimmZeile(f){
+  var liste=(S.ds&&S.ds.stimmliste)||[];
+  var jetzt=f.stimme||"";
+  var o='<div class="szz" style="margin-top:9px"><span class="szh">Stimme</span>'
+   +'<div style="display:flex;gap:7px;align-items:center">'
+   +'<select style="flex:1" onchange="dsStimme(\''+h(f.id)+'\',this.value)">'
+   +'<option value=""'+(jetzt?"":" selected")+'>Kanalstimme</option>';
+  var drin=false;
+  liste.forEach(function(e){
+    if(e[0]===jetzt)drin=true;
+    o+='<option value="'+h(e[0])+'"'+(e[0]===jetzt?" selected":"")+'>'+h(e[1])+'</option>';
+  });
+  if(jetzt&&!drin)
+    o+='<option value="'+h(jetzt)+'" selected>eigene ID</option>';
+  o+='</select>'
+   +'<button class="knopf" style="padding:9px 13px" title="kurz anhören" '
+   +'onclick="stimmProbe(\''+h(jetzt)+'\',this)">▶</button></div></div>';
+  if(!liste.length)
+    o+='<div class="szh" style="margin-top:5px;color:#FFB454">Noch keine Stimme eingetragen — '
+     +'unter <b>Einstellungen → Video &amp; Ton → Stimmen</b> anlegen.</div>';
+  return o;
+}
+function dsStimme(id,wert){
+  api("/api/darsteller?k="+S.kanal,{aktion:"stimme",id:id,wert:wert}).then(function(r){
+    if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+    ladeDarsteller();
+  });
+}
+var STIMMTON=null;
+function stimmProbe(sid,knopf){
+  if(STIMMTON){try{STIMMTON.pause()}catch(e){}}
+  if(knopf){knopf.disabled=true;knopf.textContent="…"}
+  var fertig=function(){if(knopf){knopf.disabled=false;knopf.textContent="▶"}};
+  var a=new Audio("/api/stimmprobe?k="+encodeURIComponent(S.kanal)
+                  +"&s="+encodeURIComponent(sid||"")+"&t="+Date.now());
+  STIMMTON=a;
+  a.onended=fertig;
+  a.onerror=function(){fertig();melde("Die Probe ging nicht. Steht bei den Modellen eine Stimme?")};
+  a.play().then(function(){}).catch(function(){fertig();
+    melde("Der Browser hat das Abspielen abgelehnt. Nochmal tippen.")});
+}
+function sprecherNeu(){
+  el("dialog").innerHTML='<div class="dim"><div class="dlg"><h2>Sprecher anlegen</h2>'
+   +'<p>Ein Sprecher redet nur und steht nie im Bild. Der Name gehört vor die Zeile '
+   +'im Sprechtext: <i>Sprecherin Frau: Am Morgen bebte die Erde.</i></p>'
+   +'<input type="text" id="spneu" class="breit" placeholder="z.B. Sprecherin Frau" '
+   +'style="margin-bottom:14px">'
+   +'<div class="zw"><button class="knopf" onclick="zu()">Abbrechen</button>'
+   +'<button class="knopf or" onclick="sprecherSpeichern()">Anlegen</button></div></div></div>';
+}
+function sprecherSpeichern(){
+  var n=((el("spneu")||{}).value||"").trim();
+  if(!n)return melde("Name darf nicht leer sein.");
+  api("/api/darsteller?k="+S.kanal,{aktion:"sprecher_neu",name:n}).then(function(r){
+    zu();
+    if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
+    ladeDarsteller();
+  });
+}
 function tDarsteller(){
   var d=S.ds;
   if(!d){ladeDarsteller();return '<div class="karte p"><div class="leer">lade…</div></div>'}
-  var liste=d.darsteller||[], max=d.max||3, anzahl=d.anzahl||0, bmax=d.bilder_max||4;
+  var alle=d.darsteller||[], max=d.max||3, anzahl=d.anzahl||0, bmax=d.bilder_max||4;
+  var liste=alle.filter(function(f){return f.art!=="sprecher"});
+  var sprecher=alle.filter(function(f){return f.art==="sprecher"});
 
-  var o='<div class="karte p"><h2 class="kt">Avatare</h2>'
+  var o='<div class="karte p"><h2 class="kt">Avatare &amp; Sprecher</h2>'
    +'<div class="hinw" style="padding:0;margin-bottom:10px">'
    +'Ein Avatar sind ein paar Bilder und ein Name — höchstens '+bmax+' Bilder, das erste ist '
    +'das Frontalbild. Für ein Video hakst du an, wer mitspielt; gleichzeitig im Bild gehen '
@@ -2100,7 +2165,8 @@ function tDarsteller(){
 
     o+='<div class="szz" style="margin-top:11px"><span class="szh">Name</span>'
      +'<input type="text" class="breit" value="'+h(f.name)+'" '
-     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div></div>';
+     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div>'
+     +stimmZeile(f)+'</div>';
   });
 
   if(liste.length)
@@ -2108,6 +2174,25 @@ function tDarsteller(){
      +'<b>Andere Kleidung für eine spätere Folge?</b> Leg die Figur ein zweites Mal an — '
      +'„Mara Feldjacke" — und hak die an. Ein Eintrag mehr in der Liste, dafür keine zweite Ebene.'
      +'</div></div>';
+
+  o+='<div class="karte p"><h2 class="kt">Sprecher</h2>'
+   +'<div class="hinw" style="padding:0;margin-bottom:10px">Ein Sprecher hat keine Bilder und '
+   +'steht nie im Bild — er redet nur. Im Sprechtext schreibst du seinen Namen vor die Zeile, '
+   +'genau wie bei einem Avatar. Praktisch für eine Erzählstimme neben Mara und Jonas.</div>';
+  if(!sprecher.length)
+    o+='<div class="leer">noch kein Sprecher angelegt</div>';
+  sprecher.forEach(function(f){
+    o+='<div class="szn" style="margin-bottom:11px">'
+     +'<div class="kopf" style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+     +'<h2 class="kt" style="flex:1;margin:0">'+h(f.name)+'</h2>'
+     +'<button class="ik rot" onclick="dsWeg(\''+h(f.id)+'\',\''+h(f.name).replace(/'/g,"")+'\')">✕</button></div>'
+     +'<div class="szz"><span class="szh">Name</span>'
+     +'<input type="text" class="breit" value="'+h(f.name)+'" '
+     +'onchange="dsFeld(\''+h(f.id)+'\',\'name\',this.value)"></div>'
+     +stimmZeile(f)+'</div>';
+  });
+  o+='<button class="knopf or" style="width:100%;margin-top:4px" onclick="sprecherNeu()">'
+   +'+ Sprecher anlegen</button></div>';
   return o;
 }
 

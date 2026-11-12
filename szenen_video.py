@@ -3082,3 +3082,30 @@ def _r15_zerlegen(text, namen, standard=""):
                 return stuecke
     return [(standard if ist else "", wort)
             for ist, wort in _nach_anfuehrung(roh)]
+
+
+# ---------- Nachtrag r18: Stimme zuerst beim Avatar suchen ----------
+#
+# Die Stimme steht jetzt beim Avatar selbst, im Reiter "Avatare und
+# Sprecher". Die alte Stimmenliste bleibt als Rueckfall, damit nichts
+# kaputtgeht, was schon eingerichtet ist.
+
+_r18_stimme_alt = _stimme_fuer
+
+
+def _stimme_fuer(kanal, figur):
+    name = (figur or "").strip()
+    if name:
+        try:
+            import darsteller
+            eigene = darsteller.stimme_von(kanal, name)
+            if eigene:
+                return eigene
+        except Exception as e:
+            print("[Stimme] Avatarstimme nicht lesbar:", e)
+    return _r18_stimme_alt(kanal, figur)
+
+
+# Reine Sprecher sollen in Texten als Name erkannt werden, obwohl sie
+# nie im Bild stehen. _r15_namen liest schon alle Darsteller - damit
+# sind sie automatisch dabei.
