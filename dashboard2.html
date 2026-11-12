@@ -354,7 +354,7 @@ function zeichne(){
 var ERK={
 drehbuch:"Was der Bau aus deinem Text machen wird — Szene für Szene, bevor etwas Geld kostet. Zerlegt wird auf dem Server mit genau dem Code, der danach auch baut; was hier steht, wird also so gebaut.<br><br><b>Erzähler</b> ist normaler Text. <b>Avatar sagt</b> ist, was in Anführungszeichen steht. <b>Bild</b> kommt aus <i>[BILD: ...]</i> und geht an Flux. <b>Bewegung</b> kommt aus <i>[BEWEGUNG: ...]</i> und steuert den Clip. Steht nur eine Klammer ohne Namen drin, wird sie für Bild und Bewegung genommen — dann stehen beide gleich da.<br><br>Fehlt eine Zeile, fehlt sie auch im Video. Ändern tust du oben im Textfeld, nicht hier.",
 
-szenentext:"<b>So schreibst du den Text einer Szene.</b><br><br><b>Normaler Text</b> wird vom Erzähler gesprochen — der Stimme, die bei den Stimmen auf aktiv steht.<br><br><b>In Anführungszeichen</b> spricht ein Avatar:<br><i>Der Vulkan rumort seit Tagen. „Wir müssen hier weg!“ Niemand hört auf ihn.</i><br>Alles zwischen den Anführungszeichen bekommt die Stimme des Avatars, der bei dieser Szene unter <b>Im Bild</b> an erster Stelle steht. Dafür muss ein Stimmen-Eintrag genauso heißen wie der Avatar. Der Rest bleibt beim Erzähler. Es gehen alle Sorten Anführungszeichen.<br><br><b>In eckigen Klammern</b> steht alles, was nicht gesprochen wird — keine Stimme, kein Untertitel. Zwei Sorten kannst du benennen:<br><i>[BILD: verwitterter Rucksack auf Geröll, Morgenlicht]</i> — danach malt Flux, wenn du <b>Bild neu</b> drückst.<br><i>[BEWEGUNG: Kamera fährt langsam zurück, Asche fällt]</i> — danach bewegt sich der Clip.<br>Schreibst du nur eine Klammer ohne Namen, wird sie für beides genommen.<br><br><b>Alles zusammen:</b><br><i>Am Morgen zitterte die Erde. „Lauf!“ schrie sie. [Staub wirbelt auf, Menschen rennen durchs Bild]</i>",
+szenentext:"<b>So schreibst du den Text einer Szene.</b><br><br>Jede Zeile beginnt mit dem Namen der Figur, die sie spricht:<br><i>Mara: Da vorne liegt die Küste.</i><br><i>Jonas: Das kann unmöglich Indien sein.</i><br>Jede Zeile bekommt die Stimme dieser Figur — dafür muss ein Stimmen-Eintrag genauso heißen wie der Avatar. Eine Zeile ohne Namen spricht die Kanalstimme.<br><br>Reden und zu sehen sein sind zwei verschiedene Dinge: Eine Figur kann sprechen, ohne unter <b>Wer steht im Bild</b> angewählt zu sein — dann hört man sie über der Landschaft.<br><br><b>In eckigen Klammern</b> steht, was nicht gesprochen wird:<br><i>[BILD: verwitterter Rucksack auf Geröll, Morgenlicht]</i> — danach malt Flux.<br><i>[BEWEGUNG: Kamera fährt langsam zurück]</i> — danach bewegt sich der Clip.<br>Schreibst du nur eine Klammer ohne Namen, wird sie für beides genommen.",
 
 prompt:"Wer der Kanal ist und wie er klingt. Steht am Anfang jeder Anfrage an Claude: Rolle, Tonfall, Sprache, für wen das Video gemacht ist. Gilt für jedes Video dieses Kanals, egal welches Thema. Hier steht das <b>Wer und Wie</b>.",
 
@@ -1410,7 +1410,8 @@ function werZeile(s){
             +'dadurch ähnlicher.')
           :(n+' Figuren — je bis zu '+je+' Referenzbild'+(je>1?'er':'')+'. '
             +'Weniger Figuren heißt ähnlichere Gesichter.'))
-   +' Wer vorn steht, spricht.</div>';
+   +' Wer spricht, steht als Name vor der Zeile im Sprechtext — '
+   +'sie können auch reden, ohne hier angewählt zu sein.</div>';
   return o;
 }
 
@@ -1633,20 +1634,14 @@ function tSzenen(){
      +'<textarea placeholder="Wie sich das Bild bewegen soll. Leer = ruhige Fahrt." onchange="szeneSetz(\''+s.id+'\',\'regie\',this.value)">'+h(s.regie||"")+'</textarea></div>'
      ;
     o+=schalterZeile(s,d)+werZeile(s);
-    var mehr='<div class="szz"><span class="szh">Wer spricht</span>'
-     +'<select onchange="szeneSetz(\''+s.id+'\',\'spricht\',this.value)">'
-     +((d.sprichtarten||[["sprecher","Sprecher aus dem Off"]]).map(function(x){
-        return '<option value="'+x[0]+'"'+((s.spricht||"sprecher")===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join(""))
-     +'</select></div>'
-     +'<div class="szz">'
+    /* "Wer spricht" und der Haken "Gesprochen" sind weg: Claude
+       schreibt zu jeder Szene Text, und wer ihn spricht, steht als
+       Name vor der Zeile. Ein Schalter, der den geschriebenen Text
+       wegwirft, ergibt keinen Sinn. */
+    var mehr='<div class="szz">'
      +'<label class="hak"><input type="checkbox"'+(s.untertitel?" checked":"")+' onchange="szeneSetz(\''+s.id+'\',\'untertitel\',this.checked)">Untertitel</label>'
-     +'</div>';
-    if(!s.gesprochen){
-      mehr+='<div class="szz"><span class="szh">Sekunden</span><input type="text" style="width:62px" value="'
-        +h(String(s.sekunden||s.vorschlag))+'" onchange="szeneSetz(\''+s.id+'\',\'sekunden\',this.value)"></div>';
-    }else{
-      mehr+='<div class="szz"><span class="szh">Dauert so lang wie der Satz, etwa '+s.vorschlag+' Sek.</span></div>';
-    }
+     +'</div>'
+     +'<div class="szz"><span class="szh">Dauert so lang wie der Satz, etwa '+s.vorschlag+' Sek.</span></div>';
     if(s.typ!=="clip"){
       mehr+='<div class="szz"><span class="szh">Bild</span><select onchange="szeneSetz(\''+s.id+'\',\'passen\',this.value)">'
        +(d.passenarten||[]).map(function(x){return '<option value="'+x[0]+'"'+(s.passen===x[0]?" selected":"")+'>'+h(x[1])+'</option>'}).join("")

@@ -977,3 +977,100 @@ def laden(kanal):
         except Exception as e:
             print("[Szenen] Regie nicht aufraeumbar:", e)
     return d
+
+
+# ---------- Nachtrag r16: [IM BILD: ...] in die Schalter ----------
+#
+# Claude schreibt je Szene mit, wer zu sehen ist. Daraus werden die
+# Besetzung der Szene und der Dreierschalter vorbelegt:
+#   Namen genannt -> "Avatare im Bild", diese Figuren angewaehlt
+#   "niemand"     -> "Nur Bild, bewegt"
+# Danach ist es ein ganz normales Feld - wer umschaltet, dessen
+# Einstellung bleibt.
+
+R16_IM_BILD = _r13_re.compile(r"^IM\s*BILD\s*[:\-]\s*", _r13_re.I)
+
+
+def r16_trennen(satz):
+    """(rest, bild, bewegung, im_bild) - im_bild ist None wenn nichts stand."""
+    rest, bild, beweg = r13_trennen(satz)
+    treffer = None
+    for roh in R13_GANZ.findall(satz or ""):
+        x = " ".join(roh.split())
+        if R16_IM_BILD.match(x):
+            treffer = R16_IM_BILD.sub("", x).strip()
+    if treffer is None:
+        return rest, bild, beweg, None
+    if treffer.lower() in ("niemand", "keiner", "keine", "-", ""):
+        return rest, bild, beweg, []
+    return rest, bild, beweg, [n.strip() for n in treffer.split(",") if n.strip()]
+
+
+def r16_zuordnen(kanal, namen):
+    """Namen zu Avatar-Ids des Kanals, so gut es geht."""
+    try:
+        import darsteller
+        d = darsteller.laden(kanal)
+    except Exception:
+        return []
+    raus = []
+    for n in namen or []:
+        for x in d.get("darsteller") or []:
+            if (x.get("name") or "").strip().lower() == n.strip().lower():
+                if x.get("id") not in raus:
+                    raus.append(x["id"])
+                break
+    return raus
+
+
+_r16_aufteilen_alt = r13_aufteilen
+
+
+def r13_aufteilen(kanal):
+    d = _r13_laden_alt(kanal)
+    n = 0
+    for s in d["szenen"]:
+        satz = s.get("text") or ""
+        if "[" not in satz:
+            continue
+        rest, bild, beweg, im_bild = r16_trennen(satz)
+        if not rest.strip():
+            continue
+        s["text"] = rest
+        if bild and not (s.get("bild") or "").strip():
+            s["bild"] = bild[:600]
+        if beweg and not (s.get("regie") or "").strip():
+            s["regie"] = beweg[:600]
+        if im_bild is not None and not s.get("wer"):
+            ids = r16_zuordnen(kanal, im_bild)
+            if ids:
+                s["wer"] = ids
+                s["modus"] = "avatare"
+            else:
+                s["wer"] = []
+                s["modus"] = "bewegt"
+        n += 1
+    if n:
+        speichern(kanal, d)
+    return n
+
+
+# ---------- Nachtrag r17: jede Szene wird gesprochen ----------
+#
+# "Wer spricht" und der Haken "Gesprochen" sind aus dem Dashboard
+# raus. Claude schreibt zu jeder Szene Text, und wer ihn spricht,
+# steht als Name vor der Zeile. Ein Schalter, der den geschriebenen
+# Text wegwirft, ergibt keinen Sinn - und eine stumme Szene kostet in
+# einem 20-Sekunden-Video nur Zeit.
+#
+# Alte Szenen mit gesprochen=False werden beim Laden mitgenommen.
+
+_r17_laden_alt = laden
+
+
+def laden(kanal):
+    d = _r17_laden_alt(kanal)
+    for s in d["szenen"]:
+        if s.get("gesprochen") is False and (s.get("text") or "").strip():
+            s["gesprochen"] = True
+    return d

@@ -119,7 +119,8 @@ erzaehlt wird - nicht irgendein allgemeines Motiv.
   "szenen": [
     {{"text": "gesprochener Text dieser Szene",
       "bild": "englische Bildbeschreibung die genau zu diesem Text passt",
-      "bewegung": "was sich im Bild bewegt, auf Deutsch, ein kurzer Satz"}}
+      "bewegung": "was sich im Bild bewegt, auf Deutsch, ein kurzer Satz",
+      "wer": ["Namen der Figuren, die in diesem Bild zu sehen sind, sonst leere Liste"]}}
   ],
   "beschreibung_youtube": "...",
   "beschreibung_tiktok": "...",
@@ -668,3 +669,67 @@ def _p40_json(antwort):
     raise _p40_json_modul.JSONDecodeError(
         "Die Text-KI hat kein JSON geschickt. Anfang der Antwort: %r"
         % ((antwort or "")[:120],), antwort or "", 0)
+
+
+# ---------- Nachtrag t4: die Besetzung vor dem Schreiben ----------
+#
+# Claude wusste beim Schreiben nichts von Mara und Jonas. Also konnte
+# es keinen Dialog fuer sie schreiben und nicht entscheiden, wer in
+# welcher Szene zu sehen ist. Beides wird jetzt mitgeschickt.
+#
+# Gibt es keine angehakten Avatare, bleibt alles wie bisher: ein
+# Erzaehler, keine Namen, keine Besetzungszeile.
+
+def _t4_besetzung(kanal):
+    try:
+        import darsteller
+        d = darsteller.laden(kanal)
+        dabei = [x for x in (d.get("darsteller") or [])
+                 if x.get("id") in (d.get("besetzung") or [])]
+        return [(x.get("name") or "").strip() for x in dabei
+                if (x.get("name") or "").strip()]
+    except Exception as e:
+        print("[Text] Besetzung nicht lesbar:", e)
+        return []
+
+
+def _t4_anweisung(namen):
+    if not namen:
+        return ""
+    liste = " und ".join(namen) if len(namen) < 3 else ", ".join(namen)
+    mehrere = len(namen) > 1
+    return (
+        "\n\nBESETZUNG - SEHR WICHTIG:\n"
+        "In diesem Kanal treten auf: %s. Es gibt KEINEN Erzaehler. "
+        "Jeder gesprochene Satz gehoert einer dieser Figuren.\n"
+        "Schreib den Text jeder Szene als Zeilen mit dem Namen davor:\n"
+        "  %s: Erster Satz.\n"
+        "%s"
+        "%s"
+        "Die Figuren fuehren durch das Thema, sie sind keine Zeitzeugen und "
+        "keine historischen Personen. Sie duerfen staunen, zweifeln und "
+        "nachfragen.\n"
+        "Dazu gehoert je Szene das Feld \"wer\": eine Liste der Namen, die in "
+        "DIESEM Bild zu sehen sind. Das ist unabhaengig davon, wer spricht - "
+        "die Figuren koennen auch aus dem Off reden, waehrend man nur die "
+        "Landschaft sieht. Zeig sie nicht in jeder Szene; bei Szenen, in "
+        "denen der Ort oder das Ereignis wichtiger ist, gehoert \"wer\": []."
+        % (liste,
+           namen[0],
+           ("  %s: Antwort darauf.\n" % namen[1]) if mehrere else "",
+           ("Sie reden MITEINANDER: einer fragt, der andere antwortet, einer "
+            "widerspricht. Keine zwei Leute, die abwechselnd Fakten aufsagen.\n")
+           if mehrere else "")
+    )
+
+
+_t4_erzeuge_alt = erzeuge_paket
+
+
+def erzeuge_paket(kanal, eigenes_thema=None):
+    namen = _t4_besetzung(kanal)
+    if not namen:
+        return _t4_erzeuge_alt(kanal, eigenes_thema)
+    k2 = dict(kanal or {})
+    k2["prompt"] = (k2.get("prompt") or "") + _t4_anweisung(namen)
+    return _t4_erzeuge_alt(k2, eigenes_thema)

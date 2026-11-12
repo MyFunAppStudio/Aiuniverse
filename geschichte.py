@@ -414,3 +414,54 @@ def aus_paket(paket):
             teile.append("[BEWEGUNG: %s]" % beweg)
         zeilen.append("(%s)" % " ".join(teile))
     return "\n\n".join(zeilen)
+
+
+# ---------- Nachtrag g9: wer im Bild steht mitschreiben ----------
+#
+# Claude liefert je Szene jetzt auch, welche Figuren zu sehen sind.
+# Das wandert als benannte Klammer in den Text, damit es den Weg bis
+# in die Szene uebersteht - genauso wie BILD und BEWEGUNG.
+
+_g9_aus_paket_alt = aus_paket
+
+
+def _g9_wer_text(s):
+    w = s.get("wer")
+    if isinstance(w, str):
+        w = [x.strip() for x in w.split(",")]
+    if not isinstance(w, list):
+        return None
+    namen = [str(x).strip() for x in w if str(x).strip()]
+    return ", ".join(namen) if namen else ""
+
+
+def aus_paket(paket):
+    p = paket or {}
+    szenen_ = p.get("szenen") or []
+    hat_wer = any(isinstance(s, dict) and _g9_wer_text(s) is not None
+                  for s in szenen_)
+    if not hat_wer:
+        return _g9_aus_paket_alt(paket)
+
+    zeilen = []
+    for s in szenen_:
+        if not isinstance(s, dict):
+            continue
+        satz = _sauber(s.get("text") or "")
+        if not satz:
+            continue
+        if ist_trenner(satz):
+            zeilen.append("###")
+            continue
+        teile = [satz]
+        bild = _sauber(s.get("bild") or "")
+        beweg = _sauber(s.get("bewegung") or "")
+        wer = _g9_wer_text(s)
+        if bild:
+            teile.append("[BILD: %s]" % bild)
+        if beweg:
+            teile.append("[BEWEGUNG: %s]" % beweg)
+        if wer is not None:
+            teile.append("[IM BILD: %s]" % (wer or "niemand"))
+        zeilen.append("(%s)" % " ".join(teile))
+    return "\n\n".join(zeilen)

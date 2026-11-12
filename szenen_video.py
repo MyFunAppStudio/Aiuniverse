@@ -630,26 +630,30 @@ def plan_bauen(kanal, ordner):
                     medien.erzeuge_stimme(k2, wort, wohin)
                 return wohin if os.path.exists(wohin) else None
 
-            stuecke = _nach_anfuehrung(text)
+            # Nachtrag r15: jede Zeile kann ihre eigene Figur nennen
+            # ("Mara: ..."). Ohne Namen wie bisher an den
+            # Anfuehrungszeichen, mit figur_name als Sprecher.
+            stuecke = _r15_zerlegen(text, _r15_namen(kanal), figur_name)
             # Auch ohne eigene Figurenstimme wird getrennt gesprochen: der
             # Avatar braucht das Stueck der Figur als eigene Datei.
             geteilt = len(stuecke) > 1 and any(a for a, _b in stuecke)
             if geteilt:
                 gemacht = []
-                for j, (ist_figur, wort) in enumerate(stuecke):
+                for j, (wer_name, wort) in enumerate(stuecke):
                     teil = os.path.join(ordner, "sz_%02d_%d.mp3" % (nr + 1, j))
-                    fertig_teil = _sprich(wort, eigene if ist_figur else None, teil)
+                    stimme = _stimme_fuer(kanal, wer_name) if wer_name else None
+                    fertig_teil = _sprich(wort, stimme, teil)
                     gemacht.append(fertig_teil)
                     if fertig_teil:
-                        teile_info.append((bool(ist_figur), fertig_teil,
+                        teile_info.append((bool(wer_name), fertig_teil,
                                            _dauer(fertig_teil)))
                 if None in gemacht:
                     teile_info = []
                 zusammen = _ton_kleben(gemacht, ton)
                 if zusammen:
                     ton = zusammen
-                    print("[Stimme] Szene %d: %d Stuecke, davon %d von der Figur"
-                          % (nr + 1, len(stuecke), sum(1 for a, _b in stuecke if a)))
+                    print("[Stimme] Szene %d: %s"
+                          % (nr + 1, ", ".join((a or "Erzaehler") for a, _b in stuecke)))
                 else:
                     teile_info = []
                     _sprich(text, eigene, ton)
@@ -2958,3 +2962,123 @@ def plan_bauen(kanal, ordner):
         if eigen:
             e["regie"] = eigen
     return plan, daten
+
+
+# ---------- Nachtrag r15: Dialog mit Namen davor ----------
+#
+# Bisher ging ALLES in Anfuehrungszeichen an den ersten Avatar der
+# Szene. Ein Dialog zwischen zwei Figuren war damit unmoeglich - beide
+# Saetze bekamen dieselbe Stimme. Jetzt entscheidet jede Zeile selbst:
+#
+#   Mara: "Da vorne liegt die Kueste."
+#   Jonas: Das kann unmoeglich Indien sein.
+#
+# Anfuehrungszeichen sind dabei egal, der Name vorne zaehlt. Steht in
+# einem Text gar kein Name, gilt der alte Weg ueber die
+# Anfuehrungszeichen weiter - alte Szenen gehen also unveraendert.
+
+import re as _r15_re
+
+R15_NAME = _r15_re.compile(r"^\s*([A-Za-zÄÖÜäöüß][\w .'-]{0,28}?)\s*:\s*(.+)$")
+
+
+def _r15_namen(kanal):
+    """Alle Namen, die als Sprecher in Frage kommen."""
+    namen = []
+    try:
+        import darsteller
+        for x in darsteller.laden(kanal).get("darsteller") or []:
+            n = (x.get("name") or "").strip()
+            if n:
+                namen.append(n)
+    except Exception:
+        pass
+    try:
+        for x in (kanal or {}).get("stimmen") or []:
+            n = (x.get("name") or "").strip()
+            if n and n not in namen:
+                namen.append(n)
+    except Exception:
+        pass
+    return namen
+
+
+def _r15_passt(wort, namen):
+    for n in namen:
+        if wort.lower() == n.lower():
+            return n
+    return ""
+
+
+def _r15_zerlegen(text, namen, standard=""):
+    """[(Name oder '', Text), ...] - '' heisst Erzaehler bzw. Vorgabe."""
+    roh = [z.strip() for z in (text or "").replace("\r", "").split("\n")]
+    roh = [z for z in roh if z]
+    stuecke, gefunden = [], False
+    for zeile in roh:
+        m = R15_NAME.match(zeile)
+        name = _r15_passt(m.group(1), namen) if m else ""
+        if name:
+            gefunden = True
+            rest = m.group(2).strip().strip('"„“”«»').strip()
+            if rest:
+                stuecke.append((name, rest))
+        else:
+            stuecke.append(("", zeile))
+    if gefunden:
+        # Mehrere Zeilen derselben Stimme hintereinander zusammenfassen
+        zus = []
+        for name, wort in stuecke:
+            if zus and zus[-1][0] == name:
+                zus[-1] = (name, zus[-1][1] + " " + wort)
+            else:
+                zus.append((name, wort))
+        return zus
+    # Kein Name gefunden: wie bisher an den Anfuehrungszeichen trennen
+    return [(standard if ist else "", wort)
+            for ist, wort in _nach_anfuehrung(text or "")]
+
+
+# ---------- Nachtrag r16v: Namen auch mitten im Text finden ----------
+#
+# r15 hat nur am Zeilenanfang nach "Name:" gesucht. Auf dem Weg vom
+# Paket in die Szene werden Zeilenumbrueche aber zusammengefaltet -
+# aus zwei Zeilen wird eine, und der zweite Name stand ploetzlich
+# mitten im Satz. Dann bekam Jonas' Zeile Maras Stimme. Jetzt wird
+# ueberall nach Namen gesucht, auch mitten drin.
+
+def _r16v_muster(namen):
+    teile = [_r15_re.escape(n) for n in sorted(namen, key=len, reverse=True) if n]
+    if not teile:
+        return None
+    return _r15_re.compile(r"(?:(?<=^)|(?<=[\s“„\"'(\-–—]))(%s)\s*:\s*"
+                           % "|".join(teile), _r15_re.I)
+
+
+def _r15_zerlegen(text, namen, standard=""):
+    roh = " ".join((text or "").split())
+    muster = _r16v_muster(namen)
+    if not roh:
+        return []
+    if muster:
+        treffer = list(muster.finditer(roh))
+        if treffer:
+            stuecke = []
+            vor = roh[:treffer[0].start()].strip()
+            if vor:
+                stuecke.append(("", vor))
+            for i, m in enumerate(treffer):
+                ende = treffer[i + 1].start() if i + 1 < len(treffer) else len(roh)
+                wort = roh[m.end():ende].strip()
+                wort = wort.strip('"„“”«»').strip()
+                if not wort:
+                    continue
+                name = _r15_passt(m.group(1), namen) or m.group(1)
+                if stuecke and stuecke[-1][0] == name:
+                    stuecke[-1] = (name, stuecke[-1][1] + " " + wort)
+                else:
+                    stuecke.append((name, wort))
+            if stuecke:
+                return stuecke
+    return [(standard if ist else "", wort)
+            for ist, wort in _nach_anfuehrung(roh)]
