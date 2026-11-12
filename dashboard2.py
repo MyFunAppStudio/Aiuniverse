@@ -2893,21 +2893,72 @@ def ordner_liste(key=None):
 _m15_einen_alt = _r5_einen
 
 
+def _m15_dauer(pfad):
+    try:
+        r = subprocess.run(["ffprobe", "-v", "error", "-show_entries",
+                            "format=duration", "-of",
+                            "default=nw=1:nk=1", str(pfad)],
+                           capture_output=True, text=True, timeout=40)
+        return max(0.0, float((r.stdout or "0").strip() or 0))
+    except Exception:
+        return 0.0
+
+
+def _m15_spur(stuecke, wer, ziel):
+    """Eine Spur ueber die ganze Szene: dieser Sprecher redet, sonst Stille.
+
+    MultiTalk verlangt zwei gleich lange Tonspuren. Nur die eigenen
+    Stuecke aneinanderzuhaengen gibt eine zu kurze Spur - dann kommt
+    "Audio is too short for the requested num_frames". Die Pausen des
+    anderen muessen als Stille drinstehen, sonst passen die Lippen
+    ausserdem zeitlich nicht.
+    """
+    eingaben, teile, nr = [], [], 0
+    for name, pfad, dauer in stuecke:
+        if dauer <= 0.01:
+            continue
+        if (name or "").strip().lower() == (wer or "").strip().lower():
+            eingaben += ["-i", str(pfad)]
+        else:
+            eingaben += ["-f", "lavfi", "-t", "%.3f" % dauer,
+                         "-i", "anullsrc=r=44100:cl=mono"]
+        teile.append("[%d:a]aresample=44100,aformat=sample_fmts=fltp:"
+                     "channel_layouts=mono[a%d]" % (nr, nr))
+        nr += 1
+    if not nr:
+        return None
+    filt = ";".join(teile) + ";" + "".join("[a%d]" % i for i in range(nr)) \
+           + "concat=n=%d:v=0:a=1[out]" % nr
+    befehl = (["ffmpeg", "-y", "-loglevel", "error"] + eingaben
+              + ["-filter_complex", filt, "-map", "[out]",
+                 "-c:a", "libmp3lame", "-q:a", "4", str(ziel)])
+    try:
+        r = subprocess.run(befehl, capture_output=True, text=True, timeout=300)
+        if r.returncode != 0:
+            print("[Lippen] Spur fuer %s ging nicht: %s"
+                  % (wer, (r.stderr or "")[:160]))
+            return None
+    except Exception as e:
+        print("[Lippen] Spur fuer %s ging nicht: %s" % (wer, str(e)[:120]))
+        return None
+    return str(ziel) if os.path.exists(ziel) else None
+
+
 def _m15_toene(k, kanal, s, namen, ordner):
-    """Je Sprecher eine Tonspur. Liste in der Reihenfolge der Namen."""
+    """Zwei gleich lange Spuren: je Sprecher reden, sonst schweigen."""
     import medien
     import szenen_video as sv
+    marke = re.sub(r"[^A-Za-z0-9]+", "", str(s.get("id")))[:10]
     stuecke = sv._r15_zerlegen(s.get("text") or "", namen)
-    raus = []
-    for i, n in enumerate(namen):
-        text = " ".join(t for wer, t in stuecke
-                        if (wer or "").strip().lower() == n.strip().lower())
-        if not text.strip():
-            return []
-        ziel = os.path.join(ordner, "lippen_%s_%d.mp3"
-                            % (re.sub(r"[^A-Za-z0-9]+", "", str(s.get("id")))[:10], i))
+
+    # 1. Jedes Stueck einzeln sprechen, in der Reihenfolge des Textes
+    roh = []
+    for i, (wer, text) in enumerate(stuecke):
+        if not (text or "").strip():
+            continue
+        ziel = os.path.join(ordner, "lippen_%s_t%d.mp3" % (marke, i))
         try:
-            stimme = sv._stimme_fuer(kanal, n)
+            stimme = sv._stimme_fuer(kanal, wer) if wer else None
         except Exception:
             stimme = None
         try:
@@ -2915,11 +2966,25 @@ def _m15_toene(k, kanal, s, namen, ordner):
         except TypeError:
             medien.erzeuge_stimme(kanal, text, ziel)
         except Exception as e:
-            print("[Lippen] Stimme fuer %s ging nicht: %s" % (n, str(e)[:120]))
+            print("[Lippen] Stimme ging nicht: %s" % str(e)[:120])
             return []
-        if not os.path.exists(ziel):
+        d = _m15_dauer(ziel)
+        if d <= 0.01:
             return []
-        raus.append(ziel)
+        roh.append((wer or "", ziel, d))
+    if not roh:
+        return []
+
+    # 2. Je Sprecher eine Spur ueber die ganze Szene
+    raus = []
+    for j, n in enumerate(namen):
+        ziel = os.path.join(ordner, "lippen_%s_%d.mp3" % (marke, j))
+        p = _m15_spur(roh, n, ziel)
+        if not p:
+            return []
+        raus.append(p)
+    laengen = [round(_m15_dauer(x), 2) for x in raus]
+    print("[Lippen] Spuren: %s" % laengen)
     return raus
 
 
