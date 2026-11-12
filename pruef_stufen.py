@@ -54,8 +54,9 @@ def einen(key, kanal, e):
     print("Schluessel: vorhanden")
 
     try:
-        antwort = animation._hole(animation._basis_url(url), k,
-                                  animation.M9_PROBE, zeit=60)
+        ziel = animation.m9_direkt(animation._basis_url(url))
+        print("Frage an:   %s" % ziel)
+        antwort = animation._hole(ziel, k, animation.M9_PROBE, zeit=60)
         print("\nDas Modell nimmt die Anfrage an, statt sie zu pruefen -")
         print("es sagt also nicht, welche Werte es erlaubt.")
         animation.m9_abbrechen(antwort, k)

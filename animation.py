@@ -921,7 +921,7 @@ def m9_fragen(kanal, e=None):
     if not key:
         return {}
     try:
-        antwort = _hole(_basis_url(url), key, M9_PROBE, zeit=45)
+        antwort = _hole(m9_direkt(_basis_url(url)), key, M9_PROBE, zeit=45)
         # Manche Modelle pruefen erst beim Rechnen und stellen die Anfrage
         # trotzdem in die Warteschlange. Die wird sofort zurueckgezogen,
         # sonst laeuft ein Auftrag mit Unsinn durch und kostet Geld.
@@ -943,17 +943,33 @@ def m9_fragen(kanal, e=None):
 
 
 def m9_abbrechen(antwort, key):
-    """Zieht eine versehentlich eingereihte Anfrage zurueck."""
+    """Zieht eine versehentlich eingereihte Anfrage zurueck.
+
+    fal will dafuer PUT. Mit POST kam nur "405 Method Not Allowed".
+    """
     ziel = (antwort or {}).get("cancel_url") if isinstance(antwort, dict) else ""
     if not ziel:
         return False
+    a = urllib.request.Request(ziel, data=b"", method="PUT")
+    a.add_header("Authorization", "Key " + key)
     try:
-        _hole(ziel, key, {}, zeit=30)
+        with urllib.request.urlopen(a, timeout=30):
+            pass
         print("[Modell] Probeanfrage zurueckgezogen")
         return True
     except Exception as e:
         print("[Modell] Probeanfrage NICHT zurueckgezogen:", str(e)[:120])
         return False
+
+
+def m9_direkt(url):
+    """Die Adresse ohne Warteschlange.
+
+    queue.fal.run nimmt alles an und prueft erst beim Rechnen - zum
+    Fragen taugt das nicht. fal.run antwortet sofort.
+    """
+    u = (url or "").strip()
+    return u.replace("queue.fal.run", "fal.run", 1)
 
 
 def m9_werte(kanal, neu=False):
