@@ -785,7 +785,9 @@ zusammen im Bild. Nahaufnahmen nur, wenn der Satz wirklich von einem
 einzelnen Ding handelt - hoechstens jede fuenfte Szene.
 
 SECHS DINGE GEHOEREN IN JEDE BESCHREIBUNG
-1. Einstellung und Ort: wide shot / aerial view / low angle, und wo.
+1. Einstellung und Ort: wide shot / low angle / view from a ridge,
+   und wo. KEINE Luftaufnahme, kein Blick von oben, keine Drohne -
+   siehe AUGENHOEHE weiter unten.
 2. Wer ist zu sehen und was tut er: nicht "soldiers", sondern
    "rows of infantry in blue coats advancing through trampled wheat".
    Ganze Gestalten, ruhig viele.
@@ -797,6 +799,19 @@ SECHS DINGE GEHOEREN IN JEDE BESCHREIBUNG
    foreground empty, hills receding into haze.
 6. Ein oder zwei konkrete Einzelheiten, die das Bild echt machen:
    mud, broken fence, horses, campfires, church tower in the distance.
+
+AUGENHOEHE - DAS WICHTIGSTE
+Die Kamera steht auf dem Boden, in Augenhoehe eines Menschen. In den
+Vordergrund werden spaeter die Figuren gestellt, und die muessen in
+die Szene passen: so gross wie die Leute, die im Bild zu sehen sind.
+Bei einer Luftaufnahme schweben sie als Riesen ueber der Landschaft.
+Schreib darum immer dazu, von wo aus man schaut und dass vorne
+begehbarer Boden ist: "viewed from a low ridge, trampled grass in the
+foreground", "seen from the edge of the field, muddy ground in front",
+"from a hillside path, open grass in the foreground".
+Das Geschehen liegt in der Mitteldistanz, nicht direkt vorne.
+Nur wenn in der Szene NIEMAND zu sehen sein soll ("wer": []), darf es
+auch mal ein Blick von oben sein.
 
 DREISSIG BIS SECHZIG WOERTER. Lieber zu genau als zu knapp.
 Jede Szene ein anderer Blick: mal weit ueber das Land, mal von einem
@@ -822,11 +837,12 @@ wheat, white powder smoke drifting low, cavalry massing on the right
 flank, rolling green hills and a farmhouse in the distance, heavy grey
 clouds, viewed from a low ridge, open muddy ground in the foreground]
 
-[BILD: aerial view of a walled medieval town on a hill at midday,
-timber-framed houses packed inside grey stone walls, a cathedral tower
-rising above the roofs, carts and traders crowding the road to the
-gate, ploughed fields and a winding river beyond, summer haze softening
-the far hills, empty dusty road in the foreground]
+[BILD: a walled medieval town on a hill seen from the road below at
+midday, timber-framed houses packed inside grey stone walls, a
+cathedral tower rising above the roofs, carts and traders crowding the
+road to the gate, ploughed fields and a winding river to the side,
+summer haze on the far hills, empty dusty road in the foreground at
+eye level]
 
 [BILD: wide view of a harbour at sunrise, three wooden sailing ships
 with furled sails being towed out past a stone pier, a crowd of
