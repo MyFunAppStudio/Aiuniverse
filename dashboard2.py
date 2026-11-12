@@ -1861,11 +1861,10 @@ def r5_clip_weg(k, sid):
     return szenen.r3_clip_setzen(k, sid, "")
 
 
-if __name__ == "__main__":
-    os.makedirs(VIDEOS, exist_ok=True)
-    os.makedirs(REGELN, exist_ok=True)
-    print("Dashboard 2 laeuft auf Port %d" % PORT)
-    ThreadingHTTPServer(("0.0.0.0", PORT), Griff).serve_forever()
+# Der Start stand frueher hier mitten in der Datei. serve_forever() kehrt
+# nie zurueck - alles, was weiter unten steht, wurde beim Start als Skript
+# nie ausgefuehrt. Jede Nachbesserung ab hier war auf dem Server tot,
+# obwohl sie in der Datei stand. Der Start steht jetzt ganz am Ende.
 
 
 # ---------- Nachtrag n1: strenge Pruefung fuer die Kopfzeile ----------
@@ -2437,3 +2436,17 @@ def darsteller_schreiben(key, b):
     if (b.get("aktion") or "") == "stimmen_holen":
         return stimmen_holen(key)
     return _d5_schreiben_alt(key, b)
+
+
+# ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
+#
+# serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird
+# alles darunter beim Aufruf "python3 dashboard2.py" nie ausgefuehrt -
+# die Funktionen stehen dann zwar in der Datei, aber nicht im laufenden
+# Programm. Wer unten etwas anhaengt, haengt es hinter diesen Block.
+
+if __name__ == "__main__":
+    os.makedirs(VIDEOS, exist_ok=True)
+    os.makedirs(REGELN, exist_ok=True)
+    print("Dashboard 2 laeuft auf Port %d" % PORT)
+    ThreadingHTTPServer(("0.0.0.0", PORT), Griff).serve_forever()
