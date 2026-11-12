@@ -2799,6 +2799,60 @@ def r5_clip_stand(k):
     return raus
 
 
+# ---------- Nachtrag m11: Preis zaehlt nur, was noch zu tun ist ----------
+#
+# Der Szenenpreis hat jede Szene als zu animieren gezaehlt, auch die,
+# deren Clip laengst fertig und bezahlt ist. Und gerechnet wurde pauschal
+# mit fuenf Sekunden je Clip, egal wie lang die Szene ist und welche
+# Stufe das Modell nimmt.
+#
+# Jetzt zaehlen nur Szenen ohne Clip, die auch wirklich einen bekommen
+# sollen - also die auf "Avatare im Bild" oder "Nur Bild animieren" -,
+# und jede mit ihrer eigenen Laenge.
+
+_m11_preis_alt = preis_szenen
+
+
+def _m11_stufe(werte, sekunden):
+    import animation
+    stufen = animation.m9_zahlen(werte)
+    if not stufen:
+        return max(1.0, float(sekunden or 5))
+    for x in stufen:
+        if x >= sekunden - 0.2:
+            return float(x)
+    return float(stufen[-1])
+
+
+def preis_szenen(key, d):
+    raus = _m11_preis_alt(key, d)
+    try:
+        import animation
+        roh = szenen.laden(key).get("szenen") or []
+        e = animation.ref_slot(d) or {}
+        bereit = bool((e.get("url") or "").strip())
+        werte = animation.m9_laden().get((e.get("url") or "").strip().lower()) or {}
+        je_sek = animation.preis_je_clip(d, 1) if bereit else 0.0
+        offen, summe, sekunden = 0, 0.0, 0.0
+        for s in roh:
+            if s.get("clip"):
+                continue                      # fertig und schon bezahlt
+            if (s.get("modus") or "") not in ("avatare", "bild_ki"):
+                continue                      # Standbild kostet nichts
+            dauer = _m11_stufe(werte, szenen.r3_clip_dauer(s))
+            offen += 1
+            sekunden += dauer
+            summe += dauer * je_sek
+        raus["animiert"] = offen
+        raus["animation"] = round(summe, 3)
+        raus["anim_sekunden"] = round(sekunden, 1)
+        raus["je_clip"] = round(je_sek, 4)
+        raus["gesamt"] = round((raus.get("stimme") or 0) + summe, 3)
+    except Exception as f:
+        print("[Preis] Clips nicht rechenbar:", f)
+    return raus
+
+
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------
 #
 # serve_forever() kehrt nicht zurueck. Steht der Start weiter oben, wird

@@ -1118,10 +1118,15 @@ function fragGenerieren(){
   if(p.modus==="szenen"){
     var mitClip=szenen.filter(function(x){return x.clip}).length;
     kopf="Aus deinen "+(p.szenen||szenen.length)+" Szenen";
+    var offen=Number(p.animiert)||0;
     was="Gebaut wird aus dem, was da ist: "
-      +(mitClip?(mitClip+(mitClip===1?" Szene":" Szenen")+" mit Clip, "):"")
+      +(mitClip?(mitClip+(mitClip===1?" Szene":" Szenen")+" mit fertigem Clip, "):"")
       +"der Rest als Bild. Dazu kommen Stimme, Untertitel, Musik und Abspann."
-      +"<br>Es wird <b>kein</b> neuer Text geschrieben und kein Thema verbraucht.";
+      +"<br>Es wird <b>kein</b> neuer Text geschrieben und kein Thema verbraucht."
+      +(mitClip?"<br>Fertige Clips sind bezahlt und kosten nicht noch einmal.":"")
+      +(offen?("<br><span style=\"color:#FFB454\">"+offen+(offen===1?" Szene":" Szenen")
+               +" ohne Clip werden dabei noch animiert — das ist der Preis unten.</span>")
+             :"<br>Es wird nichts mehr animiert, es kostet nur noch die Stimme.");
   }else{
     kopf=t||"nächstes Thema aus der Liste";
     was="Die Text-KI schreibt eine neue Geschichte, dann werden Bilder, "
