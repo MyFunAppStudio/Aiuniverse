@@ -2290,7 +2290,7 @@ def stimmprobe(key, stimme):
 # ElevenLabs auch ohne Konto heraus.
 
 D5_URL = "https://api.elevenlabs.io/v1/voices?show_legacy=true"
-D5_MAX = 15          # je Geschlecht
+D5_MAX = 50          # je Geschlecht
 
 D5_AKZENT = {"american": "amerikanisch", "british": "britisch",
              "australian": "australisch", "irish": "irisch",
@@ -2298,7 +2298,9 @@ D5_AKZENT = {"american": "amerikanisch", "british": "britisch",
              "german": "deutsch", "swedish": "schwedisch",
              "indian": "indisch", "italian": "italienisch",
              "french": "franzoesisch", "spanish": "spanisch",
-             "us-southern": "US-Sueden", "scottish": "schottisch"}
+             "us-southern": "US-Sueden", "scottish": "schottisch",
+             "austrian": "österreichisch", "swiss": "schweizerisch",
+             "dutch": "niederländisch", "polish": "polnisch"}
 
 D5_ALTER = {"young": "jung", "middle-aged": "mittel", "middle_aged": "mittel",
             "old": "aelter", "middle aged": "mittel"}
@@ -2419,9 +2421,9 @@ def stimmen_holen(key):
 
     stuecke = []
     if neu_f:
-        stuecke.append("%d Frauen" % neu_f)
+        stuecke.append("1 Frau" if neu_f == 1 else "%d Frauen" % neu_f)
     if neu_m:
-        stuecke.append("%d Männer" % neu_m)
+        stuecke.append("1 Mann" if neu_m == 1 else "%d Männer" % neu_m)
     if neu_r:
         stuecke.append("%d ohne Angabe" % neu_r)
     return {"ok": True, "neu": neu_f + neu_m + neu_r,
@@ -2436,6 +2438,160 @@ def darsteller_schreiben(key, b):
     if (b.get("aktion") or "") == "stimmen_holen":
         return stimmen_holen(key)
     return _d5_schreiben_alt(key, b)
+
+
+# ---------- Nachtrag d6: deutsche Stimmen aus der Bibliothek ----------
+#
+# Die feste Liste gibt immer dieselben Stimmen her, und es sind fast nur
+# englische Sprecher. Daneben hat ElevenLabs eine Bibliothek, in die
+# andere Leute ihre Stimmen einstellen - die laesst sich nach Sprache
+# filtern. Das bringt echte deutsche Sprecher statt Englaender mit
+# Akzent.
+#
+# Zwei Dinge sind dort anders als bei der festen Liste:
+# - An jeder Stimme haengt, ab welchem Tarif sie nutzbar ist. Steht das
+#   dabei und "free" ist nicht darunter, kommt es in den Namen.
+# - Stefan geht ueber fal.ai, also ueber deren Konto. Ob eine
+#   Bibliotheksstimme durchkommt, sagt nur die Probe mit dem Abspielknopf.
+
+D6_URL = "https://api.elevenlabs.io/v1/shared-voices"
+D6_PRO_SEITE = 100
+D6_MAX = 40          # je Geschlecht
+
+
+def _d6_abrufen(el_key, sprache):
+    from urllib.parse import urlencode
+    url = D6_URL + "?" + urlencode({"page_size": D6_PRO_SEITE,
+                                    "language": sprache, "page": 0})
+    kopf = {"Accept": "application/json", "User-Agent": "AiUniverse/1.0"}
+    if el_key:
+        kopf["xi-api-key"] = el_key
+    with urllib.request.urlopen(
+            urllib.request.Request(url, headers=kopf), timeout=45) as r:
+        return json.loads(r.read().decode("utf-8", "replace"))
+
+
+def _d6_tarif(v):
+    """Leer, wenn die Stimme im Gratistarif nutzbar ist oder nichts dabeisteht."""
+    stufen = v.get("available_for_tiers")
+    if not isinstance(stufen, list) or not stufen:
+        return ""
+    klein = [str(x).strip().lower() for x in stufen]
+    if "free" in klein:
+        return ""
+    return ", nur " + "/".join(klein[:2])
+
+
+def _d6_eintraege(daten, sprache):
+    frauen, maenner, rest = [], [], []
+    for v in (daten.get("voices") or []):
+        if not isinstance(v, dict):
+            continue
+        vid = str(v.get("voice_id") or "").strip()
+        nam = str(v.get("name") or "").strip()
+        if not vid or not nam:
+            continue
+        spr = str(v.get("language") or "").strip().lower()
+        if sprache and spr and not spr.startswith(sprache):
+            continue
+        akz = str(v.get("accent") or "").strip().lower()
+        teile = [D5_AKZENT.get(akz, akz)] if akz else []
+        zusatz = " (" + ", ".join(teile) + ")" if teile else ""
+        zusatz += _d6_tarif(v)
+        g = str(v.get("gender") or "").strip().lower()
+        if g.startswith("female"):
+            frauen.append(("Frau · " + nam + zusatz, vid))
+        elif g.startswith("male"):
+            maenner.append(("Mann · " + nam + zusatz, vid))
+        else:
+            rest.append((nam + zusatz, vid))
+    return frauen, maenner, rest
+
+
+def _d6_speichern(key, kanal, frauen, maenner, rest, grenze):
+    """Traegt neue Stimmen ein, ohne vorhandene anzuruehren."""
+    for x in (frauen, maenner, rest):
+        x.sort(key=lambda p: p[0].lower())
+    liste = [e for e in (kanal.get("stimmen") or [])
+             if isinstance(e, dict) and (e.get("name") or "").strip()]
+    schon = set()
+    for e in liste:
+        vid = (e.get("id") or "").strip()
+        if vid:
+            schon.add(vid)
+
+    def rein(paare):
+        n = 0
+        for nam, vid in paare[:grenze]:
+            if vid in schon:
+                continue
+            liste.append({"name": nam, "id": vid})
+            schon.add(vid)
+            n += 1
+        return n
+
+    neu_f, neu_m = rein(frauen), rein(maenner)
+    neu_r = rein(rest) if not (frauen or maenner) else 0
+    if not (neu_f or neu_m or neu_r):
+        return {"ok": True, "neu": 0,
+                "text": "Es kam nichts Neues dazu – die Stimmen stehen "
+                        "schon alle drin."}
+    alle = einstellungen.laden()
+    alle[key]["stimmen"] = liste
+    einstellungen.speichern(alle)
+    stuecke = []
+    if neu_f:
+        stuecke.append("1 Frau" if neu_f == 1 else "%d Frauen" % neu_f)
+    if neu_m:
+        stuecke.append("1 Mann" if neu_m == 1 else "%d Männer" % neu_m)
+    if neu_r:
+        stuecke.append("%d ohne Angabe" % neu_r)
+    return {"ok": True, "neu": neu_f + neu_m + neu_r,
+            "text": "Eingetragen: " + " und ".join(stuecke) + "."}
+
+
+def _d6_grund(e):
+    grund = str(e)[:200]
+    if "401" in grund or "403" in grund or "Unauthorized" in grund:
+        return ("ElevenLabs will dafür einen eigenen Schlüssel. Lege dir "
+                "ein kostenloses ElevenLabs-Konto an und trage den Schlüssel "
+                "im Reiter Technik beim Eintrag „ElevenLabs direkt“ ein.")
+    return "ElevenLabs nicht erreichbar: " + grund
+
+
+_d6_holen_alt = stimmen_holen
+
+
+def stimmen_holen(key, quelle="fest"):
+    if quelle != "deutsch":
+        return _d6_holen_alt(key)
+    alle = einstellungen.laden()
+    kanal = alle.get(key) or {}
+    if not kanal:
+        return {"ok": False, "fehler": "Kanal unbekannt"}
+    try:
+        daten = _d6_abrufen(_d5_schluessel(kanal), "de")
+    except Exception as e:
+        return {"ok": False, "fehler": _d6_grund(e)}
+    frauen, maenner, rest = _d6_eintraege(daten, "de")
+    if not (frauen or maenner or rest):
+        return {"ok": False, "fehler":
+                "Die Bibliothek hat zu Deutsch nichts herausgegeben."}
+    antwort = _d6_speichern(key, kanal, frauen, maenner, rest, D6_MAX)
+    if antwort.get("neu"):
+        antwort["text"] += (" Hör sie mit ▶ an: kommt kein Ton, lässt "
+                            "sich diese Bibliotheksstimme über fal.ai nicht "
+                            "nutzen – dann raus damit.")
+    return antwort
+
+
+_d6_schreiben_alt = darsteller_schreiben
+
+
+def darsteller_schreiben(key, b):
+    if (b.get("aktion") or "") == "stimmen_holen":
+        return stimmen_holen(key, str(b.get("quelle") or "fest"))
+    return _d6_schreiben_alt(key, b)
 
 
 # ---------- Start. Muss die letzte Zeile der Datei bleiben ----------

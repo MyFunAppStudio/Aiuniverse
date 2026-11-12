@@ -1745,8 +1745,15 @@ function stimmenKarte(){
   }
   o+=reihe("Grundstimmung",knoepfeStimmung(stimmungName(S.einst.stimme_energie)),
            "wie lebendig gesprochen wird — gilt für alle Stimmen")
-   +'<button class="knopf or" style="width:100%;margin:9px 0 8px" onclick="stimmenHolen(this)">'
+   +'<button class="knopf or" style="width:100%;margin:9px 0 7px" onclick="stimmenHolen(this)">'
    +'⬇ Stimmen von ElevenLabs holen</button>'
+   +'<button class="knopf" style="width:100%;margin:0 0 8px" onclick="stimmenHolen(this,\'deutsch\')">'
+   +'⬇ Deutsche Stimmen aus der Bibliothek</button>'
+   +'<div class="hinw" style="padding:0;margin-bottom:9px">Der obere Knopf holt die festen '
+   +'Standardstimmen — fast alles Engländer, die Deutsch mit Akzent sprechen. Der untere sucht in '
+   +'der Bibliothek nach <b>deutschen Sprechern</b>. Die stellen andere Leute ein; steht bei einer '
+   +'ein Tarif im Namen, ist sie nicht im Gratistarif. <b>Hör jede mit ▶ an, bevor du sie '
+   +'vergibst</b> — kommt kein Ton, geht sie über fal.ai nicht.</div>'
    +falte("Vorrat ansehen und aufräumen",vorratListe(),false)
    +'</div>';
   return o;
@@ -1768,10 +1775,10 @@ function vorratListe(){
 }
 /* Holt die Stimmenliste bei ElevenLabs und traegt sie beim Kanal ein.
    Gespeichert wird die ID, der Name steht nur davor. */
-function stimmenHolen(knopf){
+function stimmenHolen(knopf,quelle){
   var alt=knopf?knopf.textContent:"";
   if(knopf){knopf.disabled=true;knopf.textContent="hole Stimmen …"}
-  api("/api/darsteller?k="+S.kanal,{aktion:"stimmen_holen"}).then(function(r){
+  api("/api/darsteller?k="+S.kanal,{aktion:"stimmen_holen",quelle:quelle||"fest"}).then(function(r){
     if(knopf){knopf.disabled=false;knopf.textContent=alt}
     if(!r||!r.ok)return melde((r&&r.fehler)||"ging nicht");
     melde(r.text||"fertig");
