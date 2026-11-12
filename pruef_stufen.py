@@ -1,21 +1,23 @@
 # -*- coding: utf-8 -*-
 """Fragt das Referenzmodell, welche Werte es annimmt.
 
-Geschickt wird eine Anfrage mit absichtlich unsinnigen Werten. fal
-prueft alle Felder auf einmal und schreibt in die Antwort, was erlaubt
-gewesen waere. Eine abgelehnte Anfrage kostet nichts, und es wird kein
-Video erzeugt.
+Geschickt wird eine Anfrage mit absichtlich unsinnigen Werten. Modelle,
+die ihre Eingaben vorher pruefen, antworten mit der Liste der erlaubten
+Werte - abgelehnt, kostenlos, kein Video.
+
+Manche Modelle pruefen erst beim Rechnen und stellen die Anfrage
+trotzdem in die Warteschlange. Die wird dann sofort zurueckgezogen.
 
 Der Schluessel wird aus den Kanaleinstellungen gelesen und nirgends
 ausgegeben.
 
-Aufruf:  python3 pruef_stufen.py
+Aufruf:
+    python3 pruef_stufen.py            alle Kanaele mit Modell
+    python3 pruef_stufen.py <kanal>    nur dieser Kanal
 """
-import json
 import os
 import sys
 import urllib.error
-import urllib.request
 
 BASIS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, BASIS)
@@ -24,64 +26,81 @@ import animation
 import einstellungen
 import schluessel as schl
 
-# Unsinnige Werte - jede Beanstandung nennt die erlaubten Werte
-PROBE = {
-    "prompt": "test",
-    "reference_image_urls": [],
-    "duration": "xxx",
-    "resolution": "xxx",
-    "aspect_ratio": "xxx",
-}
 
-
-def kanal_mit_modell():
-    """Der erste Kanal, bei dem ein Referenzmodell eingetragen ist."""
+def kanaele_mit_modell(nur=None):
+    raus = []
     for key, k in (einstellungen.laden() or {}).items():
+        if nur and key != nur:
+            continue
         kanal = dict(k)
         kanal.setdefault("id", key)
         kanal.setdefault("_key", key)
         e = animation.ref_slot(kanal)
         if e and (e.get("url") or "").strip():
-            return key, kanal, e
-    return None, None, None
+            raus.append((key, kanal, e))
+    return raus
 
 
-def main():
-    key, kanal, e = kanal_mit_modell()
-    if not e:
-        print("Kein Referenzmodell eingetragen. Im Dashboard unter "
-              "KI & Technik bei Referenzclip eine Adresse eintragen.")
-        return 1
-
+def einen(key, kanal, e):
     url = (e.get("url") or "").strip()
-    print("Kanal:   %s" % key)
+    print("=" * 58)
+    print("Kanal:   %s  (%s)" % (key, kanal.get("name") or ""))
     print("Modell:  %s" % (e.get("name") or "ohne Namen"))
     print("Adresse: %s" % url)
     k = schl.fuer(kanal, e)
-    print("Schluessel: %s" % ("vorhanden" if k else "FEHLT"))
     if not k:
-        return 1
+        print("Schluessel: FEHLT - uebersprungen")
+        return
+    print("Schluessel: vorhanden")
 
-    ziel = animation._basis_url(url)
-    print("\nFrage an: %s\n" % ziel)
     try:
-        # Derselbe Weg wie im Betrieb - damit nichts anderes schiefgeht
-        antwort = animation._hole(ziel, k, PROBE, zeit=60)
-        print("Angenommen (unerwartet):")
-        print(json.dumps(antwort, ensure_ascii=False)[:800])
+        antwort = animation._hole(animation._basis_url(url), k,
+                                  animation.M9_PROBE, zeit=60)
+        print("\nDas Modell nimmt die Anfrage an, statt sie zu pruefen -")
+        print("es sagt also nicht, welche Werte es erlaubt.")
+        animation.m9_abbrechen(antwort, k)
+        return
     except urllib.error.HTTPError as f:
-        roh = f.read().decode("utf-8", "replace")
-        print("HTTP %s" % f.code)
         try:
-            d = json.loads(roh)
-            for p in (d.get("detail") or []):
-                feld = ".".join(str(x) for x in (p.get("loc") or [])[1:])
-                print("  %-18s %s" % (feld or "?", p.get("msg") or ""))
+            roh = f.read().decode("utf-8", "replace")
         except Exception:
-            print(roh[:1200])
+            roh = ""
+        print("\nHTTP %s - das Modell nennt seine erlaubten Werte:\n" % f.code)
     except Exception as f:
-        print("Keine Verbindung: %s" % f)
+        print("\nKeine Verbindung: %s" % f)
+        return
+
+    werte = animation.m9_auswerten(roh)
+    if not werte:
+        print(roh[:900])
+        return
+    for feld in sorted(werte):
+        print("  %-16s %s" % (feld, ", ".join(werte[feld])))
+    laengen = animation.m9_zahlen(werte)
+    if laengen:
+        print("\n  -> Clip-Laengen: %s Sekunden"
+              % ", ".join(str(x) for x in laengen))
+
+    alle = animation.m9_laden()
+    alle[url.lower()] = werte
+    animation.m9_speichern(alle)
+    print("\nGemerkt in regeln/modell_werte.json - der Bau benutzt das jetzt.")
+
+
+def main():
+    nur = sys.argv[1] if len(sys.argv) > 1 else None
+    liste = kanaele_mit_modell(nur)
+    if not liste:
+        if nur:
+            print("Kanal %r hat kein Referenzmodell eingetragen." % nur)
+        else:
+            print("Kein Kanal hat ein Referenzmodell eingetragen.")
+        print("Vorhandene Kanaele: %s"
+              % ", ".join((einstellungen.laden() or {}).keys()))
         return 1
+    for key, kanal, e in liste:
+        einen(key, kanal, e)
+    print("=" * 58)
     return 0
 
 

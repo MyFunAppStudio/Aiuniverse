@@ -829,6 +829,17 @@ def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,
             break
     neu_prompt = (m7_vorspann(hintergrund, figuren) + " " + rest).strip()
 
+    # Einmal je Modell nachfragen, was es annimmt - danach gemerkt.
+    try:
+        werte = m9_werte(kanal)
+        laengen = m9_zahlen(werte)
+        if laengen:
+            globals()["M7_STUFEN"] = laengen
+        globals()["M7_AUFLOESUNG"] = m9_passend(werte, "resolution",
+                                                M7_AUFLOESUNG, "768P")
+    except Exception as f:
+        print("[Modell] Werte nicht abfragbar:", str(f)[:120])
+
     alt_koerper = globals().get("ref_koerper")
     alt_platz = globals().get("ref_platz")
     globals()["ref_koerper"] = (
@@ -842,3 +853,140 @@ def erzeuge_referenz(kanal, hintergrund, figuren, prompt, sekunden, ziel,
     finally:
         globals()["ref_koerper"] = alt_koerper
         globals()["ref_platz"] = alt_platz
+
+
+# ---------- Nachtrag m9: das Modell selbst fragen ----------
+#
+# Welche Laengen ein Modell annimmt, stand hier als feste Liste - erst
+# geraten, dann von Hand nachgetragen. Beim naechsten Modell faengt das
+# von vorne an, und bis es auffaellt, sind Clips zu kurz und Szenen
+# enden mit einem eingefrorenen Bild.
+#
+# fal sagt es aber von sich aus: schickt man unsinnige Werte, nennt die
+# Antwort alle erlaubten. Das wird einmal je Modelladresse gemacht und
+# gemerkt. Die Anfrage wird abgelehnt, kostet nichts und erzeugt kein
+# Video.
+#
+# Gemerkt werden auch Aufloesung und Seitenverhaeltnis - der Fehler mit
+# "768p" statt "768P" waere damit nie entstanden.
+
+import re as _m9_re
+
+M9_DATEI = os.path.join(BASIS, "regeln", "modell_werte.json")
+M9_PROBE = {"prompt": "test", "reference_image_urls": [],
+            "duration": "xxx", "resolution": "xxx", "aspect_ratio": "xxx"}
+
+
+def m9_laden():
+    try:
+        with open(M9_DATEI, encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def m9_speichern(d):
+    try:
+        os.makedirs(os.path.dirname(M9_DATEI), exist_ok=True)
+        with open(M9_DATEI, "w", encoding="utf-8") as f:
+            json.dump(d, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print("[Modell] Werte nicht zu merken:", e)
+
+
+def m9_auswerten(roh):
+    """Aus "Input should be '6' or '10'" die Werte ziehen."""
+    raus = {}
+    try:
+        d = json.loads(roh)
+    except Exception:
+        return raus
+    for p in (d.get("detail") or []):
+        pfad = p.get("loc") or []
+        feld = str(pfad[-1]) if pfad else ""
+        werte = _m9_re.findall(r"'([^']+)'", str(p.get("msg") or ""))
+        if feld and werte:
+            raus[feld] = werte
+    return raus
+
+
+def m9_fragen(kanal, e=None):
+    """Einmal nachfragen, was dieses Modell annimmt."""
+    e = e or ref_slot(kanal) or {}
+    url = (e.get("url") or "").strip()
+    if not url:
+        return {}
+    key = schluessel.fuer(kanal, e)
+    if not key:
+        return {}
+    try:
+        antwort = _hole(_basis_url(url), key, M9_PROBE, zeit=45)
+        # Manche Modelle pruefen erst beim Rechnen und stellen die Anfrage
+        # trotzdem in die Warteschlange. Die wird sofort zurueckgezogen,
+        # sonst laeuft ein Auftrag mit Unsinn durch und kostet Geld.
+        m9_abbrechen(antwort, key)
+        return {}
+    except urllib.error.HTTPError as f:
+        try:
+            roh = f.read().decode("utf-8", "replace")
+        except Exception:
+            return {}
+    except Exception as f:
+        print("[Modell] Nicht erreichbar:", f)
+        return {}
+    werte = m9_auswerten(roh)
+    if werte:
+        print("[Modell] %s nimmt an: %s"
+              % (url.rsplit("/", 2)[-2:] and url, werte))
+    return werte
+
+
+def m9_abbrechen(antwort, key):
+    """Zieht eine versehentlich eingereihte Anfrage zurueck."""
+    ziel = (antwort or {}).get("cancel_url") if isinstance(antwort, dict) else ""
+    if not ziel:
+        return False
+    try:
+        _hole(ziel, key, {}, zeit=30)
+        print("[Modell] Probeanfrage zurueckgezogen")
+        return True
+    except Exception as e:
+        print("[Modell] Probeanfrage NICHT zurueckgezogen:", str(e)[:120])
+        return False
+
+
+def m9_werte(kanal, neu=False):
+    """Die erlaubten Werte dieses Modells. Fragt beim ersten Mal nach."""
+    e = ref_slot(kanal) or {}
+    url = (e.get("url") or "").strip().lower()
+    if not url:
+        return {}
+    alle = m9_laden()
+    if neu or url not in alle:
+        alle[url] = m9_fragen(kanal, e)
+        m9_speichern(alle)
+    return alle.get(url) or {}
+
+
+def m9_zahlen(werte, feld="duration"):
+    raus = []
+    for x in (werte.get(feld) or []):
+        t = str(x).strip()
+        if t.isdigit():
+            raus.append(int(t))
+    return sorted(set(raus))
+
+
+def m9_passend(werte, feld, wunsch, ersatz):
+    """Der Wunschwert, wenn das Modell ihn kennt - sonst ein erlaubter."""
+    erlaubt = werte.get(feld) or []
+    if not erlaubt:
+        return wunsch
+    for x in erlaubt:
+        if str(x).strip().lower() == str(wunsch).strip().lower():
+            return x
+    for x in erlaubt:
+        if str(x).strip().lower() == str(ersatz).strip().lower():
+            return x
+    return erlaubt[0]

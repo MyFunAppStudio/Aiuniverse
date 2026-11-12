@@ -2781,7 +2781,14 @@ def r5_clip_stand(k):
     try:
         import animation
         e = animation.ref_slot(_r5_kanal(k)) or {}
-        if animation.m7_ist_h3(e.get("url")):
+        # Was das Modell selbst gesagt hat, wenn es schon gefragt wurde.
+        # Hier wird nicht nachgefragt - das waere ein Netzaufruf bei jedem
+        # Zeichnen der Seite.
+        gemerkt = animation.m9_laden().get((e.get("url") or "").strip().lower())
+        laengen = animation.m9_zahlen(gemerkt or {})
+        if laengen:
+            raus["stufen"] = laengen
+        elif animation.m7_ist_h3(e.get("url")):
             raus["stufen"] = list(getattr(animation, "M7_STUFEN", []) or [])
         else:
             # Kling nimmt jede ganze Sekunde von 3 bis 15
