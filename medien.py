@@ -316,3 +316,69 @@ def worte_lesen(ton):
                 if str(x.get("w") or "").strip()]
     except Exception:
         return []
+
+
+# ---------- Nachtrag r20: aufschreiben, was fal wirklich schickt ----------
+#
+# Im Log stand nur "keine Wortzeiten geliefert". Ob das Feld fehlt, leer
+# ist oder nur anders heisst, war daran nicht zu erkennen - und ohne das
+# laesst sich der Leser nicht anpassen.
+#
+# Jetzt steht bei einem Fehlschlag kurz dabei, welche Felder die Antwort
+# hatte und wie der erste Eintrag aussieht. Der Text selbst kommt nicht
+# ins Log, nur die Form.
+
+def _r20_form(ergebnis):
+    try:
+        if not isinstance(ergebnis, dict):
+            return "Antwort ist kein Objekt (%s)" % type(ergebnis).__name__
+        felder = sorted(ergebnis.keys())
+        zusatz = ""
+        for schl in ("timestamps", "word_timestamps", "alignment", "words"):
+            w = ergebnis.get(schl)
+            if w is None:
+                continue
+            if isinstance(w, list):
+                zusatz = " | %s: Liste mit %d" % (schl, len(w))
+                if w and isinstance(w[0], dict):
+                    zusatz += ", erster hat %s" % sorted(w[0].keys())
+                elif w:
+                    zusatz += ", erster ist %s" % type(w[0]).__name__
+            elif isinstance(w, dict):
+                zusatz = " | %s: Objekt mit %s" % (schl, sorted(w.keys()))
+            else:
+                zusatz = " | %s: %s" % (schl, type(w).__name__)
+            break
+        return "Felder: %s%s" % (felder, zusatz)
+    except Exception as e:
+        return "Form nicht lesbar: %s" % str(e)[:60]
+
+
+_r20_erzeuge_alt = erzeuge_stimme
+
+
+def erzeuge_stimme(kanal, text, ziel, stimme_id=None):
+    global _R20_LETZTE
+    pfad = _r20_erzeuge_alt(kanal, text, ziel, stimme_id)
+    try:
+        if pfad and not worte_datei(pfad).exists() and _R20_LETZTE:
+            print("[Stimme] Antwort ohne Wortzeiten - %s" % _R20_LETZTE)
+            _R20_LETZTE = ""
+    except Exception:
+        pass
+    return pfad
+
+
+_R20_LETZTE = ""
+_r20_anfrage_alt = _fal_anfrage
+
+
+def _fal_anfrage(url, daten, key=None, *a, **k):
+    global _R20_LETZTE
+    ergebnis = _r20_anfrage_alt(url, daten, key, *a, **k)
+    try:
+        if isinstance(daten, dict) and daten.get("timestamps"):
+            _R20_LETZTE = _r20_form(ergebnis)
+    except Exception:
+        pass
+    return ergebnis
