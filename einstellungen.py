@@ -675,3 +675,23 @@ def laden():
     except Exception:
         pass
     return d
+
+
+# ---------- Nachtrag m16: Slot fuer zwei Sprechende ----------
+#
+# Der Avatar-Slot macht einen Mund synchron. Fuer zwei Leute, die sich
+# in einem Bild abwechseln, braucht es ein eigenes Modell - MultiTalk
+# bekommt ein Bild und zwei Tonspuren.
+#
+# Die Slotliste in dashboard2 ist nur der Notfall-Ersatz; gelesen wird
+# diese hier. Darum muss der neue Slot an dieser Stelle dazu.
+
+if not any((x[0] if isinstance(x, (list, tuple)) else x) == "multi"
+           for x in API_SLOTS):
+    _m16_neu = []
+    for _x in API_SLOTS:
+        _m16_neu.append(_x)
+        if (_x[0] if isinstance(_x, (list, tuple)) else _x) == "avatar":
+            _m16_neu.append(("multi", "Zwei Sprechende",
+                             "Lippensync, wenn zwei im Bild reden"))
+    API_SLOTS = _m16_neu
